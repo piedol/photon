@@ -1,0 +1,86 @@
+[package]
+name = "photon-windows"
+version = "0.1.0"
+edition = "2024"
+description = "Screenshot, markup and screen recording for Windows (the Windows edition of Photon)"
+license = "PolyForm-Noncommercial-1.0.0"
+publish = false
+build = "build.rs"
+
+# Standalone: the Mac app at the repo root is not a workspace, and this crate
+# never joins one, so building either never touches the other.
+[workspace]
+
+[[bin]]
+name = "Photon"
+path = "src/main.rs"
+
+[dependencies]
+# Shared naming code calls libc::localtime_r; this shim maps it to the UCRT.
+libc = { path = "libc-shim", package = "photon-libc-shim" }
+windows-capture = "2.0.1"
+wasapi = "0.26.0"
+windows-core = "0.62.2"
+windows-numerics = "0.3.1"
+parking_lot = "0.12"
+
+[dependencies.windows]
+version = "0.62.2"
+features = [
+    "Foundation",
+    "Foundation_Collections",
+    "Graphics_DirectX_Direct3D11",
+    "Media_Core",
+    "Media_MediaProperties",
+    "Media_Transcoding",
+    "Storage",
+    "Storage_FileProperties",
+    "Storage_Search",
+    "Storage_Streams",
+    "Win32_Devices_Display",
+    "Win32_Foundation",
+    "Win32_Graphics_Direct2D",
+    "Win32_Graphics_Direct2D_Common",
+    "Win32_Graphics_Direct3D",
+    "Win32_Graphics_Direct3D11",
+    "Win32_Graphics_DirectWrite",
+    "Win32_Graphics_Dwm",
+    "Win32_Graphics_Dxgi",
+    "Win32_Graphics_Dxgi_Common",
+    "Win32_Graphics_Gdi",
+    "Win32_Graphics_Imaging",
+    "Win32_Graphics_Imaging_D2D",
+    "Win32_Media_Audio",
+    "Win32_Media_MediaFoundation",
+    "Win32_Storage_FileSystem",
+    "Win32_Storage_Xps",
+    "Win32_System_Com",
+    "Win32_System_Com_StructuredStorage",
+    "Win32_System_DataExchange",
+    "Win32_System_LibraryLoader",
+    "Win32_System_Memory",
+    "Win32_System_Ole",
+    "Win32_System_Registry",
+    "Win32_System_SystemServices",
+    "Win32_System_Threading",
+    "Win32_System_Variant",
+    "Win32_System_WinRT",
+    "Win32_UI_Controls",
+    "Win32_UI_Controls_Dialogs",
+    "Win32_UI_HiDpi",
+    "Win32_UI_Input_KeyboardAndMouse",
+    "Win32_UI_Shell",
+    "Win32_UI_Shell_Common",
+    "Win32_UI_WindowsAndMessaging",
+]
+
+[build-dependencies]
+embed-resource = "3"
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+strip = true
+debug = false
