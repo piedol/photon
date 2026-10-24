@@ -17,11 +17,13 @@ objc2-app-kit = { version = "0.3.2", features = ["objc2-uniform-type-identifiers
 objc2-core-foundation = "0.3.2"
 objc2-core-graphics = "0.3.2"
 objc2-screen-capture-kit = "0.3.2"
-objc2-av-foundation = "0.3.2"
+objc2-av-foundation = { version = "0.3.2", features = ["block2", "objc2-core-media", "objc2-core-graphics", "objc2-core-foundation", "objc2-quartz-core"] }
 objc2-core-media = "0.3.2"
 objc2-service-management = "0.3.2"
 objc2-uniform-type-identifiers = "0.3.2"
 objc2-quartz-core = "0.3.2"
+objc2-av-kit = { version = "0.3.2", features = ["block2", "objc2-core-media", "objc2-core-foundation"] }
+objc2-image-io = { version = "0.3.2", features = ["objc2-core-graphics"] }
 block2 = "0.6.2"
 libc = "0.2"
 dispatch2 = "0.3.1"

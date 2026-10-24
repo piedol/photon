@@ -96,6 +96,11 @@ define_class!(
             }
         }
 
+        #[unsafe(method(statusClicked:))]
+        fn status_clicked(&self, _sender: Option<&AnyObject>) {
+            crate::app::status_clicked();
+        }
+
         #[unsafe(method(tick:))]
         fn tick(&self, _timer: Option<&AnyObject>) {
             crate::app::tick();

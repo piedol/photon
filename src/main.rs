@@ -19,6 +19,7 @@ mod record;
 mod selftest;
 mod session;
 mod settings;
+mod settings_window;
 mod ui;
 mod util;
 

@@ -5,9 +5,12 @@ use std::cell::RefCell;
 use objc2::rc::Retained;
 use objc2::{sel, MainThreadMarker, MainThreadOnly};
 use objc2_app_kit::{
-    NSApplicationActivationPolicy, NSEventModifierFlags, NSMenu, NSMenuItem, NSStatusBar,
-    NSStatusItem, NSVariableStatusItemLength,
+    NSApplicationActivationPolicy, NSCellImagePosition, NSColor, NSControlStateValueOff,
+    NSControlStateValueOn, NSEventMask, NSEventModifierFlags, NSEventType, NSFont, NSFontWeightMedium,
+    NSMenu, NSMenuItem, NSStatusBar, NSStatusItem, NSVariableStatusItemLength,
 };
+use objc2_foundation::NSTimer;
+use objc2_service_management::{SMAppService, SMAppServiceStatus};
 use objc2_foundation::NSString;
 
 use crate::commands::Command;
@@ -44,6 +47,10 @@ pub fn mtm() -> MainThreadMarker {
 pub fn launched(mtm: MainThreadMarker) {
     build_status_item(mtm);
     apply_hotkeys();
+    crate::output::destination::clean_scratch();
+    if !crate::permissions::screen_ok() {
+        crate::permissions::ask_screen();
+    }
     util::log("launched");
 }
 
@@ -136,15 +143,154 @@ pub fn open_url(host: &str) {
         "stop" => Command::StopRecording,
         "settings" => Command::OpenSettings,
         "selftest" => return crate::selftest::run(),
+        "selftest-record" => return crate::selftest::run_record(),
         _ => return,
     };
     handle(cmd);
 }
 
-pub fn menu_will_open() {}
+pub fn menu_will_open() {
+    let on = login_item_enabled();
+    SHELL.with(|sh| {
+        if let Some(sh) = sh.borrow().as_ref() {
+            sh.login_item.setState(if on { NSControlStateValueOn } else { NSControlStateValueOff });
+        }
+    });
+}
 
-/// One-second timer tick (recording clock).
-pub fn tick() {}
+fn login_item_enabled() -> bool {
+    let status = unsafe { SMAppService::mainAppService().status() };
+    status == SMAppServiceStatus::Enabled
+}
+
+fn toggle_login_item() {
+    let service = unsafe { SMAppService::mainAppService() };
+    let result = if login_item_enabled() {
+        unsafe { service.unregisterAndReturnError() }
+    } else {
+        unsafe { service.registerAndReturnError() }
+    };
+    if let Err(e) = result {
+        crate::hud::message("Couldn't change Launch at Login", Some(&e.localizedDescription().to_string()));
+    }
+}
+
+thread_local! {
+    static TIMER: RefCell<Option<Retained<NSTimer>>> = const { RefCell::new(None) };
+    static RECORD_MENU: RefCell<Option<Retained<NSMenu>>> = const { RefCell::new(None) };
+}
+
+/// Switch the menu-bar item between its idle look and the recording clock.
+pub fn set_recording_ui(on: bool) {
+    let mtm = mtm();
+    TIMER.with(|t| {
+        if let Some(t) = t.borrow_mut().take() {
+            t.invalidate();
+        }
+    });
+    SHELL.with(|sh| {
+        let sh = sh.borrow();
+        let Some(sh) = sh.as_ref() else { return };
+        let Some(button) = sh.item.button(mtm) else { return };
+        if on {
+            sh.item.setMenu(None);
+            let target = ui::controller(mtm);
+            unsafe {
+                button.setTarget(Some(&target));
+                button.setAction(Some(sel!(statusClicked:)));
+            }
+            button.sendActionOn(NSEventMask::LeftMouseUp | NSEventMask::RightMouseUp);
+            button.setImagePosition(NSCellImagePosition::ImageLeading);
+            if let Some(img) = ui::symbol("record.circle.fill", 0.0) {
+                // Palette colours keep the dot red; template images would be tinted white.
+                let red = objc2_foundation::NSArray::from_retained_slice(&[NSColor::systemRedColor()]);
+                let cfg = objc2_app_kit::NSImageSymbolConfiguration::configurationWithPaletteColors(&red);
+                let img = img.imageWithSymbolConfiguration(&cfg).unwrap_or(img);
+                img.setTemplate(false);
+                button.setImage(Some(&img));
+            }
+            button.setContentTintColor(Some(&NSColor::systemRedColor()));
+            button.setFont(Some(&NSFont::monospacedDigitSystemFontOfSize_weight(12.0, unsafe { NSFontWeightMedium })));
+            button.setToolTip(Some(&ns("Click to stop recording · right-click for options")));
+        } else {
+            unsafe {
+                button.setTarget(None);
+                button.setAction(None);
+            }
+            button.setTitle(&NSString::new());
+            button.setImagePosition(NSCellImagePosition::ImageOnly);
+            if let Some(img) = ui::symbol("camera.aperture", 0.0) {
+                img.setTemplate(true);
+                button.setImage(Some(&img));
+            }
+            button.setContentTintColor(None);
+            button.setToolTip(Some(&ns("Photon")));
+            sh.item.setMenu(Some(&sh.menu));
+        }
+    });
+    if on {
+        let target = ui::controller(mtm);
+        let timer = unsafe {
+            NSTimer::scheduledTimerWithTimeInterval_target_selector_userInfo_repeats(0.5, &target, sel!(tick:), None, true)
+        };
+        TIMER.with(|t| *t.borrow_mut() = Some(timer));
+        refresh_recording_ui();
+    }
+}
+
+/// Update the clock text ("● 02:14", or "Paused").
+pub fn refresh_recording_ui() {
+    let mtm = mtm();
+    if !record::is_active() {
+        return;
+    }
+    let secs = record::elapsed().as_secs();
+    let text = if record::is_paused() {
+        format!(" Paused {:02}:{:02}", secs / 60, secs % 60)
+    } else if secs >= 3600 {
+        format!(" {}:{:02}:{:02}", secs / 3600, (secs / 60) % 60, secs % 60)
+    } else {
+        format!(" {:02}:{:02}", secs / 60, secs % 60)
+    };
+    SHELL.with(|sh| {
+        if let Some(button) = sh.borrow().as_ref().and_then(|sh| sh.item.button(mtm)) {
+            button.setTitle(&ns(&text));
+        }
+    });
+}
+
+/// One tick of the recording clock.
+pub fn tick() {
+    refresh_recording_ui();
+}
+
+/// Status item clicked while recording: left stops, right shows options.
+pub fn status_clicked() {
+    let mtm = mtm();
+    let right = ui::app(mtm)
+        .currentEvent()
+        .map(|e| e.r#type() == NSEventType::RightMouseUp || e.modifierFlags().contains(NSEventModifierFlags::Control))
+        .unwrap_or(false);
+    if !right {
+        record::stop(false);
+        return;
+    }
+    let menu = NSMenu::new(mtm);
+    menu.setAutoenablesItems(false);
+    menu.addItem(&menu_item(mtm, "Stop and Save", Command::StopRecording));
+    menu.addItem(&menu_item(mtm, if record::is_paused() { "Resume" } else { "Pause" }, Command::PauseResume));
+    menu.addItem(&NSMenuItem::separatorItem(mtm));
+    menu.addItem(&menu_item(mtm, "Discard Recording", Command::Setting(999)));
+    SHELL.with(|sh| {
+        if let Some(sh) = sh.borrow().as_ref() {
+            if let Some(button) = sh.item.button(mtm) {
+                let p = objc2_foundation::NSPoint::new(0.0, button.bounds().size.height + 4.0);
+                menu.popUpMenuPositioningItem_atLocation_inView(None, p, Some(&button));
+            }
+        }
+    });
+    RECORD_MENU.with(|m| *m.borrow_mut() = Some(menu));
+}
 
 pub fn handle(cmd: Command) {
     let mtm = mtm();
@@ -158,7 +304,22 @@ pub fn handle(cmd: Command) {
                 session::start(Mode::Record);
             }
         }
-        Command::Quit => ui::app(mtm).terminate(None),
+        Command::Quit => {
+            if record::is_active() {
+                record::stop(false);
+                util::main_after(2.0, || ui::app(self::mtm()).terminate(None));
+            } else {
+                ui::app(mtm).terminate(None);
+            }
+        }
+        Command::StopRecording => record::stop(false),
+        Command::PauseResume => record::toggle_pause(),
+        Command::Setting(999) => record::stop(true),
+        Command::ToggleLogin => toggle_login_item(),
+        Command::OpenSettings => crate::settings_window::show(),
+        Command::Reveal | Command::CopyFile | Command::OpenFile | Command::Trim | Command::ExportGif | Command::DismissHud => {
+            record::post::command(cmd)
+        }
         Command::OpenRecordings => {
             let dir = settings::get().rec_dir;
             let _ = std::fs::create_dir_all(&dir);
