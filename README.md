@@ -37,6 +37,21 @@ scripts/bundle.sh --install
 
 Then allow Screen & System Audio Recording when macOS asks. See [Quickstart](docs/quickstart.md) for the details.
 
+## License
+
+Photon is source-available under the [PolyForm Noncommercial License 1.0.0](LICENSE.md).
+
+- **Allowed:**
+  - Personal, hobby, research and educational use.
+  - Use by nonprofits, schools and government.
+  - Forking, modifying and sharing for any of those purposes.
+- **Not allowed:** any commercial use, including use inside a company.
+- **Credit required:** anyone who shares Photon or a fork must include the license (or its URL) and this line, unchanged:
+
+  > Required Notice: Copyright (c) 2026 piedol (https://github.com/piedol/photon)
+
+For commercial licensing, contact [piedol](https://github.com/piedol).
+
 ## Docs update tag
 
 Docs last updated: `docs-2026-10-24`
