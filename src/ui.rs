@@ -8,8 +8,8 @@ use objc2::runtime::{AnyObject, ProtocolObject};
 use objc2::{define_class, msg_send, sel, MainThreadOnly};
 use objc2::runtime::Sel;
 use objc2_app_kit::{
-    NSApplication, NSApplicationDelegate, NSButton, NSColor, NSFont, NSImage,
-    NSImageSymbolConfiguration, NSMenu, NSMenuDelegate, NSTextField, NSView, NSVisualEffectBlendingMode,
+    NSApplication, NSApplicationDelegate, NSButton, NSColor, NSImage,
+    NSImageSymbolConfiguration, NSMenu, NSMenuDelegate, NSView, NSVisualEffectBlendingMode,
     NSVisualEffectMaterial, NSVisualEffectState, NSVisualEffectView, NSAppearance,
     NSAppearanceNameDarkAqua, NSFontWeightMedium, NSAppearanceCustomization, NSColorPanel,
     NSControlTextEditingDelegate, NSTextFieldDelegate, NSTextView, NSColorSpace,
@@ -53,18 +53,19 @@ define_class!(
 
     unsafe impl NSControlTextEditingDelegate for Controller {
         #[unsafe(method(controlTextDidChange:))]
-        fn control_text_did_change(&self, _n: &NSNotification) {
-            crate::session::text_changed();
+        fn control_text_did_change(&self, n: &NSNotification) {
+            let obj = n.object();
+            if !crate::settings_window::text_changed(obj.as_deref()) {
+                crate::session::text_changed();
+            }
         }
 
         #[unsafe(method(control:textView:doCommandBySelector:))]
         fn do_command(&self, _control: &AnyObject, _tv: &NSTextView, selector: Sel) -> bool {
             if selector == sel!(insertNewline:) {
-                crate::session::text_finished(true);
-                true
+                crate::session::text_finished(true)
             } else if selector == sel!(cancelOperation:) {
-                crate::session::text_finished(false);
-                true
+                crate::session::text_finished(false)
             } else {
                 false
             }
@@ -170,12 +171,6 @@ pub fn text_button(mtm: MainThreadMarker, title: &str, cmd: Command) -> Retained
     let b = unsafe { NSButton::buttonWithTitle_target_action(&ns(title), Some(&target), Some(sel!(command:)), mtm) };
     b.setTag(cmd.tag());
     b
-}
-
-pub fn label(mtm: MainThreadMarker, text: &str, size: f64) -> Retained<NSTextField> {
-    let l = NSTextField::labelWithString(&ns(text), mtm);
-    l.setFont(Some(&NSFont::systemFontOfSize(size)));
-    l
 }
 
 /// A dark HUD-material panel with rounded corners. `within` blurs this window's

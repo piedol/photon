@@ -1,6 +1,5 @@
 //! Photon: screenshots, markup and screen recording for Apple silicon Macs.
 
-#![cfg_attr(debug_assertions, allow(dead_code))]
 
 mod annotate;
 mod app;

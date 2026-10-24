@@ -16,6 +16,7 @@ macro_rules! keyed_enum {
         #[derive(Clone, Copy, Debug, PartialEq, Eq)]
         pub enum $name { $($variant),+ }
 
+        #[allow(dead_code)]
         impl $name {
             /// Every variant, in UI order.
             pub const ALL: [Self; [$($name::$variant),+].len()] = [$(Self::$variant),+];

@@ -13,7 +13,7 @@ use std::time::{Duration, Instant};
 use block2::RcBlock;
 use objc2::rc::Retained;
 use objc2::runtime::ProtocolObject;
-use objc2::{define_class, msg_send, AnyThread, DefinedClass, Message};
+use objc2::{define_class, msg_send, AnyThread, Message};
 use objc2_av_foundation::{AVFileTypeMPEG4, AVVideoCodecTypeH264, AVVideoCodecTypeHEVC};
 use objc2_core_media::CMTime;
 use objc2_foundation::{NSArray, NSError, NSObject, NSObjectProtocol, NSString, NSURL};
@@ -476,12 +476,11 @@ fn deliver(file: PathBuf, target: &RecordTarget, s: &Settings) {
         Ok(saved) => {
             util::log(format!("saved {}", saved.display()));
             settings::update(|st| st.rec_counter = counter + 1);
-            if s.rec_also_copy {
-                if let Some(also) = s.rec_also_dir.as_ref().filter(|d| destination::is_usable(d)) {
+            if s.rec_also_copy
+                && let Some(also) = s.rec_also_dir.as_ref().filter(|d| destination::is_usable(d)) {
                     let _ = std::fs::create_dir_all(also);
                     let _ = std::fs::copy(&saved, also.join(&name));
                 }
-            }
             post::finished_hud(saved, resolved.fell_back);
         }
         Err(e) => hud::message("Couldn't save the recording", Some(&e)),

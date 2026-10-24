@@ -169,10 +169,6 @@ fn save(id: u64) {
     }
 }
 
-pub fn count() -> usize {
-    PINS.with(|p| p.borrow().len())
-}
-
 #[allow(unused)]
 fn _rect(r: NSRect) -> Rect {
     crate::capture::rect(r)

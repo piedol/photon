@@ -10,11 +10,8 @@ pub const MOD_MASK: u32 = SHIFT | CONTROL | OPTION | COMMAND;
 
 pub mod vk {
     pub const RETURN: u16 = 36;
-    pub const TAB: u16 = 48;
-    pub const DELETE: u16 = 51;
     pub const ESCAPE: u16 = 53;
     pub const KEYPAD_ENTER: u16 = 76;
-    pub const FORWARD_DELETE: u16 = 117;
     pub const LEFT: u16 = 123;
     pub const RIGHT: u16 = 124;
     pub const DOWN: u16 = 125;

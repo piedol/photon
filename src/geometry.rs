@@ -28,9 +28,6 @@ impl Point {
     pub fn dist(self, o: Point) -> f64 {
         ((self.x - o.x).powi(2) + (self.y - o.y).powi(2)).sqrt()
     }
-    pub fn offset(self, dx: f64, dy: f64) -> Point {
-        pt(self.x + dx, self.y + dy)
-    }
 }
 
 impl Rect {
@@ -70,12 +67,6 @@ impl Rect {
         let mx = self.max_x().min(o.max_x());
         let my = self.max_y().min(o.max_y());
         (mx > x && my > y).then(|| Rect::new(x, y, mx - x, my - y))
-    }
-
-    pub fn union(&self, o: &Rect) -> Rect {
-        let x = self.x.min(o.x);
-        let y = self.y.min(o.y);
-        Rect::new(x, y, self.max_x().max(o.max_x()) - x, self.max_y().max(o.max_y()) - y)
     }
 
     pub fn translate(&self, dx: f64, dy: f64) -> Rect {
@@ -146,17 +137,6 @@ impl SignumOrOne for f64 {
     }
 }
 
-/// Distance from `p` to the segment `a`–`b`.
-pub fn dist_to_segment(p: Point, a: Point, b: Point) -> f64 {
-    let (dx, dy) = (b.x - a.x, b.y - a.y);
-    let len2 = dx * dx + dy * dy;
-    if len2 == 0.0 {
-        return p.dist(a);
-    }
-    let t = (((p.x - a.x) * dx + (p.y - a.y) * dy) / len2).clamp(0.0, 1.0);
-    p.dist(pt(a.x + t * dx, a.y + t * dy))
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -202,11 +182,5 @@ mod tests {
     fn snap_to_pixels() {
         let r = Rect::new(0.3, 0.26, 10.1, 10.0).snap(2.0);
         assert_eq!(r, Rect::new(0.5, 0.5, 10.0, 10.0));
-    }
-
-    #[test]
-    fn segment_distance() {
-        assert_eq!(dist_to_segment(pt(5.0, 3.0), pt(0.0, 0.0), pt(10.0, 0.0)), 3.0);
-        assert_eq!(dist_to_segment(pt(-4.0, 3.0), pt(0.0, 0.0), pt(10.0, 0.0)), 5.0);
     }
 }

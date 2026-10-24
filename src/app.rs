@@ -144,6 +144,7 @@ pub fn open_url(host: &str) {
         "settings" => Command::OpenSettings,
         "selftest" => return crate::selftest::run(),
         "selftest-record" => return crate::selftest::run_record(),
+        "selftest-settings" => return crate::selftest::run_settings(),
         _ => return,
     };
     handle(cmd);
@@ -158,12 +159,12 @@ pub fn menu_will_open() {
     });
 }
 
-fn login_item_enabled() -> bool {
+pub fn login_item_enabled() -> bool {
     let status = unsafe { SMAppService::mainAppService().status() };
     status == SMAppServiceStatus::Enabled
 }
 
-fn toggle_login_item() {
+pub fn toggle_login_item() {
     let service = unsafe { SMAppService::mainAppService() };
     let result = if login_item_enabled() {
         unsafe { service.unregisterAndReturnError() }
@@ -282,12 +283,11 @@ pub fn status_clicked() {
     menu.addItem(&NSMenuItem::separatorItem(mtm));
     menu.addItem(&menu_item(mtm, "Discard Recording", Command::Setting(999)));
     SHELL.with(|sh| {
-        if let Some(sh) = sh.borrow().as_ref() {
-            if let Some(button) = sh.item.button(mtm) {
+        if let Some(sh) = sh.borrow().as_ref()
+            && let Some(button) = sh.item.button(mtm) {
                 let p = objc2_foundation::NSPoint::new(0.0, button.bounds().size.height + 4.0);
                 menu.popUpMenuPositioningItem_atLocation_inView(None, p, Some(&button));
             }
-        }
     });
     RECORD_MENU.with(|m| *m.borrow_mut() = Some(menu));
 }
@@ -315,6 +315,7 @@ pub fn handle(cmd: Command) {
         Command::StopRecording => record::stop(false),
         Command::PauseResume => record::toggle_pause(),
         Command::Setting(999) => record::stop(true),
+        Command::Setting(id) => crate::settings_window::changed(id),
         Command::ToggleLogin => toggle_login_item(),
         Command::OpenSettings => crate::settings_window::show(),
         Command::Reveal | Command::CopyFile | Command::OpenFile | Command::Trim | Command::ExportGif | Command::DismissHud => {

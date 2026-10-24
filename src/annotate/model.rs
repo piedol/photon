@@ -123,37 +123,6 @@ pub enum Shape {
     Step { center: Point, n: u32, style: Style },
 }
 
-impl Shape {
-    /// Generous bounds for invalidation (includes stroke and arrow heads).
-    pub fn bounds(&self) -> Rect {
-        let pad = |r: Rect, d: f64| Rect::new(r.x - d, r.y - d, r.w + 2.0 * d, r.h + 2.0 * d);
-        match self {
-            Shape::Pen { pts, style } => pad(points_bounds(pts), style.width() + 2.0),
-            Shape::Marker { pts, style } => pad(points_bounds(pts), style.marker_width()),
-            Shape::Line { a, b, style } => pad(Rect::from_points(*a, *b), style.width() + 2.0),
-            Shape::Arrow { a, b, style } => pad(Rect::from_points(*a, *b), style.width() * 5.0 + 12.0),
-            Shape::Rect { r, style } | Shape::Ellipse { r, style } => pad(*r, style.width() + 2.0),
-            Shape::Text { origin, text, style } => {
-                let lines = text.lines().count().max(1) as f64;
-                let longest = text.lines().map(|l| l.chars().count()).max().unwrap_or(1) as f64;
-                let f = style.font_size();
-                pad(Rect::new(origin.x, origin.y - f * 1.3 * (lines - 1.0), longest * f * 0.7 + f, f * 1.3 * lines), 6.0)
-            }
-            Shape::Blur { r, .. } => pad(*r, 1.0),
-            Shape::Step { center, style, .. } => {
-                let r = style.step_radius() + 3.0;
-                Rect::new(center.x - r, center.y - r, r * 2.0, r * 2.0)
-            }
-        }
-    }
-}
-
-fn points_bounds(pts: &[Point]) -> Rect {
-    let mut it = pts.iter();
-    let Some(first) = it.next() else { return Rect::default() };
-    it.fold(Rect::new(first.x, first.y, 0.0, 0.0), |acc, p| acc.union(&Rect::new(p.x, p.y, 0.0, 0.0)))
-}
-
 /// A shape being dragged out.
 #[derive(Clone, Debug)]
 pub struct Draft {
@@ -219,13 +188,12 @@ impl Draft {
             return None;
         }
         let mut shape = self.shape(next_step)?;
-        if let Shape::Pen { pts, .. } | Shape::Marker { pts, .. } = &mut shape {
-            if pts.len() == 1 {
+        if let Shape::Pen { pts, .. } | Shape::Marker { pts, .. } = &mut shape
+            && pts.len() == 1 {
                 // A click draws a dot.
                 let p = pts[0];
                 pts.push(pt(p.x + 0.01, p.y));
             }
-        }
         Some(shape)
     }
 }

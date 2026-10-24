@@ -10,7 +10,7 @@ use objc2_app_kit::{
 };
 use objc2_core_foundation::{CFRetained, CGPoint, CGRect, CGSize};
 use objc2_core_graphics::{
-    CGBitmapContextCreate, CGBitmapContextCreateImage, CGBitmapInfo, CGColorSpace, CGContext, CGImage,
+    CGBitmapContextCreate, CGBitmapContextCreateImage, CGColorSpace, CGImageByteOrderInfo, CGContext, CGImage,
     CGImageAlphaInfo, kCGColorSpaceSRGB,
 };
 use objc2_foundation::{NSArray, NSData, NSDictionary, NSSize, NSString, NSURL};
@@ -39,7 +39,7 @@ pub fn compose(image: &CGImage, sel: Rect, view_h: f64, scale: f64, shapes: &[Sh
     let space = CGImage::color_space(Some(&crop))
         .filter(|s| CGColorSpace::number_of_components(Some(s)) == 3)
         .or_else(|| CGColorSpace::with_name(Some(unsafe { kCGColorSpaceSRGB })))?;
-    let info = CGImageAlphaInfo::PremultipliedFirst.0 | CGBitmapInfo::ByteOrder32Little.0;
+    let info = CGImageAlphaInfo::PremultipliedFirst.0 | CGImageByteOrderInfo::Order32Little.0;
     let ctx = unsafe { CGBitmapContextCreate(std::ptr::null_mut(), w, h, 8, 0, Some(&space), info) }?;
     let full = CGRect::new(CGPoint::new(0.0, 0.0), CGSize::new(w as f64, h as f64));
     CGContext::draw_image(Some(&ctx), full, Some(&crop));

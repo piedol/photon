@@ -178,7 +178,7 @@ fn draw_text(ctx: &CGContext, origin: Point, text: &str, size: f64, col: Rgba) {
     let font = text_font(size);
     let s = attributed(text, &font, col);
     let sz = s.size();
-    with_ns_context(ctx, || unsafe {
+    with_ns_context(ctx, || {
         s.drawAtPoint(objc2_foundation::NSPoint::new(origin.x, origin.y - sz.height));
     });
 }
@@ -196,7 +196,7 @@ fn draw_step(ctx: &CGContext, center: Point, n: u32, r: f64, col: Rgba) {
     let font = NSFont::monospacedDigitSystemFontOfSize_weight(r * 1.05, unsafe { NSFontWeightBold });
     let s = attributed(&n.to_string(), &font, fg);
     let sz = s.size();
-    with_ns_context(ctx, || unsafe {
+    with_ns_context(ctx, || {
         s.drawAtPoint(objc2_foundation::NSPoint::new(center.x - sz.width / 2.0, center.y - sz.height / 2.0));
     });
 }

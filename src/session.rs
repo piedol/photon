@@ -27,7 +27,6 @@ use crate::overlay::window::{make_window, AnnotView, OverlayView, OverlayWindow}
 use crate::util::{self, ns};
 use crate::{export, permissions, pin, record, settings, ui};
 
-pub use crate::overlay::toolbar::Mode as SessionMode;
 
 pub struct Screen {
     pub display: Display,
@@ -433,8 +432,8 @@ impl Session {
                 let sc = &mut self.screens[idx];
                 if sc.sel.press(p, allow_new, allow_move) {
                     self.refresh(idx);
-                } else if let (Some(tool), Some(r)) = (self.tool, sc.sel.rect) {
-                    if r.contains(p) {
+                } else if let (Some(tool), Some(r)) = (self.tool, sc.sel.rect)
+                    && r.contains(p) {
                         if tool == Tool::Text {
                             self.begin_text(p);
                         } else {
@@ -442,7 +441,6 @@ impl Session {
                             self.redraw_annotations();
                         }
                     }
-                }
             }
             MouseKind::Drag => {
                 if let Some(d) = &mut self.draft {
@@ -617,8 +615,16 @@ pub fn set_text_for_test(s: &str) {
     });
 }
 
-pub fn text_finished(commit: bool) {
-    with(|s| if commit { s.commit_text() } else { s.cancel_text() });
+/// Returns true when an inline markup editor handled the key.
+pub fn text_finished(commit: bool) -> bool {
+    with(|s| {
+        if s.text.is_none() {
+            return false;
+        }
+        if commit { s.commit_text() } else { s.cancel_text() }
+        true
+    })
+    .unwrap_or(false)
 }
 
 fn resize_text_field(field: &NSTextField) {

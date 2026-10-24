@@ -185,8 +185,3 @@ pub fn make_window(mtm: MainThreadMarker, frame: NSRect) -> Retained<OverlayWind
     w.setFrame_display(frame, false);
     w
 }
-
-/// Make the window object usable as a plain NSWindow reference.
-pub fn as_window(w: &OverlayWindow) -> &NSWindow {
-    w
-}

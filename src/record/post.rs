@@ -95,6 +95,7 @@ pub fn join(segments: Vec<PathBuf>, done: impl FnOnce(Result<PathBuf, String>) +
         let a = asset(seg);
         let dur = unsafe { a.duration() };
         let range = CMTimeRange { start: unsafe { kCMTimeZero }, duration: dur };
+        #[allow(deprecated)] // the async replacement needs a completion chain; this runs once per stop
         if let Err(e) = unsafe { comp.insertTimeRange_ofAsset_atTime_error(range, &a, cursor) } {
             util::log(format!("skipping segment {}: {e:?}", seg.display()));
             continue;
@@ -236,8 +237,10 @@ pub fn command(cmd: Command) {
 
 // ── Trim ───────────────────────────────────────────────────────────────────
 
+type TrimWindow = (Retained<NSWindow>, Retained<AVPlayerView>, Retained<AVPlayer>);
+
 thread_local! {
-    static TRIM: RefCell<Option<(Retained<NSWindow>, Retained<AVPlayerView>, Retained<AVPlayer>)>> = const { RefCell::new(None) };
+    static TRIM: RefCell<Option<TrimWindow>> = const { RefCell::new(None) };
 }
 
 fn trim(path: PathBuf) {

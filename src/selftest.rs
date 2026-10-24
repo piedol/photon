@@ -81,7 +81,7 @@ pub fn run() {
         })),
         (0.4, Box::new(|| shot("03-markup"))),
         (0.1, Box::new(|| {
-            session::text_finished(true);
+            let _ = session::text_finished(true);
             session::command(Command::ToggleSwatches);
         })),
         (0.3, Box::new(|| shot("04-swatches"))),
@@ -93,7 +93,7 @@ pub fn run() {
         (1.5, Box::new(|| session::start(Mode::Record))),
         (1.0, Box::new(|| drag((400.0, 900.0), (1400.0, 300.0), false))),
         (0.3, Box::new(|| shot("06-record-mode"))),
-        (0.1, Box::new(|| session::close())),
+        (0.1, Box::new(session::close)),
     ];
     run_steps(steps);
 }
@@ -109,13 +109,30 @@ pub fn run_record() {
         (0.1, Box::new(|| session::command(Command::StartRecording))),
         (1.2, Box::new(|| shot("11-countdown"))),
         (3.5, Box::new(|| shot("12-recording"))),
-        (2.0, Box::new(|| crate::record::toggle_pause())),
-        (1.0, Box::new(|| crate::record::toggle_pause())),
+        (2.0, Box::new(crate::record::toggle_pause)),
+        (1.0, Box::new(crate::record::toggle_pause)),
         (2.0, Box::new(|| crate::record::stop(false))),
         (8.0, Box::new(|| shot("13-finished"))),
         (0.2, Box::new(|| crate::record::post::command(Command::Trim))),
         (2.5, Box::new(|| shot("15-trim"))),
-        (0.2, Box::new(|| crate::record::post::close_trim())),
+        (0.2, Box::new(crate::record::post::close_trim)),
+    ];
+    run_steps(steps);
+}
+
+pub fn run_settings() {
+    if std::env::var_os("PHOTON_DEV").is_none() {
+        return;
+    }
+    let steps: Vec<(f64, Step)> = vec![
+        (0.0, Box::new(crate::settings_window::show)),
+        (0.3, Box::new(crate::settings_window::move_for_test)),
+        (0.5, Box::new(|| shot("20-general"))),
+        (0.1, Box::new(|| crate::settings_window::select_tab(1))),
+        (0.5, Box::new(|| shot("21-screenshots"))),
+        (0.1, Box::new(|| crate::settings_window::select_tab(2))),
+        (0.5, Box::new(|| shot("22-recordings"))),
+        (0.1, Box::new(crate::settings_window::close_for_test)),
     ];
     run_steps(steps);
 }

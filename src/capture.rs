@@ -31,7 +31,6 @@ pub struct Display {
     pub frame: Rect,
     pub scale: f64,
     pub name: String,
-    pub screen: Retained<NSScreen>,
 }
 
 pub struct DisplayShot {
@@ -43,7 +42,6 @@ pub struct Snapshot {
     pub shots: Vec<DisplayShot>,
     /// On-screen windows (AppKit global points), front to back.
     pub windows: Vec<Rect>,
-    pub front_app: Option<String>,
 }
 
 pub fn screen_id(screen: &NSScreen) -> u32 {
@@ -65,7 +63,6 @@ pub fn displays(mtm: MainThreadMarker) -> Vec<Display> {
                 frame: Rect::new(f.origin.x, f.origin.y, f.size.width, f.size.height),
                 scale: s.backingScaleFactor(),
                 name: s.localizedName().to_string(),
-                screen: s.clone(),
             }
         })
         .collect()
@@ -122,8 +119,10 @@ pub fn window_rects(mtm: MainThreadMarker) -> Vec<Rect> {
     out
 }
 
+type Done = Box<dyn FnOnce(Result<Snapshot, String>)>;
+
 thread_local! {
-    static PENDING: RefCell<Option<Box<dyn FnOnce(Result<Snapshot, String>)>>> = const { RefCell::new(None) };
+    static PENDING: RefCell<Option<Done>> = const { RefCell::new(None) };
 }
 
 struct Collector {
@@ -219,7 +218,7 @@ fn finish(result: Result<(), String>, images: Vec<(u32, CFRetained<CGImage>)>) {
                     shots.push(DisplayShot { display, image });
                 }
             }
-            Snapshot { shots, windows: window_rects(mtm), front_app: None }
+            Snapshot { shots, windows: window_rects(mtm) }
         });
         done(out);
     });
