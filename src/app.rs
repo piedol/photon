@@ -13,7 +13,8 @@ use objc2_foundation::NSString;
 use crate::commands::Command;
 use crate::keys::{self, Shortcut};
 use crate::util::{self, ns};
-use crate::{hotkey, settings, ui};
+use crate::overlay::toolbar::Mode;
+use crate::{hotkey, record, session, settings, ui};
 
 struct Shell {
     item: Retained<NSStatusItem>,
@@ -127,6 +128,19 @@ fn build_status_item(mtm: MainThreadMarker) {
     });
 }
 
+/// `photon://capture`, `photon://record`, `photon://stop`, `photon://settings`.
+pub fn open_url(host: &str) {
+    let cmd = match host {
+        "capture" | "screenshot" => Command::CaptureScreenshot,
+        "record" => Command::RecordScreen,
+        "stop" => Command::StopRecording,
+        "settings" => Command::OpenSettings,
+        "selftest" => return crate::selftest::run(),
+        _ => return,
+    };
+    handle(cmd);
+}
+
 pub fn menu_will_open() {}
 
 /// One-second timer tick (recording clock).
@@ -135,7 +149,23 @@ pub fn tick() {}
 pub fn handle(cmd: Command) {
     let mtm = mtm();
     match cmd {
+        Command::CaptureScreenshot => session::start(Mode::Screenshot),
+        Command::RecordScreen => session::start(Mode::Record),
+        Command::RecordHotkey => {
+            if record::is_active() {
+                handle(Command::StopRecording);
+            } else {
+                session::start(Mode::Record);
+            }
+        }
         Command::Quit => ui::app(mtm).terminate(None),
+        Command::OpenRecordings => {
+            let dir = settings::get().rec_dir;
+            let _ = std::fs::create_dir_all(&dir);
+            let url = objc2_foundation::NSURL::fileURLWithPath(&ns(&dir.to_string_lossy()));
+            objc2_app_kit::NSWorkspace::sharedWorkspace().openURL(&url);
+        }
+        c if session::is_open() => session::command(c),
         _ => util::log(format!("unhandled {cmd:?}")),
     }
 }

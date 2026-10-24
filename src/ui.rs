@@ -6,13 +6,15 @@ use std::cell::OnceCell;
 use objc2::rc::Retained;
 use objc2::runtime::{AnyObject, ProtocolObject};
 use objc2::{define_class, msg_send, sel, MainThreadOnly};
+use objc2::runtime::Sel;
 use objc2_app_kit::{
     NSApplication, NSApplicationDelegate, NSButton, NSColor, NSFont, NSImage,
     NSImageSymbolConfiguration, NSMenu, NSMenuDelegate, NSTextField, NSView, NSVisualEffectBlendingMode,
     NSVisualEffectMaterial, NSVisualEffectState, NSVisualEffectView, NSAppearance,
-    NSAppearanceNameDarkAqua, NSFontWeightMedium, NSAppearanceCustomization,
+    NSAppearanceNameDarkAqua, NSFontWeightMedium, NSAppearanceCustomization, NSColorPanel,
+    NSControlTextEditingDelegate, NSTextFieldDelegate, NSTextView, NSColorSpace,
 };
-use objc2_foundation::{MainThreadMarker, NSNotification, NSObject, NSObjectProtocol, NSRect};
+use objc2_foundation::{MainThreadMarker, NSArray, NSNotification, NSObject, NSObjectProtocol, NSRect, NSURL};
 
 use crate::commands::Command;
 use crate::util::ns;
@@ -31,6 +33,15 @@ define_class!(
         fn did_finish_launching(&self, _n: &NSNotification) {
             crate::app::launched(self.mtm());
         }
+
+        #[unsafe(method(application:openURLs:))]
+        fn open_urls(&self, _app: &NSApplication, urls: &NSArray<NSURL>) {
+            for url in urls.iter() {
+                if let Some(host) = url.host() {
+                    crate::app::open_url(&host.to_string());
+                }
+            }
+        }
     }
 
     unsafe impl NSMenuDelegate for Controller {
@@ -40,7 +51,40 @@ define_class!(
         }
     }
 
+    unsafe impl NSControlTextEditingDelegate for Controller {
+        #[unsafe(method(controlTextDidChange:))]
+        fn control_text_did_change(&self, _n: &NSNotification) {
+            crate::session::text_changed();
+        }
+
+        #[unsafe(method(control:textView:doCommandBySelector:))]
+        fn do_command(&self, _control: &AnyObject, _tv: &NSTextView, selector: Sel) -> bool {
+            if selector == sel!(insertNewline:) {
+                crate::session::text_finished(true);
+                true
+            } else if selector == sel!(cancelOperation:) {
+                crate::session::text_finished(false);
+                true
+            } else {
+                false
+            }
+        }
+    }
+
+    unsafe impl NSTextFieldDelegate for Controller {}
+
     impl Controller {
+        #[unsafe(method(colorChanged:))]
+        fn color_changed(&self, sender: Option<&AnyObject>) {
+            let Some(panel) = sender.and_then(|s| s.downcast_ref::<NSColorPanel>()) else { return };
+            let c = panel.color();
+            if let Some(c) = c.colorUsingColorSpace(&NSColorSpace::sRGBColorSpace()) {
+                crate::session::custom_color_changed(crate::annotate::model::Rgba(
+                    c.redComponent(), c.greenComponent(), c.blueComponent(), 1.0,
+                ));
+            }
+        }
+
         #[unsafe(method(command:))]
         fn command(&self, sender: Option<&AnyObject>) {
             let tag: isize = match sender {
@@ -81,6 +125,10 @@ pub fn app(mtm: MainThreadMarker) -> Retained<NSApplication> {
 pub fn set_app_delegate(mtm: MainThreadMarker) {
     let c = controller(mtm);
     app(mtm).setDelegate(Some(ProtocolObject::from_ref(&*c)));
+}
+
+pub fn text_delegate(mtm: MainThreadMarker) -> Retained<ProtocolObject<dyn NSTextFieldDelegate>> {
+    ProtocolObject::from_retained(controller(mtm))
 }
 
 pub fn menu_delegate(mtm: MainThreadMarker) -> Retained<ProtocolObject<dyn NSMenuDelegate>> {
@@ -125,12 +173,13 @@ pub fn label(mtm: MainThreadMarker, text: &str, size: f64) -> Retained<NSTextFie
     l
 }
 
-/// A dark HUD-material panel with rounded corners.
-pub fn hud_surface(mtm: MainThreadMarker, frame: NSRect, radius: f64) -> Retained<NSVisualEffectView> {
+/// A dark HUD-material panel with rounded corners. `within` blurs this window's
+/// own content (overlay toolbars); otherwise it blurs what is behind the window.
+pub fn hud_surface(mtm: MainThreadMarker, frame: NSRect, radius: f64, within: bool) -> Retained<NSVisualEffectView> {
     let v = NSVisualEffectView::initWithFrame(NSVisualEffectView::alloc(mtm), frame);
     v.setMaterial(NSVisualEffectMaterial::HUDWindow);
     v.setState(NSVisualEffectState::Active);
-    v.setBlendingMode(NSVisualEffectBlendingMode::BehindWindow);
+    v.setBlendingMode(if within { NSVisualEffectBlendingMode::WithinWindow } else { NSVisualEffectBlendingMode::BehindWindow });
     v.setWantsLayer(true);
     if let Some(layer) = v.layer() {
         layer.setCornerRadius(radius);

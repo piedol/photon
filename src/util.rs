@@ -46,3 +46,16 @@ pub fn log(msg: impl AsRef<str>) {
         eprintln!("[photon] {}", msg.as_ref());
     }
 }
+
+unsafe extern "C" {
+    fn malloc_zone_pressure_relief(zone: *mut std::ffi::c_void, goal: usize) -> usize;
+}
+
+/// Hand freed capture buffers back to the system shortly after a session ends,
+/// so the idle footprint returns to baseline instead of staying at the peak.
+pub fn release_memory_soon() {
+    main_after(1.0, || {
+        // SAFETY: a null zone means "all zones"; goal 0 means "as much as possible".
+        unsafe { malloc_zone_pressure_relief(std::ptr::null_mut(), 0) };
+    });
+}

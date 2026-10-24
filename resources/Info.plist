@@ -20,6 +20,14 @@
 	<key>NSHighResolutionCapable</key><true/>
 	<key>NSSupportsAutomaticGraphicsSwitching</key><true/>
 	<key>NSMicrophoneUsageDescription</key><string>Photon records your microphone only when you turn on the mic for a screen recording.</string>
+	<key>NSCameraUsageDescription</key><string>Photon shows your camera in a webcam bubble only when you turn it on for a screen recording.</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key><string>top.piedol.photon</string>
+			<key>CFBundleURLSchemes</key><array><string>photon</string></array>
+		</dict>
+	</array>
 	<key>NSHumanReadableCopyright</key><string>© 2026 piedol</string>
 </dict>
 </plist>

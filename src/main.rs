@@ -1,9 +1,23 @@
 //! Photon: screenshots, markup and screen recording for Apple silicon Macs.
 
+#![cfg_attr(debug_assertions, allow(dead_code))]
+
+mod annotate;
 mod app;
+mod capture;
 mod commands;
+mod export;
+mod geometry;
 mod hotkey;
+mod hud;
 mod keys;
+mod output;
+mod overlay;
+mod permissions;
+mod pin;
+mod record;
+mod selftest;
+mod session;
 mod settings;
 mod ui;
 mod util;
