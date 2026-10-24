@@ -19,6 +19,9 @@ use crate::util::{self, ns};
 use crate::overlay::toolbar::Mode;
 use crate::{hotkey, record, session, settings, ui};
 
+/// Crop corners around a dot: the app icon's motif, distinct from other menu-bar logos.
+const MENU_SYMBOL: &str = "dot.viewfinder";
+
 struct Shell {
     item: Retained<NSStatusItem>,
     menu: Retained<NSMenu>,
@@ -102,7 +105,7 @@ fn menu_item(mtm: MainThreadMarker, title: &str, cmd: Command) -> Retained<NSMen
 fn build_status_item(mtm: MainThreadMarker) {
     let item = NSStatusBar::systemStatusBar().statusItemWithLength(NSVariableStatusItemLength);
     if let Some(button) = item.button(mtm) {
-        if let Some(img) = ui::symbol("camera.aperture", 0.0) {
+        if let Some(img) = ui::symbol(MENU_SYMBOL, 0.0) {
             img.setTemplate(true);
             button.setImage(Some(&img));
         }
@@ -220,7 +223,7 @@ pub fn set_recording_ui(on: bool) {
             }
             button.setTitle(&NSString::new());
             button.setImagePosition(NSCellImagePosition::ImageOnly);
-            if let Some(img) = ui::symbol("camera.aperture", 0.0) {
+            if let Some(img) = ui::symbol(MENU_SYMBOL, 0.0) {
                 img.setTemplate(true);
                 button.setImage(Some(&img));
             }
