@@ -9,7 +9,7 @@ use objc2::rc::Retained;
 use objc2::runtime::AnyObject;
 use objc2::{AnyThread, MainThreadMarker, MainThreadOnly};
 use objc2_app_kit::{
-    NSBackingStoreType, NSColor, NSFont, NSImageView, NSPanel, NSPasteboard, NSTextField, NSWindow,
+    NSBackingStoreType, NSColor, NSFont, NSPanel, NSPasteboard, NSTextField, NSWindow,
     NSWindowStyleMask, NSWorkspace, NSFontWeightSemibold,
 };
 use objc2_av_foundation::{
@@ -146,7 +146,7 @@ pub fn finished_hud(path: PathBuf, fell_back: bool) {
     let screen = hud::pointer_screen(mtm);
     let frame = Rect::new(screen.max_x() - w - 16.0, screen.y + 16.0, w, h);
     let panel = hud::panel(mtm, frame, objc2_app_kit::NSStatusWindowLevel);
-    let surface = ui::hud_surface(mtm, cg_rect(Rect::new(0.0, 0.0, w, h)), 12.0, false);
+    let surface = ui::hud_surface(mtm, cg_rect(Rect::new(0.0, 0.0, w, h)), 10.0, false);
 
     let title = NSTextField::labelWithString(
         &ns(if fell_back { "Saved locally · cloud folder missing" } else if is_video { "Recording saved" } else { "GIF saved" }),
@@ -175,12 +175,6 @@ pub fn finished_hud(path: PathBuf, fell_back: bool) {
         b.setFrame(cg_rect(Rect::new(x, 8.0, btn, btn)));
         surface.addSubview(&b);
         x += btn + 2.0;
-    }
-    if let Some(img) = ui::symbol("checkmark.circle.fill", 13.0) {
-        let iv = NSImageView::imageViewWithImage(&img, mtm);
-        iv.setContentTintColor(Some(&NSColor::systemGreenColor()));
-        iv.setFrame(cg_rect(Rect::new(w - 58.0, h - 31.0, 18.0, 18.0)));
-        let _ = iv; // the title carries the state; keep the HUD quiet
     }
     panel.setContentView(Some(&surface));
     panel.orderFrontRegardless();

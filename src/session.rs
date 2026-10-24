@@ -259,7 +259,7 @@ impl Session {
         let sc = &self.screens[idx];
         let dragging = sc.sel.is_dragging();
         let handles = idx == self.active && !dragging;
-        sc.chrome.update(sc.bounds, sc.sel.rect, sc.hover, handles, false);
+        sc.chrome.update(sc.bounds, sc.sel.rect, sc.hover, handles);
         if idx == self.active {
             let px = sc.sel.rect.map(|r| r.pixel_size(sc.display.scale)).unwrap_or((0, 0));
             self.toolbars.layout(sc.sel.rect, sc.bounds, px, dragging);
@@ -279,7 +279,7 @@ impl Session {
             };
             if sc.hover != new {
                 sc.hover = new;
-                sc.chrome.update(sc.bounds, sc.sel.rect, sc.hover, false, false);
+                sc.chrome.update(sc.bounds, sc.sel.rect, sc.hover, false);
             }
         }
     }

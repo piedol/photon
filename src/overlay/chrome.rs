@@ -6,7 +6,6 @@ use objc2::{MainThreadMarker, MainThreadOnly};
 use objc2_app_kit::{NSColor, NSView};
 use objc2_core_foundation::{CFRetained, CGPoint, CGSize};
 use objc2_core_graphics::{CGColor, CGMutablePath};
-use objc2_foundation::{NSArray, NSNumber};
 use objc2_quartz_core::{kCAFillRuleEvenOdd, CALayer, CAShapeLayer, CATransaction};
 
 use super::selection::Handle;
@@ -80,12 +79,12 @@ impl Chrome {
             root.addSublayer(l);
         }
         let c = Chrome { view, dim, hover, border, handles };
-        c.update(bounds, None, None, false, false);
+        c.update(bounds, None, None, false);
         c
     }
 
     /// Redraw the chrome. `hover` is the window-snap preview when nothing is selected.
-    pub fn update(&self, bounds: Rect, sel: Option<Rect>, hover: Option<Rect>, handles: bool, dashed: bool) {
+    pub fn update(&self, bounds: Rect, sel: Option<Rect>, hover: Option<Rect>, handles: bool) {
         CATransaction::begin();
         CATransaction::setDisableActions(true);
         let hole = sel.or(hover);
@@ -99,11 +98,7 @@ impl Chrome {
         }
 
         match sel {
-            Some(s) => {
-                self.border.setPath(Some(&rect_path(&[s.inset(-0.5)])));
-                let pattern = dashed.then(|| NSArray::from_retained_slice(&[NSNumber::new_f64(5.0), NSNumber::new_f64(4.0)]));
-                self.border.setLineDashPattern(pattern.as_deref());
-            }
+            Some(s) => self.border.setPath(Some(&rect_path(&[s.inset(-0.5)]))),
             None => self.border.setPath(None),
         }
 

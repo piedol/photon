@@ -5,7 +5,7 @@ use std::cell::RefCell;
 use objc2::rc::Retained;
 use objc2::{MainThreadMarker, MainThreadOnly};
 use objc2_app_kit::{
-    NSAnimatablePropertyContainer, NSBackingStoreType, NSColor, NSEvent, NSFont, NSImageView, NSPanel,
+    NSAnimatablePropertyContainer, NSAnimationContext, NSBackingStoreType, NSColor, NSEvent, NSFont, NSImageView, NSPanel,
     NSScreen, NSTextField, NSWindowCollectionBehavior, NSWindowStyleMask, NSFontWeightSemibold,
 };
 use objc2_foundation::{NSPoint, NSRect, NSSize};
@@ -72,8 +72,11 @@ pub fn dismiss_after(id: u64, secs: f64) {
 
 pub fn fade_out(id: u64) {
     let Some(p) = WINDOWS.with(|w| w.borrow().iter().find(|(i, _)| *i == id).map(|(_, p)| p.clone())) else { return };
-    p.animator().setAlphaValue(0.0);
-    util::main_after(0.2, move || {
+    NSAnimationContext::runAnimationGroup(&block2::RcBlock::new(|ctx: std::ptr::NonNull<NSAnimationContext>| {
+        unsafe { ctx.as_ref() }.setDuration(0.15);
+        p.animator().setAlphaValue(0.0);
+    }));
+    util::main_after(0.18, move || {
         let p = WINDOWS.with(|w| {
             let mut w = w.borrow_mut();
             w.iter().position(|(i, _)| *i == id).map(|i| w.remove(i).1)
@@ -121,7 +124,7 @@ fn show(title: &str, detail: Option<&str>, secs: f64, symbol: &str) {
     let surface = ui::hud_surface(mtm, NSRect::new(NSPoint::new(0.0, 0.0), NSSize::new(w, h)), 10.0, false);
     if let Some(img) = ui::symbol(symbol, 15.0) {
         let iv = NSImageView::imageViewWithImage(&img, mtm);
-        let tint = if symbol.starts_with("check") { NSColor::systemGreenColor() } else { NSColor::systemYellowColor() };
+        let tint = if symbol.starts_with("check") { NSColor::systemGreenColor() } else { NSColor::systemOrangeColor() };
         iv.setContentTintColor(Some(&tint));
         iv.setFrame(cg_rect(Rect::new(14.0, h / 2.0 - 10.0, 20.0, 20.0)));
         surface.addSubview(&iv);

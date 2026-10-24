@@ -48,7 +48,11 @@ impl Outline {
     pub fn set_recording(&self, on: bool) {
         CATransaction::begin();
         CATransaction::setDisableActions(true);
-        let c = if on { rgba(1.0, 0.23, 0.19, 0.95) } else { rgba(1.0, 1.0, 1.0, 0.6) };
+        let c: objc2_core_foundation::CFRetained<objc2_core_graphics::CGColor> = if on {
+            NSColor::systemRedColor().colorWithAlphaComponent(0.95).CGColor().into()
+        } else {
+            rgba(1.0, 1.0, 1.0, 0.6)
+        };
         self.border.setStrokeColor(Some(&c));
         let dash = NSArray::from_retained_slice(&[NSNumber::new_f64(6.0), NSNumber::new_f64(4.0)]);
         self.border.setLineDashPattern(Some(&dash));
