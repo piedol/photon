@@ -167,15 +167,16 @@ pub fn login_item_enabled() -> bool {
     status == SMAppServiceStatus::Enabled
 }
 
-pub fn toggle_login_item() {
+/// Register or unregister Photon as a login item.
+pub fn set_login_item(on: bool) -> Result<(), String> {
     let service = unsafe { SMAppService::mainAppService() };
-    let result = if login_item_enabled() {
-        unsafe { service.unregisterAndReturnError() }
-    } else {
-        unsafe { service.registerAndReturnError() }
-    };
-    if let Err(e) = result {
-        crate::hud::message("Couldn't change Launch at Login", Some(&e.localizedDescription().to_string()));
+    let result = if on { unsafe { service.registerAndReturnError() } } else { unsafe { service.unregisterAndReturnError() } };
+    result.map_err(|e| e.localizedDescription().to_string())
+}
+
+pub fn toggle_login_item() {
+    if let Err(e) = set_login_item(!login_item_enabled()) {
+        crate::hud::message("Couldn't change Launch at Login", Some(&e));
     }
 }
 

@@ -110,6 +110,8 @@ Options:
 - `--notarize` also notarizes the app. It needs a `notarytool` keychain profile named `photon`.
 - `PHOTON_SIGN_IDENTITY` overrides the signing identity.
 
+Launch at Login is a checkbox in Settings › General. From a terminal you can also run `/Applications/Photon.app/Contents/MacOS/Photon --login-item on`, `off` or `status`.
+
 On first launch macOS asks for **Screen & System Audio Recording** permission. Microphone and Camera permissions are requested only when you turn those on. Stable signing means rebuilds keep the permissions.
 
 If another screenshot tool uses ⇧⌘9, quit it first. You can change either shortcut in Settings › General.
