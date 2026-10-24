@@ -101,8 +101,12 @@ pub fn start(mode: Mode) {
         return;
     }
     let front_app = capture::frontmost_app_name();
+    let t0 = std::time::Instant::now();
     capture::capture_all(mtm(), move |result| match result {
-        Ok(snapshot) => open(mode, snapshot, front_app),
+        Ok(snapshot) => {
+            open(mode, snapshot, front_app);
+            util::log(format!("overlay shown in {} ms", t0.elapsed().as_millis()));
+        }
         Err(e) => {
             util::log(format!("capture failed: {e}"));
             crate::hud::message("Couldn't capture the screen", Some(&e));
