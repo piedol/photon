@@ -93,7 +93,8 @@ impl Settings {
             rec_also_copy: b("recAlsoCopy", false),
             rec_also_dir: s("recAlsoDir").map(PathBuf::from),
             rec_codec: if s("recCodec").as_deref() == Some("hevc") { Codec::Hevc } else { Codec::H264 },
-            rec_fps: if i("recFps", 30) == 60 { 60 } else { 30 },
+            // 60 fps is the default. `recFps60` replaces `recFps`, which every save wrote as 30.
+            rec_fps: if i("recFps60", 60) == 30 { 30 } else { 60 },
             rec_system_audio: b("recSystemAudio", true),
             rec_mic: b("recMic", false),
             rec_mic_device: s("recMicDevice"),
@@ -130,7 +131,7 @@ impl Settings {
         d.setBool_forKey(self.rec_also_copy, &ns("recAlsoCopy"));
         set_s("recAlsoDir", path(&self.rec_also_dir).as_deref());
         set_s("recCodec", Some(if self.rec_codec == Codec::Hevc { "hevc" } else { "h264" }));
-        d.setInteger_forKey(self.rec_fps as isize, &ns("recFps"));
+        d.setInteger_forKey(self.rec_fps as isize, &ns("recFps60"));
         d.setBool_forKey(self.rec_system_audio, &ns("recSystemAudio"));
         d.setBool_forKey(self.rec_mic, &ns("recMic"));
         set_s("recMicDevice", self.rec_mic_device.as_deref());

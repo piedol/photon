@@ -148,6 +148,7 @@ pub fn open_url(host: &str) {
         "selftest" => return crate::selftest::run(),
         "selftest-record" => return crate::selftest::run_record(),
         "selftest-settings" => return crate::selftest::run_settings(),
+        "selftest-window" => return crate::selftest::run_window(),
         _ => return,
     };
     handle(cmd);
@@ -299,15 +300,12 @@ pub fn status_clicked() {
 pub fn handle(cmd: Command) {
     let mtm = mtm();
     match cmd {
+        // While recording, either shortcut ends the recording.
+        Command::CaptureScreenshot | Command::RecordHotkey if record::is_active() => record::stop(false),
         Command::CaptureScreenshot => session::start(Mode::Screenshot),
         Command::RecordScreen => session::start(Mode::Record),
-        Command::RecordHotkey => {
-            if record::is_active() {
-                handle(Command::StopRecording);
-            } else {
-                session::start(Mode::Record);
-            }
-        }
+        Command::RecordHotkey => session::start(Mode::Record),
+        Command::SkipCountdown => record::skip_countdown(),
         Command::Quit => {
             if record::is_active() {
                 record::stop(false);

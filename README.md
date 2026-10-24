@@ -50,17 +50,21 @@ Pinned captures float above other windows:
 ## Recording
 
 1. Press **⇧⌘0**, or **Record** in the screenshot action bar.
-2. Pick a region, then toggle the mic, system audio and webcam bubble in the record bar.
-3. Press **Record** or ↩.
+2. Choose what to record:
+   - **Drag** a region to record that area of the screen.
+   - **Click a window** to record just that window. The badge says "… window only". The recording follows the window and never shows other windows, even when you switch apps or windows cover it.
+   - **Click** empty desktop to record the whole display.
+3. Toggle the mic, system audio and webcam bubble in the record bar. The webcam bubble only works with regions and displays, not single windows.
+4. Press **Record** or ↩.
 
 While recording:
-- A 3-second countdown runs first.
+- A 3-second countdown runs first. Click **Skip** to start right away.
 - The menu-bar icon becomes a red dot with a timer.
 - A dashed outline marks the area. It isn't in the video.
 
-To stop, click the menu-bar timer or press ⇧⌘0 again. Right-click the timer to **Pause**, **Resume** or **Discard**.
+To stop, click the menu-bar timer or press either shortcut (⇧⌘0 or ⇧⌘9) again. Right-click the timer to **Pause**, **Resume** or **Discard**.
 
-Recordings are MP4 (H.264, or HEVC for smaller files), hardware-encoded by ScreenCaptureKit and written straight to disk. Pauses are cut out without re-encoding.
+Recordings are MP4 at 60 fps by default (H.264, or HEVC for smaller files), hardware-encoded by ScreenCaptureKit and written straight to disk. Pauses are cut out without re-encoding.
 
 When a recording finishes, a pop-up offers:
 - **Show in Finder**

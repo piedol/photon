@@ -136,3 +136,27 @@ pub fn run_settings() {
     ];
     run_steps(steps);
 }
+
+pub fn run_window() {
+    if std::env::var_os("PHOTON_DEV").is_none() {
+        return;
+    }
+    let click = |x: f64, y: f64| {
+        session::mouse_at(0, MouseKind::Move, pt(x, y), false);
+        session::mouse_at(0, MouseKind::Down, pt(x, y), false);
+        session::mouse_at(0, MouseKind::Up, pt(x, y), false);
+    };
+    let steps: Vec<(f64, Step)> = vec![
+        (0.0, Box::new(|| session::start(Mode::Record))),
+        (1.0, Box::new(move || click(700.0, 600.0))),
+        (0.3, Box::new(|| shot("30-window-picked"))),
+        (0.1, Box::new(|| session::command(Command::StartRecording))),
+        (0.8, Box::new(|| shot("31-countdown-skip"))),
+        (0.1, Box::new(|| crate::commands::run(Command::SkipCountdown))),
+        (3.0, Box::new(|| shot("32-window-recording"))),
+        // The screenshot shortcut must end a running recording.
+        (0.1, Box::new(|| crate::commands::run(Command::CaptureScreenshot))),
+        (3.0, Box::new(|| shot("33-stopped"))),
+    ];
+    run_steps(steps);
+}

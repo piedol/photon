@@ -40,6 +40,7 @@ pub fn install(shot: Shortcut, record: Shortcut) -> Vec<String> {
                     return;
                 }
                 let id = event.id();
+                util::log(format!("hotkey {id} pressed"));
                 let cmd = if id == SHOT_ID.load(Ordering::Relaxed) {
                     Command::CaptureScreenshot
                 } else if id == RECORD_ID.load(Ordering::Relaxed) {

@@ -150,6 +150,7 @@ impl Selection {
         match drag {
             Drag::Idle => Release::Nothing,
             Drag::Pressed { .. } => Release::Click(p),
+            Drag::Moving { orig, .. } | Drag::Resizing { orig, .. } if self.rect == Some(orig) => Release::Nothing,
             Drag::Creating { .. } | Drag::Resizing { .. } => {
                 if self.rect.is_some_and(|r| r.w < MIN_SIZE || r.h < MIN_SIZE) {
                     self.rect = None;
@@ -268,6 +269,14 @@ mod tests {
         s.set(Rect::new(990.0, 0.0, 10.0, 10.0));
         s.nudge(20.0, 0.0, false);
         assert_eq!(s.rect.unwrap().x, 990.0);
+    }
+
+    #[test]
+    fn click_inside_without_moving_changes_nothing() {
+        let mut s = sel();
+        s.set(Rect::new(100.0, 100.0, 100.0, 100.0));
+        s.press(pt(150.0, 150.0), true, true);
+        assert_eq!(s.release(pt(150.0, 150.0)), Release::Nothing);
     }
 
     #[test]

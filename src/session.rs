@@ -39,7 +39,12 @@ pub struct Screen {
     chrome: Chrome,
     pub sel: Selection,
     hover: Option<Rect>,
-    snap_rects: Vec<Rect>,
+    /// Window under the pointer while nothing is selected.
+    hover_window: Option<(u32, Option<String>)>,
+    /// Snap targets: window id, owning app, clipped view-local rect.
+    snap_rects: Vec<(u32, Option<String>, Rect)>,
+    /// The window a click selected (record mode records just that window).
+    picked_window: Option<(u32, Option<String>)>,
 }
 
 struct TextEdit {
@@ -150,7 +155,10 @@ fn open(mode: Mode, snapshot: Snapshot, front_app: Option<String>) {
         let snap_rects = snapshot
             .windows
             .iter()
-            .filter_map(|w| w.translate(-d.frame.x, -d.frame.y).intersection(&bounds))
+            .filter_map(|w| {
+                let r = w.rect.translate(-d.frame.x, -d.frame.y).intersection(&bounds)?;
+                Some((w.id, w.app.clone(), r))
+            })
             .collect();
         screens.push(Screen {
             sel: Selection::new(bounds, d.scale),
@@ -162,7 +170,9 @@ fn open(mode: Mode, snapshot: Snapshot, front_app: Option<String>) {
             annot,
             chrome,
             hover: None,
+            hover_window: None,
             snap_rects,
+            picked_window: None,
         });
     }
     if screens.is_empty() {
@@ -262,7 +272,12 @@ impl Session {
         sc.chrome.update(sc.bounds, sc.sel.rect, sc.hover, handles);
         if idx == self.active {
             let px = sc.sel.rect.map(|r| r.pixel_size(sc.display.scale)).unwrap_or((0, 0));
-            self.toolbars.layout(sc.sel.rect, sc.bounds, px, dragging);
+            // In record mode a clicked window is recorded on its own; say so on the badge.
+            let label = match (&sc.picked_window, self.mode) {
+                (Some((_, app)), Mode::Record) => Some(format!("{} window only", app.as_deref().unwrap_or("This"))),
+                _ => None,
+            };
+            self.toolbars.layout(sc.sel.rect, sc.bounds, px, dragging, label.as_deref());
         }
     }
 
@@ -272,11 +287,9 @@ impl Session {
 
     fn update_hover(&mut self, idx: usize, p: Point) {
         for (i, sc) in self.screens.iter_mut().enumerate() {
-            let new = if i == idx && sc.sel.rect.is_none() {
-                Some(sc.snap_rects.iter().copied().find(|r| r.contains(p)).unwrap_or(sc.bounds))
-            } else {
-                None
-            };
+            let hit = (i == idx && sc.sel.rect.is_none()).then(|| sc.snap_rects.iter().find(|(_, _, r)| r.contains(p))).flatten();
+            sc.hover_window = hit.map(|(id, app, _)| (*id, app.clone()));
+            let new = if i == idx && sc.sel.rect.is_none() { Some(hit.map(|h| h.2).unwrap_or(sc.bounds)) } else { None };
             if sc.hover != new {
                 sc.hover = new;
                 sc.chrome.update(sc.bounds, sc.sel.rect, sc.hover, false);
@@ -290,6 +303,7 @@ impl Session {
         }
         let old = self.active;
         self.screens[old].sel.rect = None;
+        self.screens[old].picked_window = None;
         self.active = idx;
         self.toolbars.attach(&self.screens[idx].view);
         self.refresh(old);
@@ -467,10 +481,16 @@ impl Session {
                     self.redraw_annotations();
                 } else {
                     let sc = &mut self.screens[idx];
-                    if let Release::Click(_) = sc.sel.release(p) {
-                        // Click without a drag: take the hovered window or the display.
-                        let target = sc.hover.unwrap_or(sc.bounds);
-                        sc.sel.set(target);
+                    match sc.sel.release(p) {
+                        Release::Click(_) => {
+                            // Click without a drag: take the hovered window or the display.
+                            let target = sc.hover.unwrap_or(sc.bounds);
+                            sc.sel.set(target);
+                            sc.picked_window = sc.hover_window.take();
+                        }
+                        // Any manual change makes it a plain region again.
+                        Release::Changed => sc.picked_window = None,
+                        Release::Nothing => {}
                     }
                     sc.hover = None;
                     self.refresh(idx);
@@ -513,6 +533,7 @@ impl Session {
                     _ => (0.0, -step),
                 };
                 let active = self.active;
+                self.screens[active].picked_window = None;
                 if self.screens[active].sel.nudge(dx, dy, option) {
                     self.refresh(active);
                 }
@@ -705,6 +726,8 @@ pub struct RecordTarget {
     pub scale: f64,
     pub display_name: String,
     pub front_app: Option<String>,
+    /// Record only this window (follows it, ignores everything around it).
+    pub window_id: Option<u32>,
 }
 
 fn record_target() -> Option<RecordTarget> {
@@ -717,7 +740,8 @@ fn record_target() -> Option<RecordTarget> {
             global_rect: r.translate(sc.display.frame.x, sc.display.frame.y),
             scale: sc.display.scale,
             display_name: sc.display.name.clone(),
-            front_app: s.front_app.clone(),
+            front_app: sc.picked_window.as_ref().and_then(|w| w.1.clone()).or_else(|| s.front_app.clone()),
+            window_id: sc.picked_window.as_ref().map(|w| w.0),
         })
     })
     .flatten()

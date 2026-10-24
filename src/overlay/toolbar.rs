@@ -269,14 +269,18 @@ impl Toolbars {
 
     /// Place everything around `sel` inside `bounds` (both view-local).
     /// `dragging` hides the bars while the selection is being changed.
-    pub fn layout(&self, sel: Option<Rect>, bounds: Rect, px: (u32, u32), dragging: bool) {
+    pub fn layout(&self, sel: Option<Rect>, bounds: Rect, px: (u32, u32), dragging: bool, label: Option<&str>) {
         let Some(sel) = sel else {
             self.hide_all();
             return;
         };
         // Badge: above the top-left corner, or inside it when there's no room.
-        self.badge_label.setStringValue(&ns(&format!("{} × {}", px.0, px.1)));
-        let bw = 18.0 + 7.0 * format!("{} × {}", px.0, px.1).chars().count() as f64;
+        let text = match label {
+            Some(l) => format!("{l} · {} × {}", px.0, px.1),
+            None => format!("{} × {}", px.0, px.1),
+        };
+        self.badge_label.setStringValue(&ns(&text));
+        let bw = 18.0 + 6.6 * text.chars().count() as f64;
         let mut b = Rect::new(sel.x, sel.max_y() + 6.0, bw, 22.0);
         if b.max_y() > bounds.max_y() - EDGE {
             b = Rect::new(sel.x + 6.0, sel.max_y() - 28.0, bw, 22.0);

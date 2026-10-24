@@ -74,18 +74,21 @@ pub struct Countdown {
 
 impl Countdown {
     pub fn show(mtm: MainThreadMarker, region: Rect) -> Countdown {
-        let size = 96.0;
+        let (w, h) = (116.0, 136.0);
         let c = region.mid();
-        let frame = Rect::new(c.x - size / 2.0, c.y - size / 2.0, size, size);
+        let frame = Rect::new(c.x - w / 2.0, c.y - h / 2.0, w, h);
         let panel = hud::panel(mtm, frame, objc2_app_kit::NSStatusWindowLevel + 1);
-        panel.setIgnoresMouseEvents(true);
-        let surface = ui::hud_surface(mtm, cg_rect(Rect::new(0.0, 0.0, size, size)), size / 2.0, false);
+        let surface = ui::hud_surface(mtm, cg_rect(Rect::new(0.0, 0.0, w, h)), 22.0, false);
         let label = NSTextField::labelWithString(&crate::util::ns("3"), mtm);
-        label.setFont(Some(&NSFont::monospacedDigitSystemFontOfSize_weight(44.0, unsafe { NSFontWeightSemibold })));
+        label.setFont(Some(&NSFont::monospacedDigitSystemFontOfSize_weight(48.0, unsafe { NSFontWeightSemibold })));
         label.setTextColor(Some(&NSColor::whiteColor()));
         label.setAlignment(NSTextAlignment::Center);
-        label.setFrame(cg_rect(Rect::new(0.0, (size - 54.0) / 2.0, size, 54.0)));
+        label.setFrame(cg_rect(Rect::new(0.0, 56.0, w, 60.0)));
         surface.addSubview(&label);
+        let skip = ui::text_button(mtm, "Skip", crate::commands::Command::SkipCountdown);
+        skip.setToolTip(Some(&crate::util::ns("Start recording now")));
+        skip.setFrame(cg_rect(Rect::new(18.0, 16.0, w - 36.0, 30.0)));
+        surface.addSubview(&skip);
         panel.setContentView(Some(&surface));
         panel.orderFrontRegardless();
         Countdown { panel, label }

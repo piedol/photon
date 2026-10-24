@@ -55,7 +55,8 @@ struct Recording {
     started: Option<Instant>,
     paused_total: Duration,
     paused_at: Option<Instant>,
-    indicator: indicator::Outline,
+    /// Region outline (none when recording a single window, which can move).
+    indicator: Option<indicator::Outline>,
     webcam: Option<webcam::Bubble>,
     countdown: Option<indicator::Countdown>,
 }
@@ -145,7 +146,12 @@ pub fn start(target: RecordTarget) {
         permissions::ask_camera();
         s.rec_webcam = false;
     }
-    let indicator = indicator::Outline::show(mtm, target.global_rect);
+    let window_mode = target.window_id.is_some();
+    let indicator = (!window_mode).then(|| indicator::Outline::show(mtm, target.global_rect));
+    if window_mode && s.rec_webcam {
+        hud::message("Webcam bubble is off for window recordings", Some("Select a region instead to include the camera."));
+        s.rec_webcam = false;
+    }
     let webcam = if s.rec_webcam { webcam::Bubble::show(mtm, target.global_rect, s.rec_webcam_device.as_deref()) } else { None };
     let countdown = s.rec_countdown.then(|| indicator::Countdown::show(mtm, target.global_rect));
     let rec = Recording {
@@ -174,6 +180,21 @@ pub fn start(target: RecordTarget) {
     } else {
         // Give the webcam bubble a moment to appear in the window list.
         util::main_after(0.15, begin_capture);
+    }
+}
+
+/// Start recording now instead of waiting for the countdown.
+pub fn skip_countdown() {
+    let skipped = with(|r| {
+        if r.state != State::Countdown {
+            return false;
+        }
+        r.countdown.take();
+        true
+    })
+    .unwrap_or(false);
+    if skipped {
+        begin_capture();
     }
 }
 
@@ -266,21 +287,33 @@ fn configure_and_start(content: &SCShareableContent, bubble_id: Option<u32>) {
             .iter()
             .filter(|w| Some(unsafe { w.windowID() }) == bubble_id)
             .collect();
-        let filter = unsafe {
-            SCContentFilter::initWithDisplay_excludingApplications_exceptingWindows(
-                SCContentFilter::alloc(),
-                &display,
-                &NSArray::from_retained_slice(&apps),
-                &NSArray::from_retained_slice(&keep),
-            )
-        };
         let t = &r.target;
         let s = &r.settings;
+        // A clicked window is recorded on its own: it follows the window and
+        // never shows what's around or in front of it.
+        let window = t.window_id.and_then(|id| unsafe { content.windows() }.iter().find(|w| unsafe { w.windowID() } == id));
         let cfg = unsafe { SCStreamConfiguration::new() };
+        let filter = match &window {
+            Some(w) => unsafe {
+                let f = w.frame();
+                cfg.setWidth(even(f.size.width * t.scale));
+                cfg.setHeight(even(f.size.height * t.scale));
+                cfg.setIgnoreShadowsSingleWindow(true);
+                SCContentFilter::initWithDesktopIndependentWindow(SCContentFilter::alloc(), w)
+            },
+            None => unsafe {
+                cfg.setSourceRect(crate::capture::cg_rect(t.source_rect));
+                cfg.setWidth(even(t.source_rect.w * t.scale));
+                cfg.setHeight(even(t.source_rect.h * t.scale));
+                SCContentFilter::initWithDisplay_excludingApplications_exceptingWindows(
+                    SCContentFilter::alloc(),
+                    &display,
+                    &NSArray::from_retained_slice(&apps),
+                    &NSArray::from_retained_slice(&keep),
+                )
+            },
+        };
         unsafe {
-            cfg.setSourceRect(crate::capture::cg_rect(t.source_rect));
-            cfg.setWidth(even(t.source_rect.w * t.scale));
-            cfg.setHeight(even(t.source_rect.h * t.scale));
             cfg.setMinimumFrameInterval(CMTime::new(1, s.rec_fps as i32));
             cfg.setShowsCursor(s.rec_cursor);
             cfg.setShowMouseClicks(s.rec_click_rings);
@@ -319,7 +352,9 @@ fn configure_and_start(content: &SCShareableContent, bubble_id: Option<u32>) {
                 with(|r| {
                     r.state = State::Recording;
                     r.started = Some(Instant::now());
-                    r.indicator.set_recording(true);
+                    if let Some(i) = &r.indicator {
+                        i.set_recording(true);
+                    }
                 });
                 app::refresh_recording_ui();
             }
@@ -342,7 +377,9 @@ pub fn toggle_pause() {
             }
             r.state = State::Paused;
             r.paused_at = Some(Instant::now());
-            r.indicator.set_recording(false);
+            if let Some(i) = &r.indicator {
+                i.set_recording(false);
+            }
         }
         State::Paused => {
             let (out, path) = make_output(r);
@@ -361,7 +398,9 @@ pub fn toggle_pause() {
                 r.paused_total += p.elapsed();
             }
             r.state = State::Recording;
-            r.indicator.set_recording(true);
+            if let Some(i) = &r.indicator {
+                i.set_recording(true);
+            }
         }
         _ => {}
     });

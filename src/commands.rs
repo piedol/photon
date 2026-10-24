@@ -32,6 +32,7 @@ pub enum Command {
     ToggleSystemAudio,
     ToggleWebcam,
     StartRecording,
+    SkipCountdown,
     // Finished-recording HUD
     Reveal,
     CopyFile,
@@ -73,6 +74,7 @@ impl Command {
             ToggleSystemAudio => 401,
             ToggleWebcam => 402,
             StartRecording => 403,
+            SkipCountdown => 404,
             Reveal => 500,
             CopyFile => 501,
             OpenFile => 502,
@@ -112,6 +114,7 @@ impl Command {
             401 => ToggleSystemAudio,
             402 => ToggleWebcam,
             403 => StartRecording,
+            404 => SkipCountdown,
             500 => Reveal,
             501 => CopyFile,
             502 => OpenFile,
@@ -141,7 +144,7 @@ mod tests {
             CaptureScreenshot, RecordScreen, RecordHotkey, StopRecording, PauseResume,
             OpenRecordings, OpenSettings, ToggleLogin, Quit, Tool(0), Tool(9), Color(7),
             CustomColor, ToggleSwatches, CycleStroke, Stroke(2), Copy, Save, Print, Pin, RecordSelection, Undo, Close,
-            ToggleMic, ToggleSystemAudio, ToggleWebcam, StartRecording, Reveal, CopyFile,
+            ToggleMic, ToggleSystemAudio, ToggleWebcam, StartRecording, SkipCountdown, Reveal, CopyFile,
             OpenFile, Trim, ExportGif, DismissHud, Setting(42),
         ];
         for c in all {

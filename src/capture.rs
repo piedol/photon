@@ -12,7 +12,7 @@ use objc2::{AnyThread, MainThreadMarker};
 use objc2_app_kit::{NSScreen, NSWorkspace};
 use objc2_core_foundation::{CFRetained, CGRect};
 use objc2_core_graphics::{
-    kCGWindowAlpha, kCGWindowBounds, kCGWindowLayer, kCGWindowOwnerPID, CGImage,
+    kCGWindowAlpha, kCGWindowBounds, kCGWindowLayer, kCGWindowNumber, kCGWindowOwnerName, kCGWindowOwnerPID, CGImage,
     CGWindowListCopyWindowInfo, CGWindowListOption,
 };
 use objc2_foundation::{NSArray, NSDictionary, NSError, NSNumber, NSString};
@@ -40,8 +40,8 @@ pub struct DisplayShot {
 
 pub struct Snapshot {
     pub shots: Vec<DisplayShot>,
-    /// On-screen windows (AppKit global points), front to back.
-    pub windows: Vec<Rect>,
+    /// On-screen windows, front to back.
+    pub windows: Vec<WindowInfo>,
 }
 
 pub fn screen_id(screen: &NSScreen) -> u32 {
@@ -79,8 +79,18 @@ pub fn frontmost_app_name() -> Option<String> {
     app.localizedName().map(|n| n.to_string())
 }
 
+/// An on-screen app window.
+#[derive(Clone, Debug)]
+pub struct WindowInfo {
+    pub id: u32,
+    /// AppKit global frame, in points.
+    pub rect: Rect,
+    /// Owning app, e.g. "Safari".
+    pub app: Option<String>,
+}
+
 /// Normal app windows currently on screen, front to back, excluding ours.
-pub fn window_rects(mtm: MainThreadMarker) -> Vec<Rect> {
+pub fn window_rects(mtm: MainThreadMarker) -> Vec<WindowInfo> {
     let primary_h = primary_height(mtm);
     let me = std::process::id() as i64;
     let opts = CGWindowListOption::OptionOnScreenOnly | CGWindowListOption::ExcludeDesktopElements;
@@ -95,8 +105,15 @@ pub fn window_rects(mtm: MainThreadMarker) -> Vec<Rect> {
     let num = |d: &NSDictionary<NSString, AnyObject>, k: &NSString| -> Option<f64> {
         d.objectForKey(k).and_then(|v| v.downcast::<NSNumber>().ok()).map(|n| n.doubleValue())
     };
-    let (k_layer, k_pid, k_alpha, k_bounds) = unsafe {
-        (cf_key(kCGWindowLayer), cf_key(kCGWindowOwnerPID), cf_key(kCGWindowAlpha), cf_key(kCGWindowBounds))
+    let (k_layer, k_pid, k_alpha, k_bounds, k_number, k_owner) = unsafe {
+        (
+            cf_key(kCGWindowLayer),
+            cf_key(kCGWindowOwnerPID),
+            cf_key(kCGWindowAlpha),
+            cf_key(kCGWindowBounds),
+            cf_key(kCGWindowNumber),
+            cf_key(kCGWindowOwnerName),
+        )
     };
     let (kx, ky, kw, kh) = (NSString::from_str("X"), NSString::from_str("Y"), NSString::from_str("Width"), NSString::from_str("Height"));
     let mut out = Vec::new();
@@ -114,7 +131,9 @@ pub fn window_rects(mtm: MainThreadMarker) -> Vec<Rect> {
         if w < 40.0 || h < 30.0 {
             continue;
         }
-        out.push(cg_to_appkit(Rect::new(x, y, w, h), primary_h));
+        let Some(id) = num(&d, k_number) else { continue };
+        let app = d.objectForKey(k_owner).and_then(|v| v.downcast::<NSString>().ok()).map(|s| s.to_string());
+        out.push(WindowInfo { id: id as u32, rect: cg_to_appkit(Rect::new(x, y, w, h), primary_h), app });
     }
     out
 }
