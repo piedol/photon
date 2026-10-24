@@ -149,6 +149,7 @@ pub fn open_url(host: &str) {
         "selftest-record" => return crate::selftest::run_record(),
         "selftest-settings" => return crate::selftest::run_settings(),
         "selftest-window" => return crate::selftest::run_window(),
+        "selftest-escape" => return crate::selftest::run_escape(),
         _ => return,
     };
     handle(cmd);
@@ -306,6 +307,13 @@ pub fn handle(cmd: Command) {
         Command::RecordScreen => session::start(Mode::Record),
         Command::RecordHotkey => session::start(Mode::Record),
         Command::SkipCountdown => record::skip_countdown(),
+        Command::Escape => {
+            if session::is_open() {
+                session::escape();
+            } else if record::is_counting_down() {
+                record::stop(true);
+            }
+        }
         Command::Quit => {
             if record::is_active() {
                 record::stop(false);

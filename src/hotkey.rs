@@ -12,6 +12,7 @@ use crate::util;
 
 static SHOT_ID: AtomicU32 = AtomicU32::new(0);
 static RECORD_ID: AtomicU32 = AtomicU32::new(0);
+static ESC_ID: AtomicU32 = AtomicU32::new(0);
 
 struct Registered {
     manager: GlobalHotKeyManager,
@@ -45,6 +46,8 @@ pub fn install(shot: Shortcut, record: Shortcut) -> Vec<String> {
                     Command::CaptureScreenshot
                 } else if id == RECORD_ID.load(Ordering::Relaxed) {
                     Command::RecordHotkey
+                } else if id == ESC_ID.load(Ordering::Relaxed) {
+                    Command::Escape
                 } else {
                     return;
                 };
@@ -72,6 +75,26 @@ pub fn install(shot: Shortcut, record: Shortcut) -> Vec<String> {
         }
     });
     errors
+}
+
+/// Claim Esc system-wide while a selection overlay or countdown is up, so it
+/// always cancels even if macOS didn't give Photon the keyboard.
+pub fn set_escape(on: bool) {
+    let esc = HotKey::new(None, global_hotkey::hotkey::Code::Escape);
+    STATE.with(|cell| {
+        let mut cell = cell.borrow_mut();
+        let Some(reg) = cell.as_mut() else { return };
+        let registered = ESC_ID.load(Ordering::Relaxed) != 0;
+        if on && !registered {
+            match reg.manager.register(esc) {
+                Ok(()) => ESC_ID.store(esc.id(), Ordering::Relaxed),
+                Err(e) => util::log(format!("couldn't claim Esc: {e}")),
+            }
+        } else if !on && registered {
+            let _ = reg.manager.unregister(esc);
+            ESC_ID.store(0, Ordering::Relaxed);
+        }
+    });
 }
 
 /// Temporarily stop listening (while the shortcut recorder is capturing keys).

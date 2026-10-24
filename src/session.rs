@@ -204,6 +204,7 @@ fn open(mode: Mode, snapshot: Snapshot, front_app: Option<String>) {
         scroll_acc: 0.0,
     };
     SESSION.with(|cell| *cell.borrow_mut() = Some(session));
+    crate::hotkey::set_escape(true);
 
     let app = ui::app(mtm);
     app.activate();
@@ -216,6 +217,7 @@ fn open(mode: Mode, snapshot: Snapshot, front_app: Option<String>) {
         let a = &s.screens[s.active];
         a.window.makeKeyAndOrderFront(None);
         a.window.makeFirstResponder(Some(&a.view));
+        util::log(format!("overlay key window: {}, app active: {}", a.window.isKeyWindow(), ui::app(mtm).isActive()));
         let local = pt(mouse.x - a.display.frame.x, mouse.y - a.display.frame.y);
         s.update_hover(s.active, local);
         NSCursor::crosshairCursor().set();
@@ -236,6 +238,9 @@ pub fn close() {
         drop(s);
         ui::app(mtm()).deactivate();
         NSCursor::arrowCursor().set();
+        if !record::is_counting_down() {
+            crate::hotkey::set_escape(false);
+        }
         util::release_memory_soon();
     }
 }
@@ -543,6 +548,26 @@ impl Session {
             _ => {}
         }
         None
+    }
+}
+
+/// Esc (from the overlay or the temporary global shortcut): cancel text
+/// editing, then close the swatch strip, then cancel the whole selection.
+pub fn escape() {
+    let close_all = with(|s| {
+        if s.text.is_some() {
+            s.cancel_text();
+            false
+        } else if s.toolbars.swatches_shown() {
+            s.toolbars.toggle_swatches();
+            false
+        } else {
+            true
+        }
+    })
+    .unwrap_or(false);
+    if close_all {
+        close();
     }
 }
 

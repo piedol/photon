@@ -8,17 +8,19 @@ use objc2::runtime::{AnyObject, Bool};
 use objc2::{define_class, msg_send, AnyThread, DefinedClass, MainThreadMarker, MainThreadOnly};
 use objc2_app_kit::{
     NSBackingStoreType, NSColor, NSEvent, NSGraphicsContext, NSScreenSaverWindowLevel, NSTrackingArea,
-    NSTrackingAreaOptions, NSView, NSWindow, NSWindowAnimationBehavior, NSWindowCollectionBehavior,
+    NSPanel, NSResponder, NSTrackingAreaOptions, NSView, NSWindow, NSWindowAnimationBehavior, NSWindowCollectionBehavior,
     NSWindowStyleMask,
 };
-use objc2_foundation::{NSPoint, NSRect};
+use objc2_foundation::{NSObject, NSPoint, NSRect};
 
 use crate::geometry::{pt, Point};
 use crate::session;
 
 define_class!(
-    // SAFETY: NSWindow subclass with no extra requirements; no Drop impl.
-    #[unsafe(super = NSWindow)]
+    // A non-activating panel can become key (and get the keyboard) without
+    // pulling Photon to the front, which macOS may refuse after a global hotkey.
+    // SAFETY: NSPanel subclass with no extra requirements; no Drop impl.
+    #[unsafe(super(NSPanel, NSWindow, NSResponder, NSObject))]
     #[thread_kind = MainThreadOnly]
     #[name = "PhotonOverlayWindow"]
     pub struct OverlayWindow;
@@ -166,7 +168,7 @@ impl AnnotView {
 pub fn make_window(mtm: MainThreadMarker, frame: NSRect) -> Retained<OverlayWindow> {
     let this = OverlayWindow::alloc(mtm).set_ivars(());
     let w: Retained<OverlayWindow> = unsafe {
-        msg_send![super(this), initWithContentRect: frame, styleMask: NSWindowStyleMask::Borderless, backing: NSBackingStoreType::Buffered, defer: false]
+        msg_send![super(this), initWithContentRect: frame, styleMask: NSWindowStyleMask::Borderless | NSWindowStyleMask::NonactivatingPanel, backing: NSBackingStoreType::Buffered, defer: false]
     };
     unsafe { w.setReleasedWhenClosed(false) };
     w.setLevel(NSScreenSaverWindowLevel);
@@ -182,6 +184,7 @@ pub fn make_window(mtm: MainThreadMarker, frame: NSRect) -> Retained<OverlayWind
     );
     w.setAcceptsMouseMovedEvents(true);
     w.setHidesOnDeactivate(false);
+    w.setBecomesKeyOnlyIfNeeded(false);
     w.setFrame_display(frame, false);
     w
 }

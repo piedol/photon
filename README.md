@@ -39,7 +39,7 @@ Press **⇧⌘9**. The screen freezes and dims. Then:
 | Print | ⌘P |
 | Pin to screen (floating) | — |
 | Record this area | — |
-| Cancel | esc or right-click |
+| Cancel | esc or right-click (works for recording selections too) |
 
 Pinned captures float above other windows:
 - Drag them to move.
@@ -58,7 +58,7 @@ Pinned captures float above other windows:
 4. Press **Record** or ↩.
 
 While recording:
-- A 3-second countdown runs first. Click **Skip** to start right away.
+- A 3-second countdown runs first. Click **Skip** to start right away, or press esc to cancel.
 - The menu-bar icon becomes a red dot with a timer.
 - A dashed outline marks the area. It isn't in the video.
 

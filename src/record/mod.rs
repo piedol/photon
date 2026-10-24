@@ -73,6 +73,10 @@ pub fn is_active() -> bool {
     REC.with(|r| r.borrow().is_some())
 }
 
+pub fn is_counting_down() -> bool {
+    with(|r| r.state == State::Countdown).unwrap_or(false)
+}
+
 pub fn is_paused() -> bool {
     with(|r| r.state == State::Paused).unwrap_or(false)
 }
@@ -154,6 +158,7 @@ pub fn start(target: RecordTarget) {
     }
     let webcam = if s.rec_webcam { webcam::Bubble::show(mtm, target.global_rect, s.rec_webcam_device.as_deref()) } else { None };
     let countdown = s.rec_countdown.then(|| indicator::Countdown::show(mtm, target.global_rect));
+    let countdown_on = countdown.is_some();
     let rec = Recording {
         target,
         settings: s,
@@ -175,6 +180,8 @@ pub fn start(target: RecordTarget) {
     };
     REC.with(|r| *r.borrow_mut() = Some(rec));
     app::set_recording_ui(true);
+    // Esc cancels during the countdown.
+    crate::hotkey::set_escape(countdown_on);
     if with(|r| r.countdown.is_some()).unwrap_or(false) {
         countdown_tick(3);
     } else {
@@ -255,6 +262,7 @@ fn make_output(r: &Recording) -> (Retained<SCRecordingOutput>, PathBuf) {
 
 fn begin_capture() {
     with(|r| r.state = State::Starting);
+    crate::hotkey::set_escape(false);
     let bubble_id = with(|r| r.webcam.as_ref().map(|w| w.window_number())).flatten();
     let handler = RcBlock::new(move |content: *mut SCShareableContent, error: *mut NSError| {
         let Some(content) = (unsafe { content.as_ref() }) else {
@@ -481,6 +489,9 @@ fn maybe_finalize() {
         return;
     }
     let Some(rec) = REC.with(|r| r.borrow_mut().take()) else { return };
+    if !crate::session::is_open() {
+        crate::hotkey::set_escape(false);
+    }
     util::log(format!("finalizing {} segment(s)", rec.segments.len()));
     let Recording { target, settings, segments, cancelled, indicator, webcam, .. } = rec;
     drop(indicator);

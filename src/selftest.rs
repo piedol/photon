@@ -160,3 +160,21 @@ pub fn run_window() {
     ];
     run_steps(steps);
 }
+
+pub fn run_escape() {
+    if std::env::var_os("PHOTON_DEV").is_none() {
+        return;
+    }
+    let steps: Vec<(f64, Step)> = vec![
+        (0.0, Box::new(|| session::start(Mode::Screenshot))),
+        (1.0, Box::new(|| drag((300.0, 900.0), (900.0, 400.0), false))),
+        (0.2, Box::new(|| crate::commands::run(Command::Escape))),
+        (0.3, Box::new(|| util::log(format!("after Esc: overlay open = {}", session::is_open())))),
+        (0.2, Box::new(|| session::start(Mode::Record))),
+        (1.0, Box::new(|| drag((300.0, 900.0), (900.0, 400.0), false))),
+        (0.1, Box::new(|| session::command(Command::StartRecording))),
+        (1.0, Box::new(|| crate::commands::run(Command::Escape))),
+        (0.5, Box::new(|| util::log(format!("after Esc in countdown: recording = {}", crate::record::is_active())))),
+    ];
+    run_steps(steps);
+}

@@ -13,6 +13,7 @@ pub enum Command {
     OpenSettings,
     ToggleLogin,
     Quit,
+    Escape,
     // Capture overlay
     Tool(u8),
     Color(u8),
@@ -57,6 +58,7 @@ impl Command {
             OpenSettings => 7,
             ToggleLogin => 8,
             Quit => 9,
+            Escape => 10,
             Tool(i) => 100 + i as isize,
             Color(i) => 200 + i as isize,
             CustomColor => 250,
@@ -97,6 +99,7 @@ impl Command {
             7 => OpenSettings,
             8 => ToggleLogin,
             9 => Quit,
+            10 => Escape,
             100..=199 => Tool((tag - 100) as u8),
             200..=249 => Color((tag - 200) as u8),
             250 => CustomColor,
@@ -142,7 +145,7 @@ mod tests {
     fn tags_round_trip() {
         let all = [
             CaptureScreenshot, RecordScreen, RecordHotkey, StopRecording, PauseResume,
-            OpenRecordings, OpenSettings, ToggleLogin, Quit, Tool(0), Tool(9), Color(7),
+            OpenRecordings, OpenSettings, ToggleLogin, Quit, Escape, Tool(0), Tool(9), Color(7),
             CustomColor, ToggleSwatches, CycleStroke, Stroke(2), Copy, Save, Print, Pin, RecordSelection, Undo, Close,
             ToggleMic, ToggleSystemAudio, ToggleWebcam, StartRecording, SkipCountdown, Reveal, CopyFile,
             OpenFile, Trim, ExportGif, DismissHud, Setting(42),

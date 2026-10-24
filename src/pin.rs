@@ -106,7 +106,7 @@ pub fn show(f: Finished) {
     let frame = f.global_rect;
     let this = OverlayWindow::alloc(mtm).set_ivars(());
     let w: Retained<OverlayWindow> = unsafe {
-        msg_send![super(this), initWithContentRect: cg_rect(frame), styleMask: NSWindowStyleMask::Borderless, backing: NSBackingStoreType::Buffered, defer: false]
+        msg_send![super(this), initWithContentRect: cg_rect(frame), styleMask: NSWindowStyleMask::Borderless | NSWindowStyleMask::NonactivatingPanel, backing: NSBackingStoreType::Buffered, defer: false]
     };
     unsafe { w.setReleasedWhenClosed(false) };
     w.setLevel(NSFloatingWindowLevel);
