@@ -31,7 +31,7 @@ Microphone and Camera permissions are only requested the first time you turn on 
 
 ## Shortcut conflicts
 
-Other screenshot tools may also use ⇧⌘9. Quit them, or change Photon's shortcut in Settings › General.
+Some other screenshot tools also use ⇧⌘9 or ⇧⌘0. If Photon's shortcut doesn't respond, quit the other tool, remove it from your login items, or change Photon's shortcuts in Settings › General.
 
 ## On Windows
 

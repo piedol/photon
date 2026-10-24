@@ -1,0 +1,199 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" width="1600" height="900" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <title>Photon capture overlay: a selected region with markup, the tool palette and the action bar</title>
+  <defs>
+    <linearGradient id="wall" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1D2B53"/>
+      <stop offset="0.55" stop-color="#2E2459"/>
+      <stop offset="1" stop-color="#11131F"/>
+    </linearGradient>
+    <radialGradient id="glowA" cx="0.18" cy="0.2" r="0.55">
+      <stop offset="0" stop-color="#3D7BFF" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#3D7BFF" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowB" cx="0.88" cy="0.85" r="0.5">
+      <stop offset="0" stop-color="#BF5AF2" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#BF5AF2" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="frame"><rect width="1600" height="900" rx="28"/></clipPath>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#000" flood-opacity="0.45"/>
+    </filter>
+    <filter id="hudShadow" x="-30%" y="-10%" width="160%" height="130%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#000" flood-opacity="0.45"/>
+    </filter>
+    <marker id="head" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="4.2" markerHeight="4.2" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#FF3B30"/>
+    </marker>
+  </defs>
+
+  <g clip-path="url(#frame)">
+    <!-- Desktop -->
+    <rect width="1600" height="900" fill="url(#wall)"/>
+    <rect width="1600" height="900" fill="url(#glowA)"/>
+    <rect width="1600" height="900" fill="url(#glowB)"/>
+
+    <g transform="translate(30 48)">
+    <!-- A second window, behind -->
+    <g filter="url(#shadow)">
+      <rect x="1120" y="70" width="400" height="300" rx="14" fill="#2C2C34"/>
+      <rect x="1120" y="70" width="400" height="40" rx="14" fill="#3A3A44"/>
+      <rect x="1120" y="96" width="400" height="14" fill="#3A3A44"/>
+      <rect x="1148" y="140" width="220" height="12" rx="6" fill="#55555F"/>
+      <rect x="1148" y="168" width="320" height="10" rx="5" fill="#46464F"/>
+      <rect x="1148" y="190" width="280" height="10" rx="5" fill="#46464F"/>
+      <rect x="1148" y="230" width="344" height="110" rx="10" fill="#36363F"/>
+    </g>
+
+    <!-- The app window being captured -->
+    <g filter="url(#shadow)">
+      <rect x="150" y="100" width="1010" height="660" rx="16" fill="#F5F5F7"/>
+    </g>
+    <path d="M166 100 H1144 A16 16 0 0 1 1160 116 V146 H150 V116 A16 16 0 0 1 166 100 Z" fill="#E6E6EB"/>
+    <circle cx="178" cy="123" r="6.5" fill="#C7C7CC"/>
+    <circle cx="200" cy="123" r="6.5" fill="#C7C7CC"/>
+    <circle cx="222" cy="123" r="6.5" fill="#C7C7CC"/>
+    <rect x="150" y="146" width="230" height="614" fill="#ECECF0"/>
+    <path d="M150 740 V760 H166 A16 16 0 0 1 150 744 Z" fill="#ECECF0"/>
+    <g fill="#C9C9D1">
+      <rect x="178" y="180" width="120" height="12" rx="6"/>
+      <rect x="178" y="214" width="160" height="12" rx="6" fill="#0A84FF" opacity="0.85"/>
+      <rect x="178" y="248" width="140" height="12" rx="6"/>
+      <rect x="178" y="282" width="110" height="12" rx="6"/>
+      <rect x="178" y="316" width="150" height="12" rx="6"/>
+      <rect x="178" y="380" width="90" height="10" rx="5" fill="#DADAE0"/>
+      <rect x="178" y="410" width="130" height="12" rx="6"/>
+      <rect x="178" y="444" width="100" height="12" rx="6"/>
+    </g>
+
+    <!-- Page content -->
+    <rect x="430" y="170" width="150" height="14" rx="7" fill="#C7C7CC"/>
+    <text x="444" y="258" font-size="26" font-weight="700" fill="#1C1C1E">Signups</text>
+    <rect x="444" y="272" width="210" height="10" rx="5" fill="#C7C7CC"/>
+
+    <rect x="444" y="298" width="384" height="200" rx="14" fill="#FFFFFF"/>
+    <g fill="#0A84FF">
+      <rect x="470" y="420" width="34" height="56" rx="6" opacity="0.55"/>
+      <rect x="520" y="396" width="34" height="80" rx="6" opacity="0.55"/>
+      <rect x="570" y="408" width="34" height="68" rx="6" opacity="0.55"/>
+      <rect x="620" y="370" width="34" height="106" rx="6" opacity="0.55"/>
+      <rect x="670" y="330" width="34" height="146" rx="6"/>
+      <rect x="720" y="352" width="34" height="124" rx="6"/>
+      <rect x="770" y="388" width="34" height="88" rx="6" opacity="0.55"/>
+    </g>
+    <rect x="466" y="482" width="340" height="2" fill="#E5E5EA"/>
+
+    <rect x="846" y="298" width="196" height="200" rx="14" fill="#FFFFFF"/>
+    <text x="868" y="338" font-size="14" fill="#8E8E93">This week</text>
+    <text x="868" y="384" font-size="40" font-weight="700" fill="#1C1C1E">12.4k</text>
+    <text x="868" y="414" font-size="15" font-weight="600" fill="#30D158">+38%</text>
+    <rect x="868" y="440" width="140" height="9" rx="4.5" fill="#E5E5EA"/>
+    <rect x="868" y="460" width="104" height="9" rx="4.5" fill="#E5E5EA"/>
+
+    <!-- List rows -->
+    <circle cx="462" cy="534" r="14" fill="#FF9F0A"/>
+    <rect x="488" y="526" width="230" height="12" rx="6" fill="#AEAEB2"/>
+    <rect x="740" y="526" width="120" height="12" rx="6" fill="#D1D1D6"/>
+    <circle cx="462" cy="582" r="14" fill="#BF5AF2"/>
+    <text x="488" y="588" font-size="16" fill="#3A3A3C">sam.taylor@example.com</text>
+    <circle cx="462" cy="630" r="14" fill="#30D158"/>
+    <rect x="488" y="622" width="190" height="12" rx="6" fill="#AEAEB2"/>
+    <rect x="700" y="622" width="150" height="12" rx="6" fill="#D1D1D6"/>
+    <rect x="430" y="676" width="600" height="10" rx="5" fill="#DADAE0"/>
+    <rect x="430" y="700" width="460" height="10" rx="5" fill="#DADAE0"/>
+
+    <!-- Scrim with the selection cut out -->
+    <path fill="#000" fill-opacity="0.45" fill-rule="evenodd"
+      d="M-200 -200 H1800 V1100 H-200 Z M420 220 V650 H1060 V220 Z"/>
+
+    <!-- Markup inside the selection -->
+    <!-- highlighter -->
+    <path d="M488 532 H720" stroke="#FFD60A" stroke-opacity="0.5" stroke-width="22" stroke-linecap="round"/>
+    <!-- pixelate over the email -->
+    <g>
+      <rect x="484" y="568" width="196" height="28" fill="#D9D9DE"/>
+      <g fill="#B4B4BB">
+        <rect x="484" y="568" width="14" height="14"/><rect x="512" y="568" width="14" height="14"/><rect x="554" y="568" width="14" height="14"/><rect x="582" y="568" width="14" height="14"/><rect x="624" y="568" width="14" height="14"/><rect x="652" y="568" width="14" height="14"/>
+        <rect x="498" y="582" width="14" height="14"/><rect x="540" y="582" width="14" height="14"/><rect x="568" y="582" width="14" height="14"/><rect x="610" y="582" width="14" height="14"/><rect x="638" y="582" width="14" height="14"/><rect x="666" y="582" width="14" height="14"/>
+      </g>
+      <g fill="#8E8E96">
+        <rect x="526" y="568" width="14" height="14"/><rect x="596" y="568" width="14" height="14"/><rect x="666" y="568" width="14" height="14"/>
+        <rect x="484" y="582" width="14" height="14"/><rect x="554" y="582" width="14" height="14"/><rect x="624" y="582" width="14" height="14"/>
+      </g>
+    </g>
+    <!-- rectangle around the best bars -->
+    <rect x="658" y="316" width="110" height="174" rx="8" fill="none" stroke="#FF3B30" stroke-width="5"/>
+    <!-- arrow -->
+    <path d="M905 590 Q 860 470 782 412" fill="none" stroke="#FF3B30" stroke-width="6" stroke-linecap="round" marker-end="url(#head)"/>
+    <!-- text -->
+    <text x="874" y="626" font-size="26" font-weight="700" fill="#FF3B30">Best week yet</text>
+    <!-- step badges -->
+    <g font-size="17" font-weight="700" fill="#FFFFFF" text-anchor="middle">
+      <circle cx="658" cy="316" r="16" fill="#FF3B30"/><text x="658" y="322">1</text>
+      <circle cx="704" cy="582" r="16" fill="#FF3B30"/><text x="704" y="588">2</text>
+    </g>
+
+    <!-- Selection border and handles -->
+    <rect x="420" y="220" width="640" height="430" fill="none" stroke="#FFFFFF" stroke-opacity="0.95" stroke-width="1.5"/>
+    <g fill="#FFFFFF" stroke="#000" stroke-opacity="0.25" stroke-width="1">
+      <rect x="415" y="215" width="10" height="10" rx="2"/><rect x="735" y="215" width="10" height="10" rx="2"/><rect x="1055" y="215" width="10" height="10" rx="2"/>
+      <rect x="415" y="430" width="10" height="10" rx="2"/><rect x="1055" y="430" width="10" height="10" rx="2"/>
+      <rect x="415" y="645" width="10" height="10" rx="2"/><rect x="735" y="645" width="10" height="10" rx="2"/><rect x="1055" y="645" width="10" height="10" rx="2"/>
+    </g>
+
+    <!-- Size badge -->
+    <g filter="url(#hudShadow)">
+      <rect x="420" y="184" width="108" height="26" rx="7" fill="#1E1E24" fill-opacity="0.92"/>
+    </g>
+    <text x="474" y="202" font-size="13.5" font-weight="500" fill="#FFFFFF" fill-opacity="0.92" text-anchor="middle">1280 × 860</text>
+
+    <!-- Tool palette (right of the selection, bottom-aligned) -->
+    <g filter="url(#hudShadow)">
+      <rect x="1072" y="282" width="42" height="368" rx="11" fill="#1E1E24" fill-opacity="0.94"/>
+    </g>
+    <g fill="none" stroke="#FFFFFF" stroke-opacity="0.92" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+      <!-- pen -->
+      <path d="M1087 311 L1097 301 L1100 304 L1090 314 L1086 315 Z"/>
+      <!-- line -->
+      <path d="M1086 345 L1100 331"/>
+      <!-- arrow (selected) -->
+      <rect x="1077" y="352" width="32" height="30" rx="7" fill="#0A84FF" stroke="none"/>
+      <path d="M1086 374 L1100 360 M1092 360 H1100 V368"/>
+      <!-- rectangle -->
+      <rect x="1086" y="392" width="14" height="12" rx="2"/>
+      <!-- ellipse -->
+      <ellipse cx="1093" cy="428" rx="8" ry="6.5"/>
+      <!-- highlighter -->
+      <path d="M1087 460 L1095 452 L1100 457 L1092 465 Z M1086 466 H1100" />
+      <!-- text -->
+      <path d="M1087 482 H1099 M1093 482 V495"/>
+      <!-- pixelate -->
+      <path d="M1086 511 h5 v5 h-5 z M1095 511 h5 v5 h-5 z M1090.5 520 h5 v5 h-5 z"/>
+      <!-- step -->
+      <circle cx="1093" cy="550" r="8"/>
+      <!-- undo -->
+      <path d="M1088 621 H1096 A5 5 0 0 1 1096 631 H1090 M1091 617 L1087 621 L1091 625"/>
+    </g>
+    <text x="1093" y="554.5" font-size="11" font-weight="700" fill="#FFFFFF" fill-opacity="0.92" text-anchor="middle">1</text>
+    <circle cx="1093" cy="587" r="9" fill="#FF3B30" stroke="#FFFFFF" stroke-opacity="0.85" stroke-width="2"/>
+
+    <!-- Action bar (below the selection, right-aligned) -->
+    <g filter="url(#hudShadow)">
+      <rect x="856" y="662" width="204" height="42" rx="11" fill="#1E1E24" fill-opacity="0.94"/>
+    </g>
+    <circle cx="879" cy="683" r="7" fill="#FF453A"/>
+    <g fill="none" stroke="#FFFFFF" stroke-opacity="0.92" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+      <!-- pin -->
+      <path d="M907 676 L915 676 L914 682 L917 686 H905 L908 682 Z M911 686 V692"/>
+      <!-- print -->
+      <path d="M937 680 V674 H947 V680 M934 680 H950 V688 H934 Z M937 686 H947 V692 H937 Z"/>
+      <!-- save -->
+      <path d="M975 674 V686 M970 681 L975 686 L980 681 M968 691 H982"/>
+      <!-- copy -->
+      <rect x="1001" y="677" width="11" height="13" rx="2"/>
+      <path d="M1005 677 V674 A1.5 1.5 0 0 1 1006.5 672.5 H1014.5 A1.5 1.5 0 0 1 1016 674 V685 A1.5 1.5 0 0 1 1014.5 686.5 H1012"/>
+      <!-- close -->
+      <path d="M1033 677 L1043 687 M1043 677 L1033 687"/>
+    </g>
+    </g>
+  </g>
+</svg>
