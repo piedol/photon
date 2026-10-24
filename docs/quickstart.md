@@ -33,6 +33,10 @@ Microphone and Camera permissions are only requested the first time you turn on 
 
 Other screenshot tools may also use ⇧⌘9. Quit them, or change Photon's shortcut in Settings › General.
 
+## On Windows
+
+Download `Photon-windows-x64.zip` from Releases, or build it yourself. See [Photon for Windows](windows.md).
+
 ## Next
 
 - [Usage](usage.md) covers every tool and key.

@@ -5,12 +5,12 @@
 <h1 align="center">Photon</h1>
 
 <p align="center">
-  <b>Screenshots, markup and screen recording for Apple silicon Macs, in one tiny native app.</b><br>
+  <b>Screenshots, markup and screen recording for Apple silicon Macs and Windows PCs, in one tiny native app.</b><br>
   Press a key, drag, done.
 </p>
 
 <p align="center">
-  macOS 15+ · Apple silicon · native Rust · under 1 MB · about 12 MB of memory · no network code
+  macOS 15+ on Apple silicon · Windows 10 and 11 · native Rust · under 1 MB · no network code
 </p>
 
 ---
@@ -28,13 +28,15 @@
 3. Press **↩**. You're recording.
 4. Press **⇧⌘0** again to stop. The file is saved, with one-click buttons to share, trim or turn it into a GIF.
 
+On Windows it's the same, with **Ctrl+Shift+9** and **Ctrl+Shift+0**.
+
 Changed your mind? **Esc** cancels a selection or a countdown at any point before recording starts.
 
-There are no accounts and no windows to manage. Photon lives in your menu bar and stays out of the way until you press a key.
+There are no accounts and no windows to manage. Photon lives in your menu bar (or the Windows notification area) and stays out of the way until you press a key.
 
 ## Why Photon
 
-Photon handles screenshots and screen recording in one app built only for Apple silicon.
+Photon handles screenshots and screen recording in one app built only for Apple silicon. A separate native [Windows edition](docs/windows.md) brings the same features to Windows PCs.
 
 | | A typical screenshot app | Photon |
 |---|---|---|
@@ -82,9 +84,24 @@ After every recording, a small panel offers:
 - **Native Rust** on Apple's own frameworks: about 100 ms from key press to overlay.
 - **Nothing kept in the background.** Each capture is created when you press the key and fully released when you're done.
 - **No network code at all.** No analytics, no uploads, no update pings.
-- **Scriptable:** run `open photon://capture`, `photon://record` or `photon://stop` from Raycast, Shortcuts or the terminal.
+- **Native on Windows too:** a separate Windows build of under 1 MB, using Windows' own capture, Direct2D and Media Foundation.
+- **Scriptable:** run `open photon://capture`, `photon://record` or `photon://stop` from Raycast, Shortcuts or the terminal (`start photon://capture` on Windows).
 
 ## Get started
+
+### Download
+
+Grab the latest build from [Releases](https://github.com/piedol/photon/releases):
+
+| File | For |
+|---|---|
+| `Photon-macOS-arm64.zip` | Macs with Apple silicon (M1 or newer), macOS 15+ |
+| `Photon-windows-x64.zip` | Windows 10 (1903+) and Windows 11, 64-bit |
+
+- **Mac:** unzip and drag `Photon.app` to Applications. The app is signed but not notarized, so the first time macOS blocks it, open **System Settings › Privacy & Security** and click **Open Anyway**.
+- **Windows:** unzip and run `Photon.exe`. If SmartScreen warns, click **More info › Run anyway**. See [Photon for Windows](docs/windows.md).
+
+### Build it yourself (Mac)
 
 ```bash
 scripts/bundle.sh --install
@@ -92,20 +109,20 @@ scripts/bundle.sh --install
 
 That builds, signs and installs Photon to `/Applications`. Allow **Screen & System Audio Recording** when macOS asks, then press **⇧⌘9**. Turn on **Launch at Login** from the menu-bar icon.
 
-You need macOS 15 or later on an Apple silicon Mac (M1 or newer), plus Rust and the Xcode command line tools to build it. Full steps are in [Quickstart](docs/quickstart.md).
+You need macOS 15 or later on an Apple silicon Mac (M1 or newer), plus Rust and the Xcode command line tools to build it. Full steps are in [Quickstart](docs/quickstart.md). To build the Windows edition, see [Photon for Windows](docs/windows.md#building-from-source).
 
 ## Shortcut cheat sheet
 
-| Key | What it does |
-|---|---|
-| **⇧⌘9** | Screenshot (stops a recording if one is running) |
-| **⇧⌘0** | Record (press again to stop) |
-| **↩** | Copy the screenshot, or start recording |
-| **Esc** / right-click | Cancel |
-| **⌘C · ⌘S · ⌘P · ⌘Z** | Copy · Save · Print · Undo |
-| **← → ↑ ↓** | Nudge the selection (⇧ for 10 px, ⌥ to resize) |
-| **⇧** while drawing | Straight lines, squares and circles |
-| **[ ]** or scroll | Stroke size |
+| Mac | Windows | What it does |
+|---|---|---|
+| **⇧⌘9** | **Ctrl+Shift+9** | Screenshot (stops a recording if one is running) |
+| **⇧⌘0** | **Ctrl+Shift+0** | Record (press again to stop) |
+| **↩** | **Enter** | Copy the screenshot, or start recording |
+| **Esc** / right-click | **Esc** / right-click | Cancel |
+| **⌘C · ⌘S · ⌘P · ⌘Z** | **Ctrl+C · S · P · Z** | Copy · Save · Print · Undo |
+| **← → ↑ ↓** | **← → ↑ ↓** | Nudge the selection (⇧ for 10 px, ⌥/Alt to resize) |
+| **⇧** while drawing | **Shift** while drawing | Straight lines, squares and circles |
+| **[ ]** or scroll | **[ ]** or scroll | Stroke size |
 
 You can change both shortcuts in **Settings › General**.
 
@@ -124,6 +141,7 @@ You can change both shortcuts in **Settings › General**.
 | [Development](docs/development.md) | Tests, lint, self-tests, logging, project layout, adding a tool |
 | [Deployment](docs/deployment.md) | Bundling, signing, notarizing, installing, login item, uninstalling |
 | [Troubleshooting](docs/troubleshooting.md) | Common problems and what to check |
+| [Photon for Windows](docs/windows.md) | The Windows edition: install, differences from the Mac, storage, building, self-tests |
 
 Other records in the repo:
 
@@ -146,13 +164,13 @@ For commercial licensing, contact [piedol](https://github.com/piedol).
 
 ## Docs update tag
 
-Docs last updated: `docs-2026-10-24-2`
+Docs last updated: `docs-2026-10-24-3`
 
-Docs audited through commit: `1afd6b7`
+Docs audited through commit: `e2425de`
 
 This tag marks the last commit where `README.md` and `docs/` were audited and updated.
-- View changes since the docs were last updated: `git log docs-2026-10-24-2..HEAD --oneline`
-- Diff the docs against now: `git diff docs-2026-10-24-2..HEAD -- README.md docs/`
+- View changes since the docs were last updated: `git log docs-2026-10-24-3..HEAD --oneline`
+- Diff the docs against now: `git diff docs-2026-10-24-3..HEAD -- README.md docs/`
 
 Update procedure:
 1. Pick a new tag name like `docs-YYYY-MM-DD`, or `docs-YYYY-MM-DD-2` if you've already used today's tag.

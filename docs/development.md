@@ -99,6 +99,7 @@ Expect about 12 MB right after launch and about 45 MB after the first capture, f
 
 ```text
 src/            Rust sources (see architecture.md)
+windows/        the Windows edition, a separate crate (see windows.md)
 resources/      Info.plist template, entitlements
 assets/         AppIcon.icns (generated)
 scripts/        bundle.sh (build/sign/install), make-icon.swift (renders the icon)
