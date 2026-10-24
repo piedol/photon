@@ -37,7 +37,6 @@ pub struct Settings {
     pub rec_click_rings: bool,
     pub rec_webcam: bool,
     pub rec_webcam_device: Option<String>,
-    pub rec_review: bool,
 
     pub tool_color: usize,
     pub stroke: usize,
@@ -103,7 +102,6 @@ impl Settings {
             rec_click_rings: b("recClickRings", true),
             rec_webcam: b("recWebcam", false),
             rec_webcam_device: s("recWebcamDevice"),
-            rec_review: b("recReview", true),
             tool_color: i("toolColor", 0).clamp(0, 7) as usize,
             stroke: i("stroke", 1).clamp(0, 2) as usize,
             shot_naming: load_rule(&d, "shotName", Kind::Screenshot),
@@ -140,7 +138,6 @@ impl Settings {
         d.setBool_forKey(self.rec_click_rings, &ns("recClickRings"));
         d.setBool_forKey(self.rec_webcam, &ns("recWebcam"));
         set_s("recWebcamDevice", self.rec_webcam_device.as_deref());
-        d.setBool_forKey(self.rec_review, &ns("recReview"));
         d.setInteger_forKey(self.tool_color as isize, &ns("toolColor"));
         d.setInteger_forKey(self.stroke as isize, &ns("stroke"));
         save_rule(&d, "shotName", &self.shot_naming);
