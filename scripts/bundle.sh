@@ -47,6 +47,8 @@ echo "Built $APP ($(du -sh "$APP" | cut -f1), binary $(du -h "$APP/Contents/MacO
 
 if (( INSTALL )); then
   pkill -x Photon 2>/dev/null || true
+  # Relaunching before the old process is gone makes `open` fail with -600.
+  for _ in {1..50}; do pgrep -x Photon >/dev/null || break; sleep 0.1; done
   rm -rf /Applications/Photon.app
   ditto "$APP" /Applications/Photon.app
   open /Applications/Photon.app
