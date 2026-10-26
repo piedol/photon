@@ -284,6 +284,10 @@ fn begin_capture() {
 
 fn configure_and_start(content: &SCShareableContent, bubble_id: Option<u32>) {
     let result = with(|r| -> Result<Retained<SCStream>, String> {
+        // Stopped while the shareable content was loading: never start the stream.
+        if r.state != State::Starting {
+            return Err(String::new());
+        }
         let displays = unsafe { content.displays() };
         let display = displays
             .iter()
@@ -349,6 +353,7 @@ fn configure_and_start(content: &SCShareableContent, bubble_id: Option<u32>) {
     });
     let stream = match result {
         Some(Ok(s)) => s,
+        Some(Err(e)) if e.is_empty() => return maybe_finalize(),
         Some(Err(e)) => return fail(&e),
         None => return,
     };
@@ -358,6 +363,11 @@ fn configure_and_start(content: &SCShareableContent, bubble_id: Option<u32>) {
             Some(e) => fail(&e),
             None => {
                 with(|r| {
+                    // A stop that landed while the stream was starting wins; flipping
+                    // back to Recording here would strand the menu-bar clock.
+                    if r.state != State::Starting {
+                        return;
+                    }
                     r.state = State::Recording;
                     r.started = Some(Instant::now());
                     if let Some(i) = &r.indicator {
@@ -431,6 +441,10 @@ pub fn stop(cancel: bool) {
             r.cancelled = true;
             r.stream_stopped = true;
             return None;
+        }
+        if r.stream.is_none() {
+            // Still loading the shareable content: nothing was captured yet.
+            r.stream_stopped = true;
         }
         r.stream.clone()
     })
