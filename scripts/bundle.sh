@@ -17,7 +17,9 @@ done
 
 VERSION=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -1)
 BUILD=$(git rev-list --count HEAD 2>/dev/null || echo 1)
-IDENTITY=${PHOTON_SIGN_IDENTITY:-"Developer ID Application: Your Name (TEAMID)"}
+# Sign with $PHOTON_SIGN_IDENTITY, or else the first Developer ID Application certificate
+# in the keychain. Without either, the app gets an ad-hoc signature.
+IDENTITY=${PHOTON_SIGN_IDENTITY:-$(security find-identity -v -p codesigning | sed -n 's/.*"\(Developer ID Application: [^"]*\)".*/\1/p' | head -1)}
 
 cargo build --release --target aarch64-apple-darwin
 
@@ -28,7 +30,7 @@ cp target/aarch64-apple-darwin/release/Photon "$APP/Contents/MacOS/Photon"
 sed -e "s/__VERSION__/$VERSION/" -e "s/__BUILD__/$BUILD/" resources/Info.plist > "$APP/Contents/Info.plist"
 [[ -f assets/AppIcon.icns ]] && cp assets/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
 
-if security find-identity -v -p codesigning | grep -q "$IDENTITY"; then
+if [[ -n $IDENTITY ]] && security find-identity -v -p codesigning | grep -qF -- "\"$IDENTITY\""; then
   codesign --force --options runtime --timestamp=none \
     --entitlements resources/Photon.entitlements --sign "$IDENTITY" "$APP"
 else

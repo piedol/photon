@@ -25,8 +25,8 @@ What `bundle.sh` does:
    - `Info.plist`, with the version taken from `Cargo.toml` and the build number from the git commit count.
    - `AppIcon.icns`.
 3. Signs with the hardened runtime and `resources/Photon.entitlements`:
-   - It uses `PHOTON_SIGN_IDENTITY`, or else "Developer ID Application: Your Name (TEAMID)".
-   - If that identity isn't in the keychain, it falls back to an ad-hoc signature and warns. Permissions then reset on every build.
+   - It uses `PHOTON_SIGN_IDENTITY`, or else the first "Developer ID Application" certificate in your keychain.
+   - Without either, it falls back to an ad-hoc signature and warns. macOS then asks for permissions again after every build.
 4. Verifies the signature and prints the bundle size, binary size and architecture.
 
 Result: a ~1.5 MB bundle (about 800 KB binary plus the icon), arm64 only.

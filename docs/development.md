@@ -101,7 +101,7 @@ Expect about 12 MB right after launch and about 45 MB after the first capture, f
 src/            Rust sources (see architecture.md)
 windows/        the Windows edition, a separate crate (see windows.md)
 resources/      Info.plist template, entitlements
-assets/         AppIcon.icns (generated)
+assets/         AppIcon.icns and icon.png (generated), README images
 scripts/        bundle.sh (build/sign/install), make-icon.swift (renders the icon)
 docs/           this documentation
 ```
@@ -111,3 +111,21 @@ To regenerate the icon after editing `scripts/make-icon.swift`:
 ```bash
 swift scripts/make-icon.swift
 ```
+
+## Keeping the docs in sync
+
+Docs last updated: `docs-2026-10-24-4`
+
+Docs audited through commit: `8613f8f`
+
+This tag marks the last commit where `README.md` and `docs/` were audited and updated.
+- View changes since the docs were last updated: `git log docs-2026-10-24-4..HEAD --oneline`
+- Diff the docs against now: `git diff docs-2026-10-24-4..HEAD -- README.md docs/`
+
+Update procedure:
+1. Pick a new tag name like `docs-YYYY-MM-DD`, or `docs-YYYY-MM-DD-2` if you've already used today's tag.
+2. Before changing any docs, set `Docs audited through commit` to the code commit you're auditing: `git rev-parse --short HEAD`.
+3. Update the `Docs last updated` line in the same commit as your docs changes.
+4. Commit with: `docs: sync docs (docs-YYYY-MM-DD)`.
+5. Create the annotated tag: `git tag -a docs-YYYY-MM-DD -m "docs: sync docs"`.
+6. Push the tag: `git push origin docs-YYYY-MM-DD`.

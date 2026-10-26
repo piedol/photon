@@ -189,26 +189,3 @@ Photon is source-available under the [PolyForm Noncommercial License 1.0.0](LICE
   > Required Notice: Copyright (c) 2026 piedol (https://github.com/piedol/photon)
 
 For commercial licensing, contact [piedol](https://github.com/piedol).
-
----
-
-<details>
-<summary><sub>Docs update tag</sub></summary>
-
-Docs last updated: `docs-2026-10-24-4`
-
-Docs audited through commit: `8613f8f`
-
-This tag marks the last commit where `README.md` and `docs/` were audited and updated.
-- View changes since the docs were last updated: `git log docs-2026-10-24-4..HEAD --oneline`
-- Diff the docs against now: `git diff docs-2026-10-24-4..HEAD -- README.md docs/`
-
-Update procedure:
-1. Pick a new tag name like `docs-YYYY-MM-DD`, or `docs-YYYY-MM-DD-2` if you've already used today's tag.
-2. Before changing any docs, set `Docs audited through commit` to the code commit you're auditing: `git rev-parse --short HEAD`.
-3. Update the `Docs last updated` line in the same commit as your docs changes.
-4. Commit with: `docs: sync docs (docs-YYYY-MM-DD)`.
-5. Create the annotated tag: `git tag -a docs-YYYY-MM-DD -m "docs: sync docs"`.
-6. Push the tag: `git push origin docs-YYYY-MM-DD`.
-
-</details>
