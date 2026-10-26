@@ -42,7 +42,3 @@ Folders ending in a bracketed suffix, like `OneDrive-Personal (11-09-2026 4:05 P
 - Screenshots are written to a hidden temp file in the destination folder and then renamed, so a partial PNG never appears.
 - Recordings are written in the temp folder and moved into place when complete. Across volumes, they're copied and the temp file deleted.
 - Names never overwrite an existing file (see [Naming templates](configuration.md#naming-templates)).
-
-## Future: uploads
-
-Destinations go through the `output::destination::Destination` trait. Today the only implementation is `Folder`. A future upload destination, such as shareable links on your own server, can plug in there without changing any capture code.

@@ -64,7 +64,7 @@ Turn it on from the menu, from Settings › General, or with:
 
 ## Releasing to GitHub
 
-The repo is `piedol/photon` (private), with `main` as the branch. Docs syncs are tagged `docs-YYYY-MM-DD`; see the README.
+The repo is `piedol/photon`. Releases are cut from `main`.
 
 App builds are published as GitHub Releases tagged `vX.Y.Z` (the version in `Cargo.toml` and `windows/Cargo.toml`), each with two files:
 - `Photon-macOS-arm64.zip`: `dist/Photon.app` from `scripts/bundle.sh`, zipped with `ditto -c -k --keepParent dist/Photon.app Photon-macOS-arm64.zip`.

@@ -1,19 +1,18 @@
 <p align="center">
-  <img src="assets/icon.png" width="112" alt="Photon icon">
+  <img src="assets/icon.png" width="128" alt="Photon icon">
 </p>
 
 <h1 align="center">Photon</h1>
 
 <p align="center">
-  <b>Screenshots, markup and screen recording, in one tiny native app.</b><br>
-  Press a key, drag, done.
+  Screenshots, markup and screen recording in one small native app for macOS and Windows.
 </p>
 
 <p align="center">
-  <img alt="macOS 15+ on Apple silicon" src="https://img.shields.io/badge/macOS-15%2B%20%C2%B7%20Apple%20silicon-1C1C1E?style=flat-square">
-  <img alt="Windows 10 and 11" src="https://img.shields.io/badge/Windows-10%20%C2%B7%2011-1C1C1E?style=flat-square">
-  <img alt="Written in Rust" src="https://img.shields.io/badge/built%20with-Rust-1C1C1E?style=flat-square">
-  <a href="LICENSE.md"><img alt="License: PolyForm Noncommercial" src="https://img.shields.io/badge/license-PolyForm%20Noncommercial-1C1C1E?style=flat-square"></a>
+  <a href="https://github.com/piedol/photon/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/piedol/photon?color=1c1c1e&label=release"></a>
+  <img alt="macOS 15 or later on Apple silicon" src="https://img.shields.io/badge/macOS-15%2B%20·%20Apple%20silicon-1c1c1e?logo=apple">
+  <img alt="Windows 10 and 11" src="https://img.shields.io/badge/Windows-10%20·%2011-1c1c1e">
+  <a href="LICENSE.md"><img alt="License: PolyForm Noncommercial 1.0.0" src="https://img.shields.io/badge/license-PolyForm%20Noncommercial-1c1c1e"></a>
 </p>
 
 <p align="center">
@@ -23,169 +22,169 @@
 </p>
 
 <p align="center">
-  <sub>Free for personal use · <a href="https://github.com/piedol/photon/releases">All releases</a> · <a href="#install">Install help</a></sub>
+  <img src="docs/images/showcase.png" width="880" alt="Photon's capture overlay: a selected region marked up with an arrow, a box, numbered steps and a pixelated email, beside the tool palette and the action bar">
 </p>
 
-<p align="center">
-  <img src="assets/readme/hero.svg" width="100%" alt="The Photon capture overlay: a selected region with an arrow, a box, numbered steps, a pixelated email and a highlight, next to the tool palette and action bar">
-</p>
+Photon takes screenshots and screen recordings from the menu bar. One shortcut freezes the screen so you can select an area, mark it up and copy it; another records a region, a window or a whole screen at 60 fps, which you can then trim or turn into a GIF.
 
----
+It's a single native program under 1 MB, written in Rust, with no accounts and no network code. Between captures it only waits for its shortcuts.
+
+## Contents
+
+- [Download](#download)
+- [Taking a screenshot](#taking-a-screenshot)
+- [Recording your screen](#recording-your-screen)
+- [Saving and sharing](#saving-and-sharing)
+- [Keyboard shortcuts](#keyboard-shortcuts)
+- [Privacy](#privacy)
+- [Build from source](#build-from-source)
+- [Documentation](#documentation)
+- [Contributing](#contributing) · [Credits](#credits) · [License](#license)
 
 ## Download
 
-Get the latest version from the [Releases page](https://github.com/piedol/photon/releases/latest), or use the buttons above.
-
-| Your computer | Download | Works on |
+| Computer | Download | Requirements |
 |---|---|---|
-| **Mac** | [Photon-macOS-arm64.zip](https://github.com/piedol/photon/releases/latest/download/Photon-macOS-arm64.zip) | Macs with Apple silicon (M1 or newer), macOS 15 or later |
-| **Windows PC** | [Photon-windows-x64.zip](https://github.com/piedol/photon/releases/latest/download/Photon-windows-x64.zip) | Windows 10 (version 1903 or later) and Windows 11, 64-bit |
+| Mac | [Photon-macOS-arm64.zip](https://github.com/piedol/photon/releases/latest/download/Photon-macOS-arm64.zip) | Apple silicon (M1 or later), macOS 15 or later |
+| Windows PC | [Photon-windows-x64.zip](https://github.com/piedol/photon/releases/latest/download/Photon-windows-x64.zip) | Windows 10 (version 1903 or later) or Windows 11, 64-bit |
 
-Not sure which Mac you have? Open the Apple menu › **About This Mac**. If it says **Chip: Apple M1** (or M2, M3, M4 and so on), Photon will run on it.
+To check your Mac, open the Apple menu › **About This Mac**. Photon runs on it if the Chip line says Apple M1 or later.
 
-## Install
+**Mac**
 
-**On a Mac**
-1. Open the downloaded zip, then drag **Photon** into your **Applications** folder.
-2. Open Photon. If macOS says it can't check the app, go to **System Settings › Privacy & Security** and click **Open Anyway**.
-3. When asked, allow **Screen & System Audio Recording**.
+1. Open the zip and drag **Photon** into your **Applications** folder.
+2. Open Photon. The app is signed but not notarized, so macOS blocks the first launch. Go to **System Settings › Privacy & Security**, click **Open Anyway**, then open Photon again.
+3. Allow **Screen & System Audio Recording** when macOS asks.
 4. Photon's icon appears in the menu bar. Press **⇧⌘9** to take your first screenshot.
 
-**On Windows**
-1. Open the downloaded zip and copy **Photon.exe** anywhere you like, such as your Desktop or a Programs folder.
-2. Double-click it. If Windows SmartScreen appears, click **More info › Run anyway**.
+**Windows**
+
+1. Open the zip and copy **Photon.exe** anywhere you like, such as your Desktop or a Programs folder.
+2. Double-click it. If SmartScreen appears, click **More info › Run anyway**.
 3. Photon's icon appears in the notification area by the clock. Press **Ctrl+Shift+9** to take your first screenshot.
 
-To have Photon start with your computer, click its icon and turn on **Launch at Login**.
+To start Photon with your computer, turn on **Launch at Login** in its menu (on Windows, right-click the tray icon).
 
-## How it works
+To remove Photon, see [Uninstalling](docs/deployment.md#uninstalling) for the Mac or [Photon for Windows](docs/windows.md#uninstalling). If something doesn't work, start with [Troubleshooting](docs/troubleshooting.md).
 
-<table>
-<tr>
-<th width="50%">Take a screenshot</th>
-<th width="50%">Record your screen</th>
-</tr>
-<tr>
-<td valign="top">
+## Taking a screenshot
 
-1. Press **⇧⌘9** (Windows: **Ctrl+Shift+9**). The screen freezes.
-2. Drag over what you want, or click a window.
-3. Draw on it if you like.
-4. Press **Return**. It's on your clipboard, ready to paste.
+<p align="center">
+  <img src="docs/images/markup.png" width="820" alt="A screenshot being marked up in Photon, with the colour and stroke options of the tool palette">
+</p>
 
-</td>
-<td valign="top">
+1. Press **⇧⌘9** (Windows: **Ctrl+Shift+9**). Every screen freezes at full resolution, so what you mark up is exactly what was there.
+2. Drag over an area, click a window to select it exactly, or click the desktop for the whole screen. Fine-tune with the handles or the arrow keys; a badge shows the size in pixels.
+3. Mark it up if you like.
+4. Press **Return** to copy it, or use the action bar to save it as PNG or JPEG, print it, or pin it above your other windows.
+
+Press **Esc** to cancel at any point.
+
+The markup tools are a pen, line, arrow, rectangle, ellipse, highlighter and text, plus **Pixelate** for passwords, email addresses and anything else private, and **numbered steps** (1, 2, 3…) for quick how-to guides. Hold Shift for straight lines, squares and circles. There are eight colours and a custom colour picker, and three stroke sizes on `[` and `]` or the scroll wheel.
+
+## Recording your screen
+
+<p align="center">
+  <img src="docs/images/recording.png" width="820" alt="The panel Photon shows after a recording, with Show in Finder, Copy file, Open, Trim and Make GIF">
+</p>
 
 1. Press **⇧⌘0** (Windows: **Ctrl+Shift+0**).
-2. Drag a region, or click a window.
-3. Press **Return** to start recording.
-4. Press the shortcut again to stop. Your video is saved, with buttons to share, trim or make a GIF.
+2. Drag a region, or click a window or a screen. When you pick a window, Photon records only that window, even if something covers it.
+3. Press **Return**. A countdown starts, which you can skip.
+4. Press the shortcut again to stop.
 
-</td>
-</tr>
-</table>
+Recordings are 60 fps H.264, or HEVC for smaller files, encoded in hardware and written straight to disk. System audio is recorded by default. You can add your microphone and a webcam bubble (except in single-window recordings), highlight your clicks, and pause and resume.
 
-Changed your mind? **Esc** cancels at any point before recording starts. There are no accounts, sign-ups or windows to manage.
+When you stop, a panel offers **Copy file** (which pastes straight into chat apps and email), **Open**, **Trim** (cuts the start and end without re-encoding), **Make GIF** (a looping 12 fps GIF of the first 60 seconds, up to 960 px wide) and **Show in Finder**.
 
-## Features
+## Saving and sharing
 
-### Capture
-- **Freeze-frame screenshots** of every screen at full resolution, so what you mark up is exactly what was there.
-- **Click any window** to select it precisely, or click the desktop for the whole screen.
-- **Fine-tune** with drag handles or the arrow keys. A live badge shows the exact size in pixels.
-- **Finish your way:** copy, save as PNG or JPEG, print, or **pin** the screenshot so it floats above your other windows.
+<p align="center">
+  <img src="docs/images/settings.png" width="520" alt="Photon's Settings window">
+</p>
 
-### Markup
-- **Pen, line, arrow, rectangle, ellipse, highlighter and text.** Hold Shift for straight lines, squares and circles.
-- **Pixelate** passwords, emails and anything else private before you share.
-- **Numbered steps** (1, 2, 3…) for quick how-to guides.
-- **Eight colours plus any custom colour**, and three stroke sizes on `[` `]` or the scroll wheel.
-- Everything stays crisp on high-resolution screens.
-
-### Record
-- **A region, a whole screen, or a single window.** Pick a window and only that window is recorded, even if something else covers it.
-- **Smooth 60 fps video** using your computer's hardware encoder (H.264, or HEVC for smaller files), written straight to disk.
-- **System audio, your microphone and a webcam bubble**, each one click away.
-- **Click highlights** so viewers can follow along.
-- **Countdown with Skip**, plus **pause and resume** while recording.
-
-### Share
-After every recording, a small panel gives you one-click access to:
-- **Copy file**, which pastes straight into chat apps, email or a folder.
-- **Trim** the start and end, instantly and without losing quality.
-- **Make GIF**: a looping GIF for chats, docs and issue trackers.
-- **Show in folder** and **Open**.
-
-### Save
-- **Screenshots go to the clipboard** by default. Turn on auto-save to also keep a copy in a folder.
-- **Recordings go to your Movies or Videos folder**, or anywhere you choose.
-- **Cloud sync without another account:** Photon finds your OneDrive, Google Drive, Dropbox, Box and iCloud Drive folders. Pick one and the provider's own app uploads your files.
-- **Name files your way** with templates for date, time, app name, size and a counter, with a live preview.
-
-### Light and private
-- **Under 1 MB.** Photon is a single native program with no bundled browser or runtime.
-- **Fast:** the capture screen appears in a fraction of a second.
-- **Nothing running in the background.** Each capture is created when you press the key and released when you're done.
-- **No network code at all.** No accounts, analytics, uploads or update checks. Your files go only where you put them.
+- Screenshots go to the clipboard. Turn on auto-save to also keep a copy in a folder.
+- Recordings go to your Movies (Windows: Videos) folder, or a folder you choose.
+- Photon finds your OneDrive, Google Drive, Dropbox, Box and iCloud Drive folders. Choose one as the destination and the provider's own app uploads your files; Photon never signs in to anything.
+- File names follow a template with tokens for the date, time, app name, size and a counter, with a live preview.
 
 ## Keyboard shortcuts
 
-| Mac | Windows | What it does |
+| Mac | Windows | Action |
 |---|---|---|
 | **⇧⌘9** | **Ctrl+Shift+9** | Take a screenshot (also stops a recording) |
-| **⇧⌘0** | **Ctrl+Shift+0** | Start recording, or stop it |
+| **⇧⌘0** | **Ctrl+Shift+0** | Start a recording, or stop it |
 | **Return** | **Enter** | Copy the screenshot, or start recording |
 | **Esc** | **Esc** | Cancel |
 | **⌘C · ⌘S · ⌘P · ⌘Z** | **Ctrl+C · S · P · Z** | Copy · Save · Print · Undo |
-| **Arrow keys** | **Arrow keys** | Move the selection (Shift for 10 px, ⌥ or Alt to resize) |
+| **Arrow keys** | **Arrow keys** | Move the selection (Shift for 10 px; ⌥ or Alt to resize) |
 | **Shift** while drawing | **Shift** while drawing | Straight lines, squares and circles |
-| **[ ]** or scroll | **[ ]** or scroll | Change stroke size |
+| **[ ]** or scroll | **[ ]** or scroll | Change the stroke size |
 
-Both main shortcuts can be changed in **Settings › General**. Photon can also be driven from scripts and launchers with `photon://capture`, `photon://record` and `photon://stop` links.
+Both main shortcuts can be changed in **Settings › General**. Scripts and launchers can drive Photon with `photon://capture`, `photon://record` and `photon://stop` links.
+
+## Privacy
+
+- Photon captures the screen only when you press a shortcut, and records only between Record and Stop.
+- The microphone and camera are used only during a recording, and only when you turn them on.
+- Photon makes no network connections: there are no accounts, analytics, crash reports or update checks. Your files go only where you save or paste them.
+- Pixelation is burned into the exported image, and the original pixels aren't kept.
+
+[Security & privacy](docs/security.md) has the details.
 
 ## Build from source
 
-**Mac** (needs Rust and the Xcode command line tools):
+On a Mac, with Rust and the Xcode Command Line Tools:
 
 ```bash
-scripts/bundle.sh --install
+git clone https://github.com/piedol/photon.git
 ```
 
-**Windows** (needs Rust with the MSVC toolchain and Visual Studio Build Tools):
+```bash
+cd photon && scripts/bundle.sh --install
+```
+
+On Windows, with Rust (MSVC toolchain) and the Visual Studio Build Tools:
 
 ```powershell
 cd windows
 cargo build --release
 ```
 
-See [Quickstart](docs/quickstart.md) and [Photon for Windows](docs/windows.md) for details.
+See the [Quickstart](docs/quickstart.md) and [Photon for Windows](docs/windows.md) for details.
 
 ## Documentation
 
-| Page | What it covers |
+| Page | Covers |
 |---|---|
 | [Quickstart](docs/quickstart.md) | Building, installing, first launch and permissions on a Mac |
-| [Usage](docs/usage.md) | Screenshots, markup, pins, recording, trim, GIFs, every key and button |
-| [Configuration](docs/configuration.md) | Every setting, naming templates and environment variables |
-| [Photon for Windows](docs/windows.md) | The Windows edition: install, differences, storage, building |
+| [Usage](docs/usage.md) | Screenshots, markup, pins, recording, trimming and GIFs, with every key and button |
+| [Configuration](docs/configuration.md) | Every setting, file name templates and environment variables |
+| [Photon for Windows](docs/windows.md) | The Windows edition: installing, differences, storage and building |
 | [Interfaces](docs/interfaces.md) | Global shortcuts, overlay keys and `photon://` links |
 | [Storage](docs/storage.md) | Where files, settings and temporary data live |
 | [Permissions](docs/permissions.md) | macOS privacy permissions and signing |
 | [Security & privacy](docs/security.md) | What Photon can see and what leaves your computer |
-| [Architecture](docs/architecture.md) | Modules, the capture and recording pipelines, memory |
-| [Development](docs/development.md) | Tests, lint, self-tests and project layout |
+| [Architecture](docs/architecture.md) | Modules, the capture and recording pipelines, and memory |
+| [Development](docs/development.md) | Tests, lint, self-tests and the project layout |
 | [Deployment](docs/deployment.md) | Bundling, signing, releases and uninstalling |
 | [Troubleshooting](docs/troubleshooting.md) | Common problems and what to check |
+
+## Contributing
+
+Bug reports and pull requests are welcome. Before opening a pull request, run `cargo test` and `cargo clippy` (and the same in `windows/` for changes to the Windows edition). [Development](docs/development.md) describes the project layout and the self-tests.
+
+## Credits
+
+On macOS, Photon calls Apple's frameworks through [objc2](https://github.com/madsmtm/objc2) and registers its shortcuts with [global-hotkey](https://github.com/tauri-apps/global-hotkey). The Windows edition uses the [windows](https://github.com/microsoft/windows-rs) crate, [windows-capture](https://github.com/NiiightmareXD/windows-capture) and [wasapi](https://github.com/HEnquist/wasapi-rs).
 
 ## License
 
 Photon is source-available under the [PolyForm Noncommercial License 1.0.0](LICENSE.md).
 
-- **Free** for personal, hobby, research and educational use, and for nonprofits, schools and government.
-- **Forks and changes** are welcome for those same purposes.
-- **Not for commercial use**, including use inside a company, without a separate license.
-- **Credit is required.** Anyone who shares Photon or a fork must include the license and this notice, unchanged:
+- It's free for personal, hobby, research and educational use, and for nonprofits, schools and government bodies.
+- Forks and changes are welcome for the same purposes.
+- Commercial use, including use inside a company, needs a separate license. Open an issue to ask about one.
+- Anyone who shares Photon or a fork must include the license and this notice, unchanged:
 
   > Required Notice: Copyright (c) 2026 piedol (https://github.com/piedol/photon)
-
-For commercial licensing, contact [piedol](https://github.com/piedol).
