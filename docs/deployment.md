@@ -29,7 +29,7 @@ What `bundle.sh` does:
    - Without either, it falls back to an ad-hoc signature and warns. macOS then asks for permissions again after every build.
 4. Verifies the signature and prints the bundle size, binary size and architecture.
 
-The bundle is about 1.5 MB (a binary of about 800 KB plus the icon) and arm64 only.
+The bundle is about 1.7 MB (an 824 KB binary, the icon and the translations) and arm64 only.
 
 ## Notarizing
 

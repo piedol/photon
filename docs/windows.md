@@ -15,7 +15,7 @@ Photon for Windows is a native Windows edition with the same features as the Mac
 4. Photon appears in the notification area (system tray). Press **Ctrl+Shift+9**.
 5. To start Photon with Windows, right-click the tray icon and turn on **Launch at Login**.
 
-`Photon.exe` is 0.9 MB and needs no installer, services or drivers.
+`Photon.exe` is 1.1 MB, translations included, and needs no installer, services or drivers.
 
 ## How it differs from the Mac app
 

@@ -27,7 +27,7 @@
 
 Photon takes screenshots and screen recordings from the menu bar. Press **⇧⌘9** (Windows: **Ctrl+Shift+9**) and the screen freezes while you select an area, mark it up and copy it. **⇧⌘0** records a region, a window or a whole screen at 60 fps, and afterwards you can trim the recording or turn it into a GIF.
 
-The program file is under 1 MB on both the Mac and Windows. On the Mac, Photon uses about 12 MB of memory at launch and about 45 MB after the first capture. It makes no network connections.
+The program file is 824 KB on the Mac and 1.1 MB on Windows. On the Mac, Photon uses about 12 MB of memory at launch and about 45 MB after the first capture. It makes no network connections.
 
 Photon is in English, Simplified Chinese, Japanese, German, French, Spanish, Brazilian Portuguese and Korean, and follows your system language. On a Mac you can set Photon's language in System Settings › General › Language & Region › Applications.
 
