@@ -16,7 +16,7 @@ scripts/bundle.sh --install
 scripts/bundle.sh --notarize
 ```
 
-The first command builds and signs into `dist/Photon.app`. `--install` also replaces `/Applications/Photon.app` and relaunches it. `--notarize` also notarizes and staples the app.
+The first command builds and signs into `dist/Photon.app`. `--install` also replaces `/Applications/Photon.app` and relaunches it. `--notarize` also notarizes and staples the app, then zips it as `dist/Photon-macOS-arm64.zip` for a release.
 
 What `bundle.sh` does:
 1. `cargo build --release --target aarch64-apple-darwin`. The release profile uses fat LTO, 1 codegen unit, `panic = "abort"`, stripped symbols and opt-level 3.
@@ -31,15 +31,15 @@ What `bundle.sh` does:
 
 Result: a ~1.5 MB bundle (about 800 KB binary plus the icon), arm64 only.
 
-## Notarizing (optional)
+## Notarizing
 
-Notarizing is only needed when giving Photon to another Mac. First create a keychain profile once:
+Notarizing is needed when giving Photon to another Mac. Create a keychain profile once, using the Apple ID that belongs to your developer team and an app-specific password from account.apple.com:
 
 ```bash
-xcrun notarytool store-credentials photon --apple-id <you> --team-id <your team ID>
+xcrun notarytool store-credentials piedol-notary --apple-id <your Apple ID> --team-id <your team ID>
 ```
 
-Then run `scripts/bundle.sh --notarize`. It zips the app, submits it, waits, and staples the ticket.
+Then run `scripts/bundle.sh --notarize`. It signs with a secure timestamp, submits the app, waits for Apple, staples the ticket and writes the release zip. Set `NOTARY_PROFILE` to use a profile with another name.
 
 ## Updating
 

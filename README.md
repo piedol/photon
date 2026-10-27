@@ -53,7 +53,7 @@ To check your Mac, open the Apple menu › **About This Mac**. Photon runs on it
 **Mac**
 
 1. Open the zip and drag **Photon** into your **Applications** folder.
-2. Open Photon. The app is signed but not notarized, so macOS blocks the first launch. Go to **System Settings › Privacy & Security**, click **Open Anyway**, then open Photon again.
+2. Open Photon. It's signed and notarized by Apple, so macOS only asks you to confirm that you want to open an app downloaded from the internet.
 3. Allow **Screen & System Audio Recording** when macOS asks.
 4. Photon's icon appears in the menu bar. Press **⇧⌘9** to take your first screenshot.
 
