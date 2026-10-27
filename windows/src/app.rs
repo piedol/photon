@@ -4,7 +4,7 @@
 use std::cell::RefCell;
 use std::path::PathBuf;
 
-use windows::Win32::Foundation::{ERROR_ALREADY_EXISTS, GetLastError, HWND, LPARAM, LRESULT, POINT, WPARAM};
+use windows::Win32::Foundation::{CloseHandle, ERROR_ALREADY_EXISTS, GetLastError, HWND, LPARAM, LRESULT, POINT, WPARAM};
 use windows::Win32::Graphics::Gdi::{
     BI_RGB, BITMAPINFO, BITMAPINFOHEADER, CreateBitmap, CreateCompatibleDC, CreateDIBSection, DIB_RGB_COLORS, DeleteDC,
     DeleteObject, HGDIOBJ, SelectObject,
@@ -18,8 +18,8 @@ use windows::Win32::System::Registry::{
 };
 use windows::Win32::System::Threading::CreateMutexW;
 use windows::Win32::UI::Shell::{
-    NIF_ICON, NIF_MESSAGE, NIF_TIP, NIM_ADD, NIM_DELETE, NIM_MODIFY, NIM_SETVERSION, NOTIFYICON_VERSION_4, NOTIFYICONDATAW,
-    ShellExecuteW, Shell_NotifyIconW,
+    NIF_ICON, NIF_INFO, NIF_MESSAGE, NIF_TIP, NIIF_LARGE_ICON, NIIF_USER, NIM_ADD, NIM_DELETE, NIM_MODIFY, NIM_SETVERSION,
+    NIN_BALLOONUSERCLICK, NOTIFYICON_VERSION_4, NOTIFYICONDATAW, ShellExecuteW, Shell_NotifyIconW,
 };
 use windows::Win32::UI::WindowsAndMessaging::{
     AppendMenuW, CreatePopupMenu, CreateWindowExW, DefWindowProcW, DestroyIcon, DestroyMenu, DispatchMessageW, FindWindowW,
@@ -36,7 +36,7 @@ use crate::d2d::{self, rgba};
 use crate::i18n::{tr, trf};
 use crate::toolbar::Mode;
 use crate::util::{self, W};
-use crate::{hotkey, record, session, settings, settings_window};
+use crate::{hotkey, pin, record, session, settings, settings_window, update_ui};
 
 const WM_TRAY: u32 = WM_APP + 2;
 const TRAY_ID: u32 = 1;
@@ -132,7 +132,16 @@ fn register_url_scheme() {
 
 // ── Entry ──────────────────────────────────────────────────────────────────
 
-pub fn main(args: Vec<String>) -> i32 {
+pub fn main(mut args: Vec<String>) -> i32 {
+    // `--updated <pid>`: started by the version this one replaced. Wait for it to quit, so
+    // the single-instance check below doesn't find it.
+    if let Some(i) = args.iter().position(|a| a == "--updated") {
+        if let Some(pid) = args.get(i + 1).and_then(|p| p.parse().ok()) {
+            crate::update::wait_for_exit(pid);
+        }
+        args.drain(i..(i + 2).min(args.len()));
+    }
+
     // `Photon --login-item on|off|status`, like the Mac build.
     if args.first().map(String::as_str) == Some("--login-item") {
         let r = match args.get(1).map(String::as_str) {
@@ -153,8 +162,8 @@ pub fn main(args: Vec<String>) -> i32 {
     }
 
     // One instance: later launches (e.g. from a photon:// link) forward and exit.
+    let instance = unsafe { CreateMutexW(None, false, w!("Local\\PhotonSingleInstance")) };
     unsafe {
-        let _mutex = CreateMutexW(None, false, w!("Local\\PhotonSingleInstance"));
         if GetLastError() == ERROR_ALREADY_EXISTS {
             if let Ok(hwnd) = FindWindowW(w!("PhotonMessage"), None) {
                 let text = args.join(" ");
@@ -175,6 +184,7 @@ pub fn main(args: Vec<String>) -> i32 {
     apply_hotkeys();
     crate::destination::clean_scratch();
     util::log("launched");
+    update_ui::launched();
 
     // A photon:// URL on the first launch.
     for a in &args {
@@ -184,7 +194,7 @@ pub fn main(args: Vec<String>) -> i32 {
     let mut msg = MSG::default();
     unsafe {
         while GetMessageW(&mut msg, None, 0, 0).as_bool() {
-            if settings_window::is_dialog_message(&msg) {
+            if settings_window::is_dialog_message(&msg) || update_ui::is_dialog_message(&msg) {
                 continue;
             }
             let _ = TranslateMessage(&msg);
@@ -192,6 +202,18 @@ pub fn main(args: Vec<String>) -> i32 {
         }
     }
     remove_tray_icon();
+    if crate::update::pending() {
+        // The new version starts now. Let go of the shortcuts and the single-instance lock
+        // first, so it gets them instead of finding this copy still running.
+        hotkey::suspend();
+        hotkey::set_escape(false);
+        if let Ok(h) = instance {
+            unsafe {
+                let _ = CloseHandle(h);
+            }
+        }
+        update_ui::quitting();
+    }
     0
 }
 
@@ -241,6 +263,8 @@ unsafe extern "system" fn wndproc(hwnd: HWND, msg: u32, wp: WPARAM, lp: LPARAM) 
                     }
                 }
                 WM_RBUTTONUP | WM_CONTEXTMENU => tray_menu(hwnd),
+                // Only update notifications use balloons.
+                NIN_BALLOONUSERCLICK => util::main_async(update_ui::notification_clicked),
                 _ => {}
             }
             return LRESULT(0);
@@ -399,6 +423,50 @@ fn remove_tray_icon() {
     });
 }
 
+/// A notification from the tray icon (a toast on Windows 10 and 11). Clicking it sends
+/// `NIN_BALLOONUSERCLICK`.
+pub fn balloon(title: &str, text: &str) {
+    let mut nid = NOTIFYICONDATAW {
+        cbSize: std::mem::size_of::<NOTIFYICONDATAW>() as u32,
+        hWnd: util::message_window(),
+        uID: TRAY_ID,
+        uFlags: NIF_INFO,
+        dwInfoFlags: NIIF_USER | NIIF_LARGE_ICON,
+        hBalloonIcon: balloon_icon(),
+        ..Default::default()
+    };
+    let t: Vec<u16> = title.encode_utf16().take(nid.szInfoTitle.len() - 1).collect();
+    nid.szInfoTitle[..t.len()].copy_from_slice(&t);
+    let b: Vec<u16> = text.encode_utf16().take(nid.szInfo.len() - 1).collect();
+    nid.szInfo[..b.len()].copy_from_slice(&b);
+    unsafe {
+        let _ = Shell_NotifyIconW(NIM_MODIFY, &nid);
+    }
+}
+
+/// The app icon at the large-icon size, loaded once and kept for the notification.
+fn balloon_icon() -> HICON {
+    thread_local! {
+        static ICON: std::cell::Cell<Option<HICON>> = const { std::cell::Cell::new(None) };
+    }
+    ICON.with(|i| {
+        let icon = i.get().unwrap_or_else(|| app_icon(unsafe { GetSystemMetrics(windows::Win32::UI::WindowsAndMessaging::SM_CXICON) }));
+        i.set(Some(icon));
+        icon
+    })
+}
+
+/// Quit at once: the update is in place, and the new version starts as this one exits.
+pub fn quit_now() {
+    unsafe { PostQuitMessage(0) };
+}
+
+/// Nothing would be lost by quitting now: no capture, recording or video in progress, no
+/// pinned screenshot, and no file or print dialog open. An update waits for this.
+pub fn is_idle() -> bool {
+    !session::is_open() && !record::is_active() && !util::busy() && !pin::any() && !record::post::trimming()
+}
+
 /// Switch the tray icon between idle and recording.
 pub fn set_recording_ui(on: bool) {
     RECORDING_UI.with(|c| c.set(on));
@@ -430,6 +498,8 @@ const M_FOLDER: usize = 3;
 const M_SETTINGS: usize = 4;
 const M_LOGIN: usize = 5;
 const M_QUIT: usize = 6;
+const M_UPDATE: usize = 7;
+const M_UPDATE_STATUS: usize = 8;
 const M_STOP: usize = 10;
 const M_PAUSE: usize = 11;
 const M_DISCARD: usize = 12;
@@ -456,6 +526,11 @@ fn tray_menu(hwnd: HWND) {
             let _ = AppendMenuW(menu, MF_SEPARATOR, 0, None);
             add(M_SETTINGS, &tr("Settings…"), MF_STRING);
             add(M_LOGIN, &tr("Launch at Login"), if login_item_enabled() { MF_STRING | MF_CHECKED } else { MF_STRING });
+            let (title, status, enabled) = update_ui::menu_item();
+            add(M_UPDATE, &title, if enabled { MF_STRING } else { MF_STRING | MF_GRAYED });
+            if let Some(status) = status {
+                add(M_UPDATE_STATUS, &status, MF_STRING | MF_GRAYED);
+            }
             let _ = AppendMenuW(menu, MF_SEPARATOR, 0, None);
             add(M_QUIT, &tr("Quit Photon"), if session::is_open() { MF_STRING | MF_GRAYED } else { MF_STRING });
         }
@@ -472,6 +547,7 @@ fn tray_menu(hwnd: HWND) {
             M_SETTINGS => Command::OpenSettings,
             M_LOGIN => Command::ToggleLogin,
             M_QUIT => Command::Quit,
+            M_UPDATE => Command::Update(0),
             M_STOP => Command::StopRecording,
             M_PAUSE => Command::PauseResume,
             M_DISCARD => Command::Setting(999),
@@ -519,6 +595,7 @@ pub fn handle(cmd: Command) {
         Command::Setting(999) => record::stop(true),
         Command::Setting(id) => settings_window::changed(id),
         Command::ToggleLogin => toggle_login_item(),
+        Command::Update(n) => update_ui::command(n),
         Command::OpenSettings => settings_window::show(),
         Command::OpenRecordings => {
             let dir = settings::get().rec_dir;

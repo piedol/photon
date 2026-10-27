@@ -11,7 +11,11 @@ Photon captures nothing in the background. When the overlay closes, it keeps onl
 
 ## What leaves the Mac
 
-Photon has no network code, so it makes no network connections.
+Photon connects to GitHub and nowhere else:
+- About a minute after launch if the last check was more than a day ago, then daily while it runs, it asks `api.github.com` for the latest release of `piedol/photon`. The request carries the user agent `Photon/<version>` and nothing about you or your files. To turn this off, clear **Check for updates automatically** in Settings › General. **Check for Updates…** in the menu still works.
+- When you click **Install and Relaunch**, it downloads that release's zip from GitHub.
+
+Before an update replaces anything, the zip's SHA-256 must match the `digest` GitHub lists for the release asset (a release without a digest isn't installed). The app inside must then pass `anchor apple generic and identifier "top.piedol.photon" and certificate leaf[subject.OU] = "D9JNQPYFBM" and notarized` under strict validation, and be newer than the running app. On Windows, where `Photon.exe` isn't Authenticode-signed, the checksum fetched over HTTPS is the check, and the new exe's version resource must name Photon and a newer version. Requests go through macOS's NSURLSession and Windows' WinHTTP, so Photon has no TLS code of its own.
 
 Files can leave the Mac only through things you choose:
 - A **cloud folder** you selected. The provider's app uploads it under your account.
@@ -32,4 +36,4 @@ Notarization credentials, if you use them, are stored in a `notarytool` keychain
 
 ## Supply chain
 
-Dependencies are Apple-framework bindings (`objc2-*`, `block2`, `dispatch2`), `global-hotkey` and `libc`, with versions pinned by `Cargo.lock`. The app ships as a signed binary with no plugins, scripts or runtime downloads.
+Dependencies are Apple-framework bindings (`objc2-*`, `block2`, `dispatch2`), `global-hotkey`, `libc` and `serde_json` (for GitHub's release JSON), with versions pinned by `Cargo.lock`. The app ships as a signed binary with no plugins or scripts. The only code it downloads is a release you choose to install, checked as above.

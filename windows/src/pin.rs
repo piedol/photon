@@ -80,6 +80,11 @@ unsafe extern "system" fn wndproc(hwnd: HWND, msg: u32, wp: WPARAM, lp: LPARAM) 
     unsafe { DefWindowProcW(hwnd, msg, wp, lp) }
 }
 
+/// Whether any capture is pinned to the screen.
+pub fn any() -> bool {
+    PINS.with(|p| !p.borrow().is_empty())
+}
+
 pub fn show(f: Finished) {
     REGISTER.call_once(|| unsafe {
         let wc = WNDCLASSEXW {

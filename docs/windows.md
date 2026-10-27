@@ -15,7 +15,7 @@ Photon for Windows is a native Windows edition with the same features as the Mac
 4. Photon appears in the notification area (system tray). Press **Ctrl+Shift+9**.
 5. To start Photon with Windows, right-click the tray icon and turn on **Launch at Login**.
 
-`Photon.exe` is 1.1 MB, translations included, and needs no installer, services or drivers.
+`Photon.exe` is 1.3 MB, translations included, and needs no installer, services or drivers.
 
 ## How it differs from the Mac app
 
@@ -32,6 +32,7 @@ Photon for Windows is a native Windows edition with the same features as the Mac
 | macOS privacy prompts | No prompts. For the mic or webcam, Windows must allow desktop apps under **Settings › Privacy**. |
 | System accent colour | Windows accent colour |
 | `open photon://capture` | `start photon://capture` (also `record`, `stop`, `settings`) |
+| Update notification, **Install and Relaunch** | A Windows notification from the tray icon, **Install and Restart**. The running `Photon.exe` is renamed `Photon.exe.old`, the new exe takes its place and starts, and the next start deletes the old file. |
 
 Both shortcuts can be changed in **Settings › General**, as on the Mac.
 
@@ -45,8 +46,9 @@ Both shortcuts can be changed in **Settings › General**, as on the Mac.
 | Launch at Login | `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`, value `Photon` |
 | `photon://` links | `HKCU\Software\Classes\photon`, written at each launch for the current user only |
 | Log (only with `PHOTON_LOG`) | `%LOCALAPPDATA%\Photon\photon.log` |
+| Update download | `%LOCALAPPDATA%\Photon\Updates`, during an install |
 
-Cloud destinations work the same way as on the Mac. Photon detects OneDrive (personal and work), Google Drive, Dropbox, Box and iCloud Drive folders and writes into them. The provider's app uploads the files, since Photon has no network code.
+Cloud destinations work the same way as on the Mac. Photon detects OneDrive (personal and work), Google Drive, Dropbox, Box and iCloud Drive folders and writes into them. The provider's app uploads the files.
 
 ## Privacy
 
@@ -110,6 +112,7 @@ The OS-facing code is Windows-native:
 | `record/` | Windows.Graphics.Capture recording, Media Foundation encoding, WASAPI system audio and mic, webcam bubble, click highlights, trim and GIF |
 | `settings.rs`, `settings_window.rs` | The INI settings file and the Settings window |
 | `cloud.rs` | Cloud-folder detection and known folders |
+| `update/`, `update_ui.rs` | Update checks against GitHub releases through WinHTTP, the SHA-256 check (BCrypt), unpacking with `tar.exe`, swapping the exe; the tray item, setting, notification and update window |
 | `selftest.rs` | Scripted sessions for development (only with `PHOTON_DEV`) |
 
 ## Self-tests
@@ -128,6 +131,6 @@ The self-tests capture whatever is on screen and save recording files, so delete
 ## Uninstalling
 
 1. Right-click the tray icon and turn off **Launch at Login**, then choose **Quit Photon**.
-2. Delete `Photon.exe`.
+2. Delete `Photon.exe` (and `Photon.exe.old`, if it's there).
 3. Optionally delete `%APPDATA%\Photon`, `%LOCALAPPDATA%\Photon` and the registry key `HKCU\Software\Classes\photon`.
 4. Your screenshots and recordings stay in their folders.

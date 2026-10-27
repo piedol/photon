@@ -97,6 +97,11 @@ thread_local! {
     static NEXT: Cell<u64> = const { Cell::new(1) };
 }
 
+/// Whether any capture is pinned to the screen.
+pub fn any() -> bool {
+    PINS.with(|p| !p.borrow().is_empty())
+}
+
 pub fn show(f: Finished) {
     let mtm = MainThreadMarker::new().unwrap();
     let id = NEXT.with(|n| {

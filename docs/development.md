@@ -16,7 +16,7 @@ cargo clippy
 
 `cargo build` makes a debug build of the binary at `target/debug/Photon`. Clippy should report no warnings.
 
-The unit tests (58) cover the pure modules:
+The unit tests (80) cover the pure modules:
 - Geometry.
 - The selection state machine.
 - Markup drafts and undo.
@@ -25,6 +25,8 @@ The unit tests (58) cover the pure modules:
 - Destinations.
 - Shortcut encoding.
 - Command tags.
+- Translations: the catalogs have all the `tr` keys and no stale ones.
+- Updates: version numbers, release JSON, release notes, the schedule, SHA-256, signature checks and folder permissions.
 
 The AppKit, ScreenCaptureKit and AVFoundation code is exercised by the self-tests below.
 
@@ -57,6 +59,7 @@ open photon://selftest
 | `photon://selftest-settings` | Opens Settings and screenshots each tab |
 | `photon://selftest-showcase` | The README's overlay shots, over the page from `swift scripts/showcase-backdrop.swift` |
 | `photon://selftest-settings-shots` | Each Settings tab as a window capture without its shadow |
+| `photon://selftest-update-shots` | The update window for a made-up release, and the up-to-date message |
 
 Screenshots go to `$PHOTON_SHOTS` (default `/tmp/photon-shots`), and logs go to stderr.
 

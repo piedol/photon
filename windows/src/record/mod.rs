@@ -491,6 +491,7 @@ pub fn stop(cancel: bool) {
     }
     // Stop capture and finish the file off the UI thread (finishing flushes the encoder).
     let job = util::MainBound((control, path, target, s, cancelled, frames, failed));
+    let busy = util::Busy::start();
     std::thread::spawn(move || {
         let whole = job;
         let (control, path, target, s, cancelled, frames, failed) = whole.0;
@@ -508,6 +509,7 @@ pub fn stop(cancel: bool) {
         let have_file = path.exists() && frames.load(Ordering::Relaxed) > 0;
         let payload = util::MainBound((path, target, s, cancelled, have_file, err));
         util::main_async(move || {
+            let _busy = busy;
             let whole = payload;
             let (path, target, s, cancelled, have_file, err) = whole.0;
             if cancelled || !have_file {

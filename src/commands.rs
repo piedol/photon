@@ -41,6 +41,8 @@ pub enum Command {
     Trim,
     ExportGif,
     DismissHud,
+    // Updates: 0 the menu item, then the update window's buttons (see update_ui)
+    Update(u8),
     // Settings window controls
     Setting(u16),
 }
@@ -83,6 +85,7 @@ impl Command {
             Trim => 503,
             ExportGif => 504,
             DismissHud => 505,
+            Update(i) => 600 + i as isize,
             Setting(i) => 1000 + i as isize,
         }
     }
@@ -124,6 +127,7 @@ impl Command {
             503 => Trim,
             504 => ExportGif,
             505 => DismissHud,
+            600..=609 => Update((tag - 600) as u8),
             1000..=1999 => Setting((tag - 1000) as u16),
             _ => return None,
         })
@@ -148,7 +152,7 @@ mod tests {
             OpenRecordings, OpenSettings, ToggleLogin, Quit, Escape, Tool(0), Tool(9), Color(7),
             CustomColor, ToggleSwatches, CycleStroke, Stroke(2), Copy, Save, Print, Pin, RecordSelection, Undo, Close,
             ToggleMic, ToggleSystemAudio, ToggleWebcam, StartRecording, SkipCountdown, Reveal, CopyFile,
-            OpenFile, Trim, ExportGif, DismissHud, Setting(42),
+            OpenFile, Trim, ExportGif, DismissHud, Update(0), Update(3), Setting(42),
         ];
         for c in all {
             assert_eq!(Command::from_tag(c.tag()), Some(c), "{c:?}");

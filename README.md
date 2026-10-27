@@ -27,7 +27,7 @@
 
 Photon takes screenshots and screen recordings from the menu bar. Press **⇧⌘9** (Windows: **Ctrl+Shift+9**) and the screen freezes while you select an area, mark it up and copy it. **⇧⌘0** records a region, a window or a whole screen at 60 fps, and afterwards you can trim the recording or turn it into a GIF.
 
-The program file is 824 KB on the Mac and 1.1 MB on Windows. On the Mac, Photon uses about 12 MB of memory at launch and about 45 MB after the first capture. It makes no network connections.
+The program file is 940 KB on the Mac and 1.3 MB on Windows. On the Mac, Photon uses about 12 MB of memory at launch and about 45 MB after the first capture. Apart from a daily check of GitHub for a new version, it makes no network connections.
 
 Photon is in English, Simplified Chinese, Japanese, German, French, Spanish, Brazilian Portuguese and Korean, and follows your system language. On a Mac you can set Photon's language in System Settings › General › Language & Region › Applications.
 
@@ -38,6 +38,7 @@ Photon is in English, Simplified Chinese, Japanese, German, French, Spanish, Bra
 - [Recording your screen](#recording-your-screen)
 - [Saving and sharing](#saving-and-sharing)
 - [Keyboard shortcuts](#keyboard-shortcuts)
+- [Updates](#updates)
 - [Privacy](#privacy)
 - [Build from source](#build-from-source)
 - [Documentation](#documentation)
@@ -125,11 +126,19 @@ When you stop, a panel offers **Copy file** (which pastes straight into chat app
 
 Both main shortcuts can be changed in **Settings › General**. Scripts and launchers can drive Photon with `photon://capture`, `photon://record` and `photon://stop` links.
 
+## Updates
+
+**Check for Updates…** in Photon's menu (on Windows, right-click the tray icon) looks for a new version. Photon also checks about a minute after launch if the last check was more than a day ago, then daily while it runs. To stop these checks, turn off **Check for updates automatically** in Settings › General.
+
+When a new version is out, a notification says so and the menu shows **Update to Photon X.Y.Z…**. Choose it or click the notification to read the release notes, then click **Install and Relaunch** (Windows: **Install and Restart**). The first time a Mac finds an update, macOS asks whether Photon may show notifications.
+
+Photon downloads the release from GitHub and installs it only if the zip matches the checksum GitHub lists for it. On a Mac, the app inside must also be signed with Photon's Developer ID and notarized. If you're capturing or recording, or a screenshot is pinned, the install waits until you're done. On a Mac the old copy goes to the Trash. On Windows the old `Photon.exe` is renamed `Photon.exe.old` and deleted the next time Photon starts. If your account can't make changes in the folder Photon is in, Photon opens the release page in your browser instead.
+
 ## Privacy
 
 - Photon captures the screen only when you press a shortcut, and records only between Record and Stop.
 - The microphone and camera are used only during a recording, and only when you turn them on.
-- Photon makes no network connections. It has no analytics or crash reporting and doesn't check for updates.
+- Photon checks GitHub once a day for a new version and downloads it when you choose to install it. You can turn the check off in Settings › General. Photon has no analytics or crash reporting.
 - Your files go only where you save or paste them.
 - Pixelation is burned into the exported image, and the original pixels aren't kept.
 

@@ -34,6 +34,7 @@ use crate::{app, hotkey, ui};
 const SHOT_KEY: u16 = 1;
 const REC_KEY: u16 = 2;
 const LOGIN: u16 = 3;
+const UPDATES: u16 = 4;
 const SHOT_AUTOSAVE: u16 = 10;
 const SHOT_DEST: u16 = 11;
 const REC_DEST: u16 = 40;
@@ -355,6 +356,9 @@ pub fn show() {
     let hotkey_note = g.note(&tr("Click a shortcut, then press the new keys. It needs ⌘, ⌃ or ⌥. Esc cancels."));
     g.section(&tr("Startup"));
     g.plain(LOGIN, checkbox(&tr("Launch Photon at login"), LOGIN, app::login_item_enabled()), 20.0);
+    g.section(&tr("Updates"));
+    g.plain(UPDATES, checkbox(&tr("Check for updates automatically"), UPDATES, s.check_updates), 20.0);
+    g.note(&tr("Once a day, Photon asks GitHub whether there's a newer version."));
     g.section(&tr("Scripting"));
     g.note("open photon://capture · photon://record · photon://stop · photon://settings");
 
@@ -665,6 +669,11 @@ pub fn changed(id: u16) {
     match id {
         SHOT_KEY | REC_KEY => start_recording_key(id),
         LOGIN => app::toggle_login_item(),
+        UPDATES => {
+            let on = is_on(id);
+            settings::update(|s| s.check_updates = on);
+            crate::update_ui::setting_changed();
+        }
         SHOT_AUTOSAVE => {
             let on = is_on(id);
             settings::update(|s| s.shot_autosave = on);

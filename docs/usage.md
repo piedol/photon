@@ -101,4 +101,5 @@ The GIF gets its own panel with Show in Finder, Copy file and Open.
 - Open Recordings Folder
 - Settings… (⌘,)
 - Launch at Login
+- Check for Updates…, which becomes **Update to Photon X.Y.Z…** when a new version is out (see [Updates](../README.md#updates))
 - Quit Photon (⌘Q)

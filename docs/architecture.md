@@ -1,6 +1,6 @@
 # Architecture
 
-Photon is a Rust binary of about 8,000 lines in `src/`. It's a menu-bar AppKit app that uses the accessory activation policy, so it has no Dock icon. All UI runs on the main thread. ScreenCaptureKit and AVFoundation callbacks arrive on background queues and hop back to the main queue (`util::main_async`) before touching state.
+Photon is a Rust binary of about 11,000 lines in `src/`. It's a menu-bar AppKit app that uses the accessory activation policy, so it has no Dock icon. All UI runs on the main thread. ScreenCaptureKit and AVFoundation callbacks arrive on background queues and hop back to the main queue (`util::main_async`) before touching state.
 
 ## Modules
 
@@ -23,6 +23,8 @@ Photon is a Rust binary of about 8,000 lines in `src/`. It's a menu-bar AppKit a
 | `permissions.rs` | Screen, mic and camera permission checks |
 | `hud.rs` | Toasts and HUD panels |
 | `keys.rs`, `geometry.rs`, `util.rs` | Key tables, coordinate maths, helpers |
+| `update/` | Update checks against GitHub releases: the download, checksum, signature and notarization checks, replacing the app and reopening it, the daily schedule and release notes. Shared with piedol's other Mac apps and copied as is. |
+| `update_ui.rs` | The update menu item, setting, notification and window, in Photon's language |
 | `selftest.rs` | Developer-only scripted sessions |
 
 ## Screenshot pipeline

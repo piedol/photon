@@ -180,6 +180,11 @@ fn invalidate(hwnd: HWND) {
     }
 }
 
+/// Whether the trimmer is open.
+pub fn is_open() -> bool {
+    TRIM.with(|t| t.borrow().is_some())
+}
+
 pub fn open(path: PathBuf) {
     if TRIM.with(|t| t.borrow().is_some()) {
         return;

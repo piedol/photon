@@ -317,3 +317,32 @@ pub fn run_settings_shots() {
     ];
     run_steps(steps);
 }
+
+/// `photon://selftest-update-shots`: the update window for a made-up release and the
+/// up-to-date message, as update-available.png and update-current.png. PHOTON_DRAW=1 draws
+/// them, as in selftest-settings-shots.
+pub fn run_update_shots() {
+    if std::env::var_os("PHOTON_DEV").is_none() {
+        return;
+    }
+    let draw = std::env::var_os("PHOTON_DRAW").is_some();
+    let shoot = move |name: &'static str| {
+        move || {
+            let Some(w) = crate::update_ui::window_for_test() else { return };
+            if draw {
+                draw_window(name, &w);
+            } else {
+                grab_window(name, w.windowNumber());
+            }
+        }
+    };
+    let steps: Vec<(f64, Step)> = vec![
+        (0.0, Box::new(crate::update_ui::show_sample_for_test)),
+        (0.8, Box::new(shoot("update-available"))),
+        (0.1, Box::new(crate::update_ui::show_up_to_date_for_test)),
+        (0.6, Box::new(shoot("update-current"))),
+        (0.1, Box::new(crate::update_ui::close_for_test)),
+        (0.2, Box::new(|| util::log("selftest done"))),
+    ];
+    run_steps(steps);
+}

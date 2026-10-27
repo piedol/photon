@@ -1,6 +1,6 @@
 [package]
 name = "photon-windows"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2024"
 description = "Screenshot, markup and screen recording for Windows (the Windows edition of Photon)"
 license = "GPL-3.0-or-later"
@@ -23,6 +23,7 @@ wasapi = "0.26.0"
 windows-core = "0.62.2"
 windows-numerics = "0.3.1"
 parking_lot = "0.12"
+serde_json = "1"
 
 [dependencies.windows]
 version = "0.62.2"
@@ -53,11 +54,14 @@ features = [
     "Win32_Graphics_Imaging_D2D",
     "Win32_Media_Audio",
     "Win32_Media_MediaFoundation",
+    "Win32_Networking_WinHttp",
+    "Win32_Security_Cryptography",
     "Win32_Storage_FileSystem",
     "Win32_Storage_Xps",
     "Win32_System_Com",
     "Win32_System_Com_StructuredStorage",
     "Win32_System_DataExchange",
+    "Win32_System_Diagnostics_Debug",
     "Win32_System_LibraryLoader",
     "Win32_System_Memory",
     "Win32_System_Ole",

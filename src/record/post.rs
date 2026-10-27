@@ -83,6 +83,12 @@ static NEXT_JOB: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::ne
 type Job = Box<dyn FnOnce(Result<PathBuf, String>)>;
 thread_local! {
     static JOBS: RefCell<Vec<(u64, Job)>> = const { RefCell::new(Vec::new()) };
+    static GIFS: std::cell::Cell<usize> = const { std::cell::Cell::new(0) };
+}
+
+/// A video is still being joined, trimmed or turned into a GIF, or the trimmer is open.
+pub fn busy() -> bool {
+    JOBS.with(|j| !j.borrow().is_empty()) || GIFS.with(|g| g.get() > 0) || TRIM.with(|t| t.borrow().is_some())
 }
 
 /// Join pause segments into one file (passthrough). One segment is used as is.
@@ -352,6 +358,7 @@ const GIF_MAX_WIDTH: f64 = 960.0;
 
 fn make_gif(video: PathBuf) {
     hud::toast(&tr("Making GIF…"), None);
+    GIFS.with(|g| g.set(g.get() + 1));
     let out = video.with_extension("gif");
     let job = MainBound((video, out));
     dispatch2::DispatchQueue::global_queue(dispatch2::GlobalQueueIdentifier::QualityOfService(
@@ -364,6 +371,7 @@ fn make_gif(video: PathBuf) {
         let r = MainBound(result.map(|()| out));
         util::main_async(move || {
             let whole = r;
+            GIFS.with(|g| g.set(g.get().saturating_sub(1)));
             match whole.0 {
                 Ok(path) => finished_hud(path, false),
                 Err(e) => hud::message(&tr("Couldn't make the GIF"), Some(&e)),

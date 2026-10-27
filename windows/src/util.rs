@@ -146,6 +146,29 @@ pub fn log(msg: impl AsRef<str>) {
     }
 }
 
+static BUSY: AtomicUsize = AtomicUsize::new(0);
+
+/// Held while Photon does something quitting would lose: saving a recording, trimming,
+/// making a GIF, or waiting in a file or print dialog. An update waits until none is held.
+pub struct Busy(());
+
+impl Busy {
+    pub fn start() -> Busy {
+        BUSY.fetch_add(1, Ordering::SeqCst);
+        Busy(())
+    }
+}
+
+impl Drop for Busy {
+    fn drop(&mut self) {
+        BUSY.fetch_sub(1, Ordering::SeqCst);
+    }
+}
+
+pub fn busy() -> bool {
+    BUSY.load(Ordering::SeqCst) > 0
+}
+
 /// Give freed capture buffers back to the system shortly after a session ends.
 pub fn release_memory_soon() {
     main_after(1.0, || unsafe {

@@ -45,6 +45,11 @@ pub struct Settings {
     pub rec_naming: NamingRule,
     pub shot_counter: u32,
     pub rec_counter: u32,
+
+    /// Look for a new version on GitHub once a day.
+    pub check_updates: bool,
+    /// When the last update check got an answer, in seconds since 1970. 0 = never.
+    pub last_update_check: u64,
 }
 
 fn known_folder(var: &str, fallback: &str) -> PathBuf {
@@ -122,6 +127,8 @@ impl Settings {
             rec_naming: rule("recName", Kind::Recording),
             shot_counter: i("shotCounter", 1).max(1) as u32,
             rec_counter: i("recCounter", 1).max(1) as u32,
+            check_updates: b("checkUpdates", true),
+            last_update_check: i("lastUpdateCheck", 0).max(0) as u64,
         }
     }
 
@@ -166,6 +173,8 @@ impl Settings {
         }
         put("shotCounter", self.shot_counter.to_string());
         put("recCounter", self.rec_counter.to_string());
+        put("checkUpdates", (self.check_updates as u8).to_string());
+        put("lastUpdateCheck", self.last_update_check.to_string());
         let path = Self::file();
         let tmp = path.with_extension("ini.tmp");
         if std::fs::write(&tmp, out).is_ok() {

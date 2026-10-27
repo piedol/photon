@@ -12,6 +12,7 @@ Photon is configured in **Settings** (menu bar › Settings…, or `open photon:
   - While you're choosing, the existing shortcuts are paused.
   - If another app already owns a combination, the note under the buttons says so.
 - **Launch Photon at login**
+- **Check for updates automatically:** on by default. Photon asks GitHub for the latest release about a minute after launch if the last check was more than a day ago, then daily. **Check for Updates…** in the menu works either way. See [Updates](../README.md#updates).
 
 ### Screenshots
 
@@ -61,6 +62,8 @@ Settings are stored in the standard macOS preferences for the domain `top.piedol
 | `shotNameTemplate`, `shotNameDate`, `shotNameTime`, `shotNameCase`, `shotNameSep` | strings | see below | Screenshot naming rule |
 | `recNameTemplate`, `recNameDate`, `recNameTime`, `recNameCase`, `recNameSep` | strings | see below | Recording naming rule |
 | `shotCounter`, `recCounter` | int | `1` | Next `{counter}` value |
+| `checkUpdates` | bool | `true` | Check GitHub for a new version once a day |
+| `lastUpdateCheck` | int | `0` | When the last update check got an answer, in seconds since 1970 |
 
 Unknown or invalid values fall back to the defaults. To reset all settings, quit Photon, then run:
 
@@ -119,3 +122,5 @@ None are needed for normal use.
 | `PHOTON_DEV` | app | Enables the `photon://selftest*` URLs (see [Development](development.md)) |
 | `PHOTON_SHOTS` | self-tests | Folder for self-test screenshots (default `/tmp/photon-shots`) |
 | `PHOTON_SIGN_IDENTITY` | `scripts/bundle.sh` | Signing identity override |
+| `PHOTON_UPDATE_TEST` | app | `install`: check for updates at launch and install a newer release without asking. Nothing is saved to settings. For testing the updater. |
+| `PHOTON_UPDATE_FEED` | app | Read the release JSON from this URL instead of GitHub. A `file://` feed may point at a `file://` zip. For testing the updater. |

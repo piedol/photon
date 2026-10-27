@@ -34,6 +34,8 @@ use crate::util;
 
 mod trim;
 
+pub use trim::is_open as trimming;
+
 struct Finished {
     path: PathBuf,
     hud: u64,
@@ -193,11 +195,15 @@ fn copy_file(path: &Path) -> bool {
 /// Cut `[start, end)` seconds out of `path` without re-encoding, replacing it.
 pub fn apply_trim(path: PathBuf, start: f64, end: f64) {
     hud::toast(&tr("Trimming…"), None);
+    let busy = util::Busy::start();
     std::thread::spawn(move || {
         let result = trim_file(&path, start, end);
-        util::main_async(move || match result {
-            Ok(()) => finished_hud(path, false),
-            Err(e) => hud::message(&tr("Couldn't trim the recording"), Some(&e)),
+        util::main_async(move || {
+            let _busy = busy;
+            match result {
+                Ok(()) => finished_hud(path, false),
+                Err(e) => hud::message(&tr("Couldn't trim the recording"), Some(&e)),
+            }
         });
     });
 }
@@ -244,14 +250,18 @@ const GIF_MAX_WIDTH: u32 = 960;
 fn make_gif(video: PathBuf) {
     hud::toast(&tr("Making GIF…"), None);
     let out = video.with_extension("gif");
+    let busy = util::Busy::start();
     std::thread::spawn(move || {
         unsafe {
             let _ = windows::Win32::System::Com::CoInitializeEx(None, windows::Win32::System::Com::COINIT_MULTITHREADED);
         }
         let result = write_gif(&video, &out).map(|()| out);
-        util::main_async(move || match result {
-            Ok(path) => finished_hud(path, false),
-            Err(e) => hud::message(&tr("Couldn't make the GIF"), Some(&e)),
+        util::main_async(move || {
+            let _busy = busy;
+            match result {
+                Ok(path) => finished_hud(path, false),
+                Err(e) => hud::message(&tr("Couldn't make the GIF"), Some(&e)),
+            }
         });
     });
 }

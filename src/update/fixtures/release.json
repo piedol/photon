@@ -1,0 +1,31 @@
+{
+  "url": "https://api.github.com/repos/piedol/tamka/releases/425519391",
+  "html_url": "https://github.com/piedol/tamka/releases/tag/v0.1.1",
+  "id": 425519391,
+  "tag_name": "v0.1.1",
+  "target_commitish": "main",
+  "name": "Tamka 0.1.1",
+  "draft": false,
+  "immutable": false,
+  "prerelease": false,
+  "created_at": "2026-10-27T13:44:40Z",
+  "updated_at": "2026-10-27T13:45:43Z",
+  "published_at": "2026-10-27T13:45:43Z",
+  "body": "Tamka 0.1.1 adds a microphone choice and fixes recording from USB mics and from mics that disconnect.\n\n## Download\n\n`Tamka-macOS-arm64.zip` is for Macs with Apple silicon running macOS 26 or later. Unzip it and drag **Tamka** into Applications, replacing the old copy. Your settings and models carry over.\n\n## Changes\n\n- **Choose the microphone.** The menu bar menu and Settings › General have a Microphone choice.\n- **Mics with several channels are mixed down.**",
+  "assets": [
+    {
+      "url": "https://api.github.com/repos/piedol/tamka/releases/assets/681728453",
+      "id": 681728453,
+      "name": "Tamka-macOS-arm64.zip",
+      "label": "",
+      "content_type": "application/zip",
+      "state": "uploaded",
+      "size": 10222162,
+      "digest": "sha256:1bb88d2e8cdabf8d0296d07a3a947c9f4389dc7a214a012534f11f00a5509363",
+      "download_count": 1,
+      "created_at": "2026-10-27T13:45:41Z",
+      "updated_at": "2026-10-27T13:45:42Z",
+      "browser_download_url": "https://github.com/piedol/tamka/releases/download/v0.1.1/Tamka-macOS-arm64.zip"
+    }
+  ]
+}

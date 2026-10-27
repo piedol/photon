@@ -45,6 +45,11 @@ pub struct Settings {
     pub rec_naming: NamingRule,
     pub shot_counter: u32,
     pub rec_counter: u32,
+
+    /// Look for a new version on GitHub once a day.
+    pub check_updates: bool,
+    /// When the last update check got an answer, in seconds since 1970. 0 = never.
+    pub last_update_check: u64,
 }
 
 fn load_rule(d: &NSUserDefaults, prefix: &str, kind: Kind) -> NamingRule {
@@ -111,6 +116,8 @@ impl Settings {
             rec_naming: load_rule(&d, "recName", Kind::Recording),
             shot_counter: i("shotCounter", 1).max(1) as u32,
             rec_counter: i("recCounter", 1).max(1) as u32,
+            check_updates: b("checkUpdates", true),
+            last_update_check: i("lastUpdateCheck", 0).max(0) as u64,
         }
     }
 
@@ -147,6 +154,8 @@ impl Settings {
         save_rule(&d, "recName", Kind::Recording, &self.rec_naming);
         d.setInteger_forKey(self.shot_counter as isize, &ns("shotCounter"));
         d.setInteger_forKey(self.rec_counter as isize, &ns("recCounter"));
+        d.setBool_forKey(self.check_updates, &ns("checkUpdates"));
+        d.setInteger_forKey(self.last_update_check as isize, &ns("lastUpdateCheck"));
     }
 }
 

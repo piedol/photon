@@ -29,7 +29,7 @@ What `bundle.sh` does:
    - Without either, it falls back to an ad-hoc signature and warns. macOS then asks for permissions again after every build.
 4. Verifies the signature and prints the bundle size, binary size and architecture.
 
-The bundle is about 1.7 MB (an 824 KB binary, the icon and the translations) and arm64 only.
+The bundle is about 1.9 MB (a 940 KB binary, the icon and the translations) and arm64 only.
 
 ## Notarizing
 
@@ -43,7 +43,9 @@ Then run `scripts/bundle.sh --notarize`. It signs with a secure timestamp, submi
 
 ## Updating
 
-Run `scripts/bundle.sh --install` again. Same-identity signing keeps Screen Recording, Microphone and Camera permissions and the login item. Settings in `~/Library/Preferences/top.piedol.photon.plist` are untouched.
+A copy installed from a release updates from the menu (**Check for Updates…**) or after the daily check. See [Updates](../README.md#updates).
+
+For a build from source, run `scripts/bundle.sh --install` again. Same-identity signing keeps Screen Recording, Microphone and Camera permissions and the login item. Settings in `~/Library/Preferences/top.piedol.photon.plist` are untouched.
 
 ## Launch at Login
 
@@ -73,3 +75,12 @@ App builds are published as GitHub Releases tagged `vX.Y.Z` (the version in `Car
 ```bash
 gh release create v0.1.0 Photon-macOS-arm64.zip Photon-windows-x64.zip --title "Photon 0.1.0" --notes-file notes.md
 ```
+
+Installed copies update from the latest release, so:
+- Keep the asset names exactly as above, and the tag as `vX.Y.Z`. Drafts and pre-releases are ignored.
+- GitHub lists a SHA-256 `digest` for each asset. Photon won't install an asset that has no digest.
+- The Mac zip must hold a notarized and stapled `Photon.app` (`scripts/bundle.sh --notarize`) with a higher `CFBundleShortVersionString`.
+- The Windows exe's version resource (`windows/resources/photon.rc`) must match `windows/Cargo.toml` and name the product Photon.
+- The release notes are shown in the update window. Headings, bullets, bold and code spans are formatted.
+
+To try an update end to end, build a copy with a lower version, put it in a scratch folder and start it with `PHOTON_UPDATE_TEST=install` (see [Configuration](configuration.md#environment-variables)).

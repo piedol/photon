@@ -233,6 +233,7 @@ fn autosave(f: &Finished, s: &Settings) -> Result<(PathBuf, bool), String> {
 
 /// Ask where to save (PNG, or JPEG by type or extension).
 pub fn save_with_dialog(f: Finished) {
+    let _busy = util::Busy::start();
     let s = settings::get();
     let dir = s.last_save_dir.clone().filter(|d| d.is_dir()).unwrap_or_else(|| {
         let r = destination::resolve(&s.shot_dir, &Settings::default_shot_dir());
@@ -289,6 +290,7 @@ fn save_dialog(dir: &Path, name: &str) -> Option<PathBuf> {
 
 /// Print, scaled to fit the printable area and centred.
 pub fn print(f: &Finished) {
+    let _busy = util::Busy::start();
     unsafe {
         let mut pd = PRINTDLGW {
             lStructSize: std::mem::size_of::<PRINTDLGW>() as u32,

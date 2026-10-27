@@ -1,5 +1,5 @@
-//! Shared AppKit plumbing: the controller object every control targets, and
-//! small constructors for symbols, buttons and HUD surfaces.
+//! Shared AppKit plumbing: the controller object every control targets (and the update
+//! notification's delegate), and small constructors for symbols, buttons and HUD surfaces.
 
 use std::cell::OnceCell;
 
@@ -15,6 +15,10 @@ use objc2_app_kit::{
     NSControlTextEditingDelegate, NSTextFieldDelegate, NSTextView, NSColorSpace,
 };
 use objc2_foundation::{MainThreadMarker, NSArray, NSNotification, NSObject, NSObjectProtocol, NSRect, NSURL};
+use objc2_user_notifications::{
+    UNNotification, UNNotificationPresentationOptions, UNNotificationResponse, UNUserNotificationCenter,
+    UNUserNotificationCenterDelegate,
+};
 
 use crate::commands::Command;
 use crate::util::ns;
@@ -73,6 +77,30 @@ define_class!(
     }
 
     unsafe impl NSTextFieldDelegate for Controller {}
+
+    unsafe impl UNUserNotificationCenterDelegate for Controller {
+        #[unsafe(method(userNotificationCenter:willPresentNotification:withCompletionHandler:))]
+        fn will_present(
+            &self,
+            _center: &UNUserNotificationCenter,
+            _notification: &UNNotification,
+            handler: &block2::DynBlock<dyn Fn(UNNotificationPresentationOptions)>,
+        ) {
+            // Show the banner even while Settings is in front.
+            handler.call((UNNotificationPresentationOptions::Banner | UNNotificationPresentationOptions::List,));
+        }
+
+        #[unsafe(method(userNotificationCenter:didReceiveNotificationResponse:withCompletionHandler:))]
+        fn did_receive(
+            &self,
+            _center: &UNUserNotificationCenter,
+            response: &UNNotificationResponse,
+            handler: &block2::DynBlock<dyn Fn()>,
+        ) {
+            crate::update_ui::notification_response(&response.actionIdentifier().to_string());
+            handler.call(());
+        }
+    }
 
     impl Controller {
         #[unsafe(method(colorChanged:))]

@@ -18,7 +18,7 @@ use crate::i18n::{tr, trf};
 use crate::keys::{self, Shortcut};
 use crate::util::{self, ns};
 use crate::overlay::toolbar::Mode;
-use crate::{hotkey, record, session, settings, ui};
+use crate::{hotkey, pin, record, session, settings, ui, update_ui};
 
 /// Crop corners around a dot: the app icon's motif, distinct from other menu-bar logos.
 const MENU_SYMBOL: &str = "dot.viewfinder";
@@ -29,6 +29,8 @@ struct Shell {
     shot_item: Retained<NSMenuItem>,
     record_item: Retained<NSMenuItem>,
     login_item: Retained<NSMenuItem>,
+    /// Check for Updates…, Update to Photon X…, or the install in progress.
+    update_item: Retained<NSMenuItem>,
 }
 
 thread_local! {
@@ -56,6 +58,7 @@ pub fn launched(mtm: MainThreadMarker) {
         crate::permissions::ask_screen();
     }
     util::log("launched");
+    update_ui::launched();
     // Developer mode can start a self-test at launch, for a build run next to the installed
     // app, where photon:// links would reach the installed copy.
     if std::env::var_os("PHOTON_DEV").is_some()
@@ -134,6 +137,8 @@ fn build_status_item(mtm: MainThreadMarker) {
     settings_item.setKeyEquivalent(&ns(","));
     menu.addItem(&settings_item);
     menu.addItem(&login_item);
+    let update_item = menu_item(mtm, &tr("Check for Updates…"), Command::Update(0));
+    menu.addItem(&update_item);
     menu.addItem(&NSMenuItem::separatorItem(mtm));
     let quit = menu_item(mtm, &tr("Quit Photon"), Command::Quit);
     quit.setKeyEquivalent(&ns("q"));
@@ -142,7 +147,7 @@ fn build_status_item(mtm: MainThreadMarker) {
     item.setMenu(Some(&menu));
 
     SHELL.with(|sh| {
-        *sh.borrow_mut() = Some(Shell { item, menu, shot_item, record_item, login_item })
+        *sh.borrow_mut() = Some(Shell { item, menu, shot_item, record_item, login_item, update_item })
     });
 }
 
@@ -160,6 +165,7 @@ pub fn open_url(host: &str) {
         "selftest-escape" => return crate::selftest::run_escape(),
         "selftest-showcase" => return crate::selftest::run_showcase(),
         "selftest-settings-shots" => return crate::selftest::run_settings_shots(),
+        "selftest-update-shots" => return crate::selftest::run_update_shots(),
         _ => return,
     };
     handle(cmd);
@@ -167,11 +173,25 @@ pub fn open_url(host: &str) {
 
 pub fn menu_will_open() {
     let on = login_item_enabled();
+    let (title, subtitle, enabled) = update_ui::menu_item();
     SHELL.with(|sh| {
         if let Some(sh) = sh.borrow().as_ref() {
             sh.login_item.setState(if on { NSControlStateValueOn } else { NSControlStateValueOff });
+            sh.update_item.setTitle(&ns(&title));
+            sh.update_item.setSubtitle(subtitle.as_deref().map(ns).as_deref());
+            sh.update_item.setEnabled(enabled);
         }
     });
+}
+
+/// Nothing would be lost by quitting now: no capture, recording or video in progress, no
+/// pinned screenshot, and no save or folder panel open. An update waits for this.
+pub fn is_idle() -> bool {
+    !session::is_open()
+        && !record::is_active()
+        && !record::post::busy()
+        && !pin::any()
+        && ui::app(mtm()).modalWindow().is_none()
 }
 
 pub fn login_item_enabled() -> bool {
@@ -338,6 +358,7 @@ pub fn handle(cmd: Command) {
         Command::Setting(999) => record::stop(true),
         Command::Setting(id) => crate::settings_window::changed(id),
         Command::ToggleLogin => toggle_login_item(),
+        Command::Update(n) => update_ui::command(n),
         Command::OpenSettings => crate::settings_window::show(),
         Command::Reveal | Command::CopyFile | Command::OpenFile | Command::Trim | Command::ExportGif | Command::DismissHud => {
             record::post::command(cmd)

@@ -44,6 +44,7 @@ use crate::{app, hotkey, hud};
 const SHOT_KEY: u16 = 1;
 const REC_KEY: u16 = 2;
 const LOGIN: u16 = 3;
+const UPDATES: u16 = 4;
 const SHOT_AUTOSAVE: u16 = 10;
 const SHOT_DEST: u16 = 11;
 const REC_DEST: u16 = 40;
@@ -491,6 +492,9 @@ fn build(st: &mut State, s: f64, client_w: i32) {
     f.st.note = note;
     f.section(&tr("Startup"));
     f.checkbox(LOGIN, &tr("Launch Photon at login"), app::login_item_enabled());
+    f.section(&tr("Updates"));
+    f.checkbox(UPDATES, &tr("Check for updates automatically"), set.check_updates);
+    f.note(&tr("Once a day, Photon asks GitHub whether there's a newer version."));
     f.section(&tr("Scripting"));
     f.note("photon://capture · photon://record · photon://stop · photon://settings");
 
@@ -719,6 +723,7 @@ fn refresh() {
 }
 
 fn pick_folder(start: &std::path::Path) -> Option<PathBuf> {
+    let _busy = util::Busy::start();
     unsafe {
         let dlg: IFileOpenDialog = CoCreateInstance(&FileOpenDialog, None, CLSCTX_INPROC_SERVER).ok()?;
         let opts = dlg.GetOptions().unwrap_or_default();
@@ -819,6 +824,11 @@ pub fn changed(id: u16) {
             if let Some(h) = ctl(LOGIN) {
                 set_check(h, app::login_item_enabled());
             }
+        }
+        UPDATES => {
+            let on = is_on(id);
+            settings::update(|s| s.check_updates = on);
+            crate::update_ui::setting_changed();
         }
         SHOT_AUTOSAVE => {
             let on = is_on(id);

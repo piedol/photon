@@ -53,6 +53,8 @@ mod session;
 mod settings;
 mod settings_window;
 mod toolbar;
+mod update;
+mod update_ui;
 mod util;
 
 fn main() {

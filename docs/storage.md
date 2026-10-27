@@ -17,6 +17,9 @@ Photon keeps no database or cache of your captures. The table lists where each k
 | Trim | Replaces the recording in place (via `<name>.trimming.mp4` next to it) | MP4 | n/a | The original is overwritten |
 | GIF | Next to the recording, same name with `.gif` | Looping GIF, 12 fps, ≤ 960 px, ≤ 60 s | Permanent | You |
 | Settings | `~/Library/Preferences/top.piedol.photon.plist` | plist | Permanent | `defaults delete top.piedol.photon` |
+| Update download | `~/Library/Caches/Photon/Updates/` | The release zip and the app unpacked from it | During an install | Photon, when the install ends and at each launch |
+| Previous version after an update | The Trash | App bundle | Until you empty the Trash | You |
+| Update marker | `~/Library/Caches/Photon/just-updated` | The new version number | From the install to the next launch | Photon, at that launch |
 | Launch at Login | macOS Background Task Management (SMAppService) | n/a | Until turned off | Settings › General or `--login-item off` |
 
 ## Cloud folders
