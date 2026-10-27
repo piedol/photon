@@ -1,6 +1,6 @@
 # Architecture
 
-Photon is one Rust binary (about 8,000 lines across `src/`). It's a menu-bar AppKit app: accessory activation policy, no Dock icon. All UI runs on the main thread. ScreenCaptureKit and AVFoundation callbacks arrive on their own queues and hop back to the main queue (`util::main_async`) before touching state.
+Photon is a Rust binary of about 8,000 lines in `src/`. It's a menu-bar AppKit app that uses the accessory activation policy, so it has no Dock icon. All UI runs on the main thread. ScreenCaptureKit and AVFoundation callbacks arrive on background queues and hop back to the main queue (`util::main_async`) before touching state.
 
 ## Modules
 
@@ -12,10 +12,10 @@ Photon is one Rust binary (about 8,000 lines across `src/`). It's a menu-bar App
 | `ui.rs` | The shared `PhotonController` ObjC object that every control targets, plus symbol, button and HUD helpers |
 | `hotkey.rs` | Global shortcuts and the temporary Esc shortcut |
 | `capture.rs` | Freeze-frame capture of every display (ScreenCaptureKit), window list for snapping (CGWindowList) |
-| `session.rs` | One capture session: overlays, selection, markup, actions |
+| `session.rs` | The capture session: overlays, selection, markup, actions |
 | `overlay/` | `window.rs` (key-capable panel and event view), `chrome.rs` (CAShapeLayer dim, border and handles), `selection.rs` (pure state machine), `toolbar.rs` (palette, action bar, record bar, badge) |
 | `annotate/` | `model.rs` (shapes, drafts, undo; pure), `render.rs` (CoreGraphics drawing shared by screen and export) |
-| `export.rs` | Compose the final image; copy, save, print |
+| `export.rs` | Compose the final image for copy, save and print |
 | `pin.rs` | Floating pinned captures |
 | `record/` | `mod.rs` (recorder state machine), `indicator.rs` (outline, countdown), `webcam.rs`, `post.rs` (segment joining, saved HUD, trim, GIF) |
 | `output/` | `destination.rs` (folders, fallback, atomic writes), `naming.rs` (templates; pure), `cloud.rs` (cloud folder discovery; pure) |
@@ -43,10 +43,10 @@ Copy/Save/Print/Pin ─► export::compose (crop + render shapes at pixel scale)
 ```
 
 Key decisions:
-- **Freeze first.** Displays are captured before any Photon window appears, so no filtering is needed and the markup matches what you saw.
-- **Vector markup.** Shapes are stored in view points. The same `render.rs` draws them on screen and into the export bitmap at native pixel scale. Pixelate samples the frozen frame.
-- **GPU chrome.** Moving the selection only updates CAShapeLayer paths; the frozen frame is never repainted.
-- **Key-capable non-activating panel.** The overlay gets the keyboard even when macOS won't activate the app after a global hotkey.
+- Displays are captured before any Photon window appears, so no filtering is needed and the markup matches what you saw.
+- Markup is stored as vector shapes in view points. The same `render.rs` draws them on screen and into the export bitmap at native pixel scale. Pixelate samples the frozen frame.
+- The selection chrome is composited on the GPU. Moving the selection updates CAShapeLayer paths, and the frozen frame is never repainted.
+- The overlay is a key-capable non-activating panel, so it gets the keyboard even when macOS won't activate the app after a global hotkey.
 
 ## Recording pipeline
 
@@ -64,18 +64,18 @@ stop   = stopCapture ─► every segment finished ─► post::join (AVMutableC
 ```
 
 Key decisions:
-- **SCRecordingOutput** (macOS 15) writes encoded video straight to disk. RAM stays flat however long the recording is.
-- **Pause** works through segments, joined without re-encoding.
-- A segment counts as finished when the recording output reports it. Paused segments are marked finished 0.8 s after removal. A 6 s safety net finishes a stop even if a callback never arrives.
-- **Click highlights** come from ScreenCaptureKit's own `showMouseClicks`.
+- SCRecordingOutput (macOS 15) writes encoded video straight to disk, so RAM stays flat however long the recording is.
+- Pause works through segments, which are joined without re-encoding.
+- A segment counts as finished when the recording output reports it. Paused segments are marked finished 0.8 s after removal. If a callback doesn't arrive, a 6 s timeout finishes the stop.
+- Click highlights come from ScreenCaptureKit's `showMouseClicks`.
 
 ## Memory lifecycle
 
-- **Idle:** status item, hotkeys and the controller only. About 12 MB.
-- **During a capture:** the frozen frames dominate (about 40 MB per 5K display, plus a GPU copy). Everything is owned by the `Session` and dropped when it closes.
-- **After closing:** `util::release_memory_soon` calls `malloc_zone_pressure_relief` one second later, so freed buffers go back to the system. Measured footprint settles at about 45 MB after the first capture (AppKit and graphics caches) and stays flat over repeated captures.
+- At idle, Photon holds the status item, hotkeys and the controller, about 12 MB.
+- During a capture, the frozen frames dominate (about 40 MB per 5K display, plus a GPU copy). The `Session` owns all of it and drops it when it closes.
+- When the session closes, `util::release_memory_soon` calls `malloc_zone_pressure_relief` 1 s later, so freed buffers go back to the system. Measured footprint settles at about 45 MB after the first capture (AppKit and graphics caches) and stays flat over repeated captures.
 
 ## Threading rules
 
 - Never touch AppKit off the main thread. Background callbacks capture only `Send` data, or wrap main-thread values in `util::MainBound` and hand them to `main_async`.
-- Session, recording and settings state live in `thread_local!` `RefCell`s on the main thread. Event handlers use `try_borrow_mut` (`with`) and do re-entrant work, like closing the session, only after the borrow ends.
+- Session, recording and settings state is kept in `thread_local!` `RefCell`s on the main thread. Event handlers use `try_borrow_mut` (`with`) and do re-entrant work, like closing the session, only after the borrow ends.

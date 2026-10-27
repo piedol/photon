@@ -2,7 +2,7 @@
 
 ## Screenshots (⇧⌘9)
 
-The screen freezes and dims. Photon captures every display at its native pixel resolution *before* drawing anything, so what you mark up is exactly what was on screen.
+The screen freezes and dims. Photon captures every display at its native pixel resolution *before* drawing anything, so you mark up the frame you saw.
 
 ### Choosing what to capture
 
@@ -17,7 +17,7 @@ The screen freezes and dims. Photon captures every display at its native pixel r
 | ⌥ + arrow keys | Resize from the right and top edges |
 | Esc or right-click | Cancel and close |
 
-A selection stays on the display where you started it. After you add any markup, dragging outside the selection no longer starts a new one, so a stray drag can't throw your work away.
+A selection stays on the display where you started it. After you add markup, dragging outside the selection no longer starts a new selection, so a stray drag can't throw your work away.
 
 ### Markup tools (palette to the right of the selection)
 
@@ -41,13 +41,13 @@ Click a tool again to turn it off and get back to moving the selection. Markup i
 | Button | Key | What happens |
 |---|---|---|
 | Copy | ⌘C or ↩ | PNG to the clipboard (Retina images carry 144 dpi). If **auto-save** is on, a PNG is also written to your screenshot folder. |
-| Save | ⌘S | Save panel. The name is pre-filled from your naming template and the last folder is remembered. Ends in `.jpg` or `.jpeg` to get a JPEG; otherwise PNG. |
+| Save | ⌘S | Save panel. The name is pre-filled from your naming template and the last folder is remembered. End the name in `.jpg` or `.jpeg` to get a JPEG. Otherwise it's a PNG. |
 | Print | ⌘P | System print dialog, scaled to fit the page and centred |
-| Pin | — | Floats the capture above other windows (see below) |
-| Record | — | Starts recording this area. If you clicked a window, only that window is recorded. |
+| Pin | None | Floats the capture above other windows (see below) |
+| Record | None | Starts recording this area. If you clicked a window, only that window is recorded. |
 | ✕ | Esc | Cancel |
 
-A small "Copied" or "Saved" confirmation appears next to the pointer.
+A "Copied" or "Saved" confirmation appears next to the pointer.
 
 ### Pinned captures
 
@@ -65,18 +65,18 @@ Pins stay until you close them or quit Photon. They're not saved anywhere.
    - **Drag** a region to record that part of the screen.
    - **Click a window** to record *only that window*. The badge reads "… window only". The video follows the window and never shows other windows, even when you switch apps or windows cover it.
    - **Click empty desktop** to record the whole display.
-2. In the record bar, toggle **microphone**, **system audio** and the **webcam bubble**. These toggles are remembered. The webcam bubble isn't available when recording a single window.
+2. In the record bar, toggle **microphone**, **system audio** and the **webcam bubble**. These toggles are remembered. The webcam bubble isn't available for window recordings.
 3. Press **Record** or ↩.
 
 ### While recording
 
-- A 3-second countdown appears. **Skip** starts immediately; **Esc** cancels and nothing is saved.
-- Region and display recordings show a dashed outline around the area: red while recording, grey while paused. The outline is never in the video. Window recordings have no outline, because the window can move.
+- A 3-second countdown appears. **Skip** starts immediately. **Esc** cancels, and nothing is saved.
+- Region and display recordings show a dashed outline around the area, red while recording and grey while paused. The outline is never in the video. Window recordings have no outline, because the window can move.
 - The menu-bar icon becomes a **red dot and a clock**.
   - **Click the clock** to stop and save.
   - **Right-click** for Stop and Save, Pause or Resume, and Discard Recording.
 - Pressing **either shortcut (⇧⌘0 or ⇧⌘9)** stops and saves.
-- The webcam bubble shows your camera in a circle in the corner of the area. Drag it anywhere; it *is* in the video.
+- The webcam bubble shows your camera in a circle in the corner of the area. Drag it anywhere. The bubble is recorded in the video.
 - Clicks are highlighted and the pointer is shown, unless you turn those off in Settings.
 - Quitting Photon while recording saves the recording first.
 
@@ -90,7 +90,7 @@ A panel appears in the bottom-right for 10 seconds:
 | Copy file | Puts the file on the clipboard, ready to paste into Discord, Slack, Mail or Finder |
 | Open | Opens the file in your default video player |
 | Trim | Opens the macOS trimmer (yellow handles). **Trim** replaces the file with the trimmed version, without re-encoding. |
-| Make GIF | Writes a looping GIF next to the video: 12 fps, up to 960 px wide, first 60 seconds |
+| Make GIF | Writes a looping GIF next to the video (12 fps, up to 960 px wide, first 60 seconds) |
 
 The GIF gets its own panel with Show in Finder, Copy file and Open.
 

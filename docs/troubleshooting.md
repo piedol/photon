@@ -2,7 +2,7 @@
 
 ## The shortcut does nothing
 
-**Another app owns it.** Some other screenshot tools use ⇧⌘9 too.
+**Another app owns it.** Some other screenshot tools also use ⇧⌘9.
 - Quit the other app, or pick a new shortcut in Settings › General.
 - If registration fails, the note under the shortcut buttons says so.
 
@@ -18,7 +18,7 @@ pgrep -x Photon
 
 Screen Recording permission is missing or stale:
 - Check System Settings › Privacy & Security › Screen & System Audio Recording.
-- After an **ad-hoc** rebuild, remove Photon from that list and add it again. A stable Developer ID signature avoids this; see [Deployment](deployment.md).
+- After an **ad-hoc** rebuild, remove Photon from that list and add it again. A stable Developer ID signature avoids this. See [Deployment](deployment.md).
 
 ## Esc, ↩ or typing doesn't work in the overlay
 
@@ -30,7 +30,7 @@ The overlay is a key-capable panel, and Esc is also claimed system-wide while it
 
 This is macOS's periodic consent prompt for apps that use ScreenCaptureKit directly. Choose **Allow**.
 
-If it names **Terminal** or another app instead of Photon, Photon was started from a shell; see [Permissions](permissions.md).
+If it names **Terminal** or another app instead of Photon, Photon was started from a shell. See [Permissions](permissions.md).
 
 ## Recording
 
@@ -39,7 +39,7 @@ If it names **Terminal** or another app instead of Photon, Photon was started fr
 | Other windows appear in the video | You dragged a region. Click the window instead, so the badge says "… window only". |
 | No microphone in the file | The mic toggle was off, or Microphone permission was denied. Pick the right device in Settings › Recordings. |
 | No system audio | Turn on "Record system audio". Photon's own sounds are always excluded. |
-| No webcam bubble | Camera permission, the camera picker, or a single-window recording (not supported) |
+| No webcam bubble | Camera permission and the camera picker. Window recordings can't include the bubble. |
 | "Recording stopped" mid-way | The stream failed, for example because the display disconnected or the window closed. What was recorded is still saved. |
 | Stop took a few seconds | It finishes within 6 s even if macOS drops a callback. Run with `PHOTON_LOG=1` to see segment events. |
 | A `photon-recordings` folder in the temp directory | Leftover segments from a crash. They're deleted automatically at next launch. |
@@ -50,7 +50,7 @@ The cloud provider's folder was missing, for example because you were signed out
 
 ## Memory looks higher than 12 MB
 
-That's expected after the first capture: about 45 MB of system graphics and font caches, which stays flat. If it keeps growing across captures, run `leaks $(pgrep -x Photon)` and see [Development](development.md#memory-checks).
+About 45 MB after the first capture is expected. The extra memory is system graphics and font caches, and it stays flat. If it keeps growing across captures, run `leaks $(pgrep -x Photon)` and see [Development](development.md#memory-checks).
 
 ## Reset everything
 

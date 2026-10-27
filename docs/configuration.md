@@ -1,6 +1,6 @@
 # Configuration
 
-Everything is set in **Settings** (menu bar › Settings…, or `open photon://settings`). Changes apply and save straight away; there's no Save button.
+Photon is configured in **Settings** (menu bar › Settings…, or `open photon://settings`). Changes apply and save straight away, so there's no Save button.
 
 ## Settings window
 
@@ -34,7 +34,7 @@ If a chosen cloud folder disappears (for example because you signed out of the p
 
 ## Stored preferences
 
-Settings live in the standard macOS preferences for the domain `top.piedol.photon`, in `~/Library/Preferences/top.piedol.photon.plist`. You can inspect them with `defaults read top.piedol.photon`.
+Settings are stored in the standard macOS preferences for the domain `top.piedol.photon`, in `~/Library/Preferences/top.piedol.photon.plist`. `defaults read top.piedol.photon` prints them.
 
 | Key | Type | Default | Meaning |
 |---|---|---|---|
@@ -42,10 +42,10 @@ Settings live in the standard macOS preferences for the domain `top.piedol.photo
 | `recordHotkey` | int | ⇧⌘0 | Record shortcut, same encoding |
 | `shotAutosave` | bool | `false` | Also write a PNG when copying |
 | `shotDir` | string | `~/Pictures/Photon` | Screenshot folder |
-| `lastSaveDir` | string | — | Last folder chosen in the ⌘S save panel |
+| `lastSaveDir` | string | None | Last folder chosen in the ⌘S save panel |
 | `recDir` | string | `~/Movies/Photon` | Recording folder |
 | `recAlsoCopy` | bool | `false` | Copy each recording to a second folder |
-| `recAlsoDir` | string | — | That second folder |
+| `recAlsoDir` | string | None | That second folder |
 | `recCodec` | string | `h264` | `h264` or `hevc` |
 | `recFps60` | int | `60` | `30` or `60` (replaces the old `recFps` key) |
 | `recSystemAudio` | bool | `true` | Capture system audio (Photon's own sounds are excluded) |
@@ -62,7 +62,7 @@ Settings live in the standard macOS preferences for the domain `top.piedol.photo
 | `recNameTemplate`, `recNameDate`, `recNameTime`, `recNameCase`, `recNameSep` | strings | see below | Recording naming rule |
 | `shotCounter`, `recCounter` | int | `1` | Next `{counter}` value |
 
-Unknown or invalid values fall back to the defaults. To reset everything, quit Photon, then:
+Unknown or invalid values fall back to the defaults. To reset all settings, quit Photon, then run:
 
 ```bash
 defaults delete top.piedol.photon
@@ -82,7 +82,7 @@ Screenshots and recordings each have their own template.
 | `{display}` | Display name |
 | `{counter}` | Running number, zero-padded to 3 digits (`007`) |
 
-Tokens are case-insensitive. Unknown `{words}` stay as plain text. Anything else you type is kept.
+Tokens are case-insensitive. Unknown `{words}` aren't replaced, and the rest of the text you type is kept.
 
 | Option | Choices (stored key) |
 |---|---|

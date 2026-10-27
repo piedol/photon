@@ -28,7 +28,7 @@ The unit tests (58) cover the pure modules:
 
 The AppKit, ScreenCaptureKit and AVFoundation code is exercised by the self-tests below.
 
-To test the real app (signed, so permissions stick), use:
+To test the signed app (so permissions stick), run:
 
 ```bash
 scripts/bundle.sh --install
@@ -42,7 +42,7 @@ Synthetic mouse and keyboard events need Accessibility permission, so Photon has
 PHOTON_DEV=1 PHOTON_LOG=1 /Applications/Photon.app/Contents/MacOS/Photon
 ```
 
-Then trigger one:
+Then open a self-test URL:
 
 ```bash
 open photon://selftest
@@ -60,7 +60,7 @@ open photon://selftest
 
 Screenshots go to `$PHOTON_SHOTS` (default `/tmp/photon-shots`), and logs go to stderr.
 
-**Privacy note:** the self-tests capture whatever is on screen, and recording tests save real files to your recordings folder. Delete those artifacts afterwards.
+The self-tests capture whatever is on screen, and the recording tests save files to your recordings folder. Delete those files afterwards.
 
 Useful log lines:
 - `overlay shown in N ms`: shortcut-to-overlay latency (about 100 ms warm, about 230 ms for the first capture after launch).
@@ -84,18 +84,18 @@ Expect about 12 MB right after launch and about 45 MB after the first capture, f
 
 ## Conventions
 
-- **Main thread only for AppKit.** Background callbacks hop back with `util::main_async`; main-thread values cross in `util::MainBound`.
-- **State** lives in `thread_local!` `RefCell`s. Use the module's `with()` (try-borrow) and do re-entrant work, such as closing windows, after the borrow ends.
-- **Commands:** a new button gets a `Command` variant with a unique tag in `commands.rs` (and the round-trip test), and is handled in `app::handle` or `session::command`.
-- **objc2 classes** use `define_class!`. Remember `set_ivars(())` before `msg_send![super(this), init…]`.
-- **Pure logic** (geometry, selection, model, naming, cloud) stays free of AppKit and gets unit tests.
+- AppKit is called on the main thread only. Background callbacks hop back with `util::main_async`, and main-thread values cross in `util::MainBound`.
+- State is kept in `thread_local!` `RefCell`s. Use the module's `with()` (try-borrow) and do re-entrant work, such as closing windows, after the borrow ends.
+- A new button gets a `Command` variant with a unique tag in `commands.rs` (and the round-trip test), and is handled in `app::handle` or `session::command`.
+- objc2 classes use `define_class!`. Remember `set_ivars(())` before `msg_send![super(this), init…]`.
+- Pure logic (geometry, selection, model, naming, cloud) stays free of AppKit and gets unit tests.
 
 ## Adding a markup tool
 
 1. Add a variant to `annotate::model::Tool` (and to `ALL`, `symbol`, `tooltip`).
 2. Add a `Shape` variant, then handle it in `Draft::update`, `Draft::shape` and `Draft::finish`.
 3. Draw it in `annotate::render::draw_shape`. It's then automatically on screen and in exports.
-4. The palette picks it up from `Tool::ALL`. Its height grows by one button.
+4. The palette picks it up from `Tool::ALL` and grows by a button's height.
 
 ## Project layout
 

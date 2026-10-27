@@ -1,6 +1,6 @@
 # Interfaces
 
-Photon has no network API. Its interfaces are global shortcuts, keys inside the overlay, a URL scheme, and one command-line flag.
+Photon has no network API. Its interfaces are global shortcuts, keys inside the overlay, a URL scheme and the `--login-item` command-line flag.
 
 ## Global shortcuts
 
@@ -21,7 +21,7 @@ Pressing the same shortcut while its overlay is open closes the overlay. **Esc i
 | Esc | Cancel text editing, then close the swatches, then close the overlay |
 | ↩ / Enter | Copy and close (screenshot), or start recording (record) |
 | ⌘C, ⌘S, ⌘P | Copy, Save, Print |
-| ⌘Z | Undo the last mark. While typing, it undoes text in the text box; the Undo button cancels the text instead. |
+| ⌘Z | Undo the last mark. While typing, it undoes text in the text box. The Undo button cancels the text instead. |
 | ← → ↑ ↓ | Move the selection 1 px (⇧ for 10 px). ⌥ resizes instead. |
 | `[` `]` or scroll | Smaller or larger stroke |
 | ⇧ while drawing | Constrain to 45°, square or circle |
@@ -59,18 +59,18 @@ Without arguments, the binary runs the menu-bar app.
 
 ## How errors appear
 
-Photon has no error codes for users. Problems appear as a HUD next to the pointer (an orange warning symbol, a title and one line of detail, about 4 seconds). The ones you can see:
+Photon has no error codes for users. Problems appear for about 4 seconds as a HUD next to the pointer, with an orange warning symbol, a title and a line of detail. The messages are:
 
 | Message | Cause |
 |---|---|
 | Couldn't capture the screen | ScreenCaptureKit returned an error, usually missing permission |
 | Recording stopped | The stream failed mid-recording. Whatever was recorded is still saved. |
 | Couldn't save the recording | Joining segments or moving the file into the folder failed |
-| Copied, but auto-save failed | The PNG couldn't be written; the clipboard copy still worked |
+| Copied, but auto-save failed | The PNG couldn't be written. The clipboard copy still worked. |
 | Copied · cloud folder missing / Saved locally · cloud folder missing | The chosen cloud folder is unavailable, so the file went to the local default |
 | Couldn't trim the recording / Couldn't make the GIF | AVFoundation export or ImageIO failed |
 | Microphone access is off / Camera access is off | Permission denied. Photon also opens the right Settings pane. |
-| Webcam bubble is off for window recordings | Single-window recordings can't include the bubble |
+| Webcam bubble is off for window recordings | Window recordings can't include the bubble |
 | Couldn't change Launch at Login | macOS (SMAppService) refused |
 
 Shortcut conflicts appear in Settings › General, under the shortcut buttons.

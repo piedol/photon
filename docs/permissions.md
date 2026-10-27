@@ -1,12 +1,12 @@
 # Permissions
 
-Photon has no user accounts or roles. Its access model is macOS privacy permissions (TCC), the entitlements in its signature, and one temporary system-wide key.
+Photon has no user accounts or roles. Its access model is macOS privacy permissions (TCC), the entitlements in its signature, and a temporary system-wide Esc shortcut.
 
 ## macOS privacy permissions
 
 | Permission | Needed for | When it's asked | If denied |
 |---|---|---|---|
-| Screen & System Audio Recording | Every screenshot and recording, and system audio | At launch, through `CGRequestScreenCaptureAccess` | A dialog explains and offers **Open System Settings**; captures fail until it's granted |
+| Screen & System Audio Recording | Every screenshot and recording, and system audio | At launch, through `CGRequestScreenCaptureAccess` | A dialog explains and offers **Open System Settings**. Captures fail until it's granted. |
 | Microphone | The record bar's mic toggle | The first time you turn the mic on | The mic is skipped for that recording, and a HUD opens Privacy › Microphone |
 | Camera | The webcam bubble | The first time you turn the webcam on | The bubble is skipped, and a HUD opens Privacy › Camera |
 

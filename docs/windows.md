@@ -11,15 +11,15 @@ Photon for Windows is a native Windows edition with the same features as the Mac
 
 1. Download `Photon-windows-x64.zip` from the repo's [Releases](https://github.com/piedol/photon/releases).
 2. Unzip `Photon.exe` anywhere you like, for example `%LOCALAPPDATA%\Programs\Photon`.
-3. Run it. The build is not code-signed, so Windows SmartScreen may warn the first time: click **More info › Run anyway**.
+3. Run it. The build is not code-signed, so Windows SmartScreen may warn the first time. Click **More info › Run anyway**.
 4. Photon appears in the notification area (system tray). Press **Ctrl+Shift+9**.
 5. To start Photon with Windows, right-click the tray icon and turn on **Launch at Login**.
 
-There are no installers, services or drivers. Photon is one 0.9 MB program.
+`Photon.exe` is 0.9 MB and needs no installer, services or drivers.
 
 ## How it differs from the Mac app
 
-Everything in [Usage](usage.md) applies, with these Windows equivalents:
+[Usage](usage.md) also applies on Windows, with these equivalents:
 
 | Mac | Windows |
 |---|---|
@@ -28,7 +28,7 @@ Everything in [Usage](usage.md) applies, with these Windows equivalents:
 | **⌘C · ⌘S · ⌘P · ⌘Z** | **Ctrl+C · Ctrl+S · Ctrl+P · Ctrl+Z** |
 | Menu-bar icon and timer | Tray icon: turns red while recording. Left-click stops, right-click opens the menu. |
 | Show in Finder | Show in Explorer |
-| QuickTime-style trimmer | Photon's own trim window: filmstrip, drag the yellow handles, **Enter** to trim. Still lossless. |
+| QuickTime-style trimmer | Photon's trim window, with a filmstrip. Drag the yellow handles and press **Enter** to trim. Trimming is still lossless. |
 | macOS privacy prompts | No prompts. For the mic or webcam, Windows must allow desktop apps under **Settings › Privacy**. |
 | System accent colour | Windows accent colour |
 | `open photon://capture` | `start photon://capture` (also `record`, `stop`, `settings`) |
@@ -46,7 +46,7 @@ Both shortcuts can be changed in **Settings › General**, as on the Mac.
 | `photon://` links | `HKCU\Software\Classes\photon`, written at each launch for the current user only |
 | Log (only with `PHOTON_LOG`) | `%LOCALAPPDATA%\Photon\photon.log` |
 
-Cloud destinations work the same way as on the Mac. Photon detects OneDrive (personal and work), Google Drive, Dropbox, Box and iCloud Drive folders, writes into them, and lets the provider's own app upload. Photon has no network code.
+Cloud destinations work the same way as on the Mac. Photon detects OneDrive (personal and work), Google Drive, Dropbox, Box and iCloud Drive folders and writes into them. The provider's app uploads the files, since Photon has no network code.
 
 ## Privacy
 
@@ -97,7 +97,7 @@ The Windows edition reuses the Mac app's platform-free code by including those f
 - `output/destination.rs` (folders and fallbacks)
 - `commands.rs`
 
-Everything that touches the OS is Windows-native:
+The OS-facing code is Windows-native:
 
 | Module | Job |
 |---|---|
@@ -123,7 +123,7 @@ start photon://selftest
 
 Available sessions: `selftest`, `selftest-record`, `selftest-trim`, `selftest-trim-apply`, `selftest-gif`, `selftest-window`, `selftest-misc`, `selftest-webcam`, `selftest-settings`, `selftest-escape` and `selftest-plain`. Screenshots go to `%PHOTON_SHOTS%` (default `%TEMP%\photon-shots`).
 
-The self-tests capture whatever is on screen and save real recordings, so delete those files afterwards. With `PHOTON_DEV` set, Photon's own panels are not hidden from captures, so they appear in the test screenshots.
+The self-tests capture whatever is on screen and save recording files, so delete those afterwards. With `PHOTON_DEV` set, Photon's own panels are not hidden from captures, so they appear in the test screenshots.
 
 ## Uninstalling
 

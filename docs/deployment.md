@@ -1,6 +1,6 @@
 # Deployment
 
-Photon is a single local app with no servers, databases or hosted infrastructure. "Deployment" means building the app bundle, signing it and installing it on a Mac.
+Photon has no servers or databases, so deploying it means building the app bundle, signing it and installing it on a Mac.
 
 ## Build and install
 
@@ -29,7 +29,7 @@ What `bundle.sh` does:
    - Without either, it falls back to an ad-hoc signature and warns. macOS then asks for permissions again after every build.
 4. Verifies the signature and prints the bundle size, binary size and architecture.
 
-Result: a ~1.5 MB bundle (about 800 KB binary plus the icon), arm64 only.
+The bundle is about 1.5 MB (a binary of about 800 KB plus the icon) and arm64 only.
 
 ## Notarizing
 

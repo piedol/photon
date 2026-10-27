@@ -12,14 +12,14 @@
 scripts/bundle.sh --install
 ```
 
-This:
+This command:
 1. Builds a release binary for `aarch64-apple-darwin`.
 2. Assembles `dist/Photon.app`.
 3. Signs it with the hardened runtime.
 4. Replaces `/Applications/Photon.app`.
 5. Launches it.
 
-Photon lives in the menu bar (the crop-corners icon) and has no Dock icon.
+Photon appears in the menu bar as a crop-corners icon. It has no Dock icon.
 
 ## First launch
 
@@ -27,7 +27,7 @@ Photon lives in the menu bar (the crop-corners icon) and has no Dock icon.
 2. Press **⇧⌘9** to take a screenshot, or **⇧⌘0** to record.
 3. To start Photon at login, use **Launch at Login** in the menu, or Settings › General.
 
-Microphone and Camera permissions are only requested the first time you turn on the mic or the webcam bubble.
+Photon asks for Microphone and Camera permission the first time you turn on the mic or the webcam bubble.
 
 ## Shortcut conflicts
 
@@ -39,5 +39,5 @@ Download `Photon-windows-x64.zip` from Releases, or build it yourself. See [Phot
 
 ## Next
 
-- [Usage](usage.md) covers every tool and key.
+- [Usage](usage.md) covers the tools and keys.
 - [Configuration](configuration.md) covers where files go and how they're named.

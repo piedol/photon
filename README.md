@@ -5,7 +5,7 @@
 <h1 align="center">Photon</h1>
 
 <p align="center">
-  Screenshots, markup and screen recording in one small native app for macOS and Windows.
+  A screenshot, markup and screen recording app for macOS and Windows.
 </p>
 
 <p align="center">
@@ -25,9 +25,9 @@
   <img src="docs/images/showcase.png" width="880" alt="Photon's capture overlay: a selected region marked up with an arrow, a box, numbered steps and a pixelated email, beside the tool palette and the action bar">
 </p>
 
-Photon takes screenshots and screen recordings from the menu bar. One shortcut freezes the screen so you can select an area, mark it up and copy it; another records a region, a window or a whole screen at 60 fps, which you can then trim or turn into a GIF.
+Photon takes screenshots and screen recordings from the menu bar. Press **⇧⌘9** (Windows: **Ctrl+Shift+9**) and the screen freezes while you select an area, mark it up and copy it. **⇧⌘0** records a region, a window or a whole screen at 60 fps, and afterwards you can trim the recording or turn it into a GIF.
 
-It's a single native program under 1 MB, written in Rust, with no accounts and no network code. Between captures it only waits for its shortcuts.
+Photon is written in Rust and makes no network connections. Its program file is under 1 MB on both the Mac and Windows.
 
 ## Contents
 
@@ -53,7 +53,7 @@ To check your Mac, open the Apple menu › **About This Mac**. Photon runs on it
 **Mac**
 
 1. Open the zip and drag **Photon** into your **Applications** folder.
-2. Open Photon. It's signed and notarized by Apple, so macOS only asks you to confirm that you want to open an app downloaded from the internet.
+2. Open Photon and confirm that you want to open an app downloaded from the internet. It's signed and notarized by Apple, so macOS doesn't ask you to approve it in Privacy & Security.
 3. Allow **Screen & System Audio Recording** when macOS asks.
 4. Photon's icon appears in the menu bar. Press **⇧⌘9** to take your first screenshot.
 
@@ -73,14 +73,14 @@ To remove Photon, see [Uninstalling](docs/deployment.md#uninstalling) for the Ma
   <img src="docs/images/markup.png" width="520" alt="Marking up a screenshot in Photon: the tool palette with its colour swatches open">
 </p>
 
-1. Press **⇧⌘9** (Windows: **Ctrl+Shift+9**). Every screen freezes at full resolution, so what you mark up is exactly what was there.
-2. Drag over an area, click a window to select it exactly, or click the desktop for the whole screen. Fine-tune with the handles or the arrow keys; a badge shows the size in pixels.
+1. Press **⇧⌘9** (Windows: **Ctrl+Shift+9**). Your screens freeze at full resolution.
+2. Drag over an area, click a window to select it, or click the desktop for the whole screen. Adjust the selection with the handles or the arrow keys. A badge shows its size in pixels.
 3. Mark it up if you like.
 4. Press **Return** to copy it, or use the action bar to save it as PNG or JPEG, print it, or pin it above your other windows.
 
 Press **Esc** to cancel at any point.
 
-The markup tools are a pen, line, arrow, rectangle, ellipse, highlighter and text, plus **Pixelate** for passwords, email addresses and anything else private, and **numbered steps** (1, 2, 3…) for quick how-to guides. Hold Shift for straight lines, squares and circles. There are eight colours and a custom colour picker, and three stroke sizes on `[` and `]` or the scroll wheel.
+The markup tools are a pen, line, arrow, rectangle, ellipse, highlighter and text, plus **Pixelate** for hiding passwords and email addresses, and **numbered steps** (1, 2, 3…) for how-to guides. Hold Shift for straight lines, squares and circles. There are eight colours and a custom colour picker, and three stroke sizes on `[` and `]` or the scroll wheel.
 
 ## Recording your screen
 
@@ -93,7 +93,7 @@ The markup tools are a pen, line, arrow, rectangle, ellipse, highlighter and tex
 3. Press **Return**. A countdown starts, which you can skip.
 4. Press the shortcut again to stop.
 
-Recordings are 60 fps H.264, or HEVC for smaller files, encoded in hardware and written straight to disk. System audio is recorded by default. You can add your microphone and a webcam bubble (except in single-window recordings), highlight your clicks, and pause and resume.
+Recordings are 60 fps H.264, or HEVC for smaller files, encoded in hardware and written straight to disk. System audio is recorded by default. You can add your microphone and a webcam bubble (not available when recording a window), highlight your clicks, and pause and resume.
 
 When you stop, a panel offers **Copy file** (which pastes straight into chat apps and email), **Open**, **Trim** (cuts the start and end without re-encoding), **Make GIF** (a looping 12 fps GIF of the first 60 seconds, up to 960 px wide) and **Show in Finder**.
 
@@ -105,7 +105,7 @@ When you stop, a panel offers **Copy file** (which pastes straight into chat app
 
 - Screenshots go to the clipboard. Turn on auto-save to also keep a copy in a folder.
 - Recordings go to your Movies (Windows: Videos) folder, or a folder you choose.
-- Photon finds your OneDrive, Google Drive, Dropbox, Box and iCloud Drive folders. Choose one as the destination and the provider's own app uploads your files; Photon never signs in to anything.
+- Photon finds your OneDrive, Google Drive, Dropbox, Box and iCloud Drive folders. Save to any of them and the provider's app uploads the files. Photon never signs in to anything.
 - File names follow a template with tokens for the date, time, app name, size and a counter, with a live preview.
 
 ## Keyboard shortcuts
@@ -127,7 +127,8 @@ Both main shortcuts can be changed in **Settings › General**. Scripts and laun
 
 - Photon captures the screen only when you press a shortcut, and records only between Record and Stop.
 - The microphone and camera are used only during a recording, and only when you turn them on.
-- Photon makes no network connections: there are no accounts, analytics, crash reports or update checks. Your files go only where you save or paste them.
+- Photon makes no network connections. It has no analytics or crash reporting and doesn't check for updates.
+- Your files go only where you save or paste them.
 - Pixelation is burned into the exported image, and the original pixels aren't kept.
 
 [Security & privacy](docs/security.md) has the details.
