@@ -350,8 +350,8 @@ pub fn show() {
     // General.
     let mut g = Form::new(inner_w, inner_h);
     g.section(&tr("Shortcuts"));
-    g.row(&tr("Screenshot:"), SHOT_KEY, shortcut_button(s.shot_hotkey, SHOT_KEY), Some(140.0), 28.0);
-    g.row(&tr("Record screen:"), REC_KEY, shortcut_button(s.record_hotkey, REC_KEY), Some(140.0), 28.0);
+    g.row(&tr("Screenshot:"), SHOT_KEY, shortcut_button(s.shot_hotkey, SHOT_KEY), Some(160.0), 28.0);
+    g.row(&tr("Record screen:"), REC_KEY, shortcut_button(s.record_hotkey, REC_KEY), Some(160.0), 28.0);
     let hotkey_note = g.note(&tr("Click a shortcut, then press the new keys. It needs ⌘, ⌃ or ⌥. Esc cancels."));
     g.section(&tr("Startup"));
     g.plain(LOGIN, checkbox(&tr("Launch Photon at login"), LOGIN, app::login_item_enabled()), 20.0);
@@ -397,9 +397,13 @@ pub fn show() {
     rc.section(&tr("Video and audio"));
     let half = (inner_w - (X + LABEL_W + 10.0) - X - 8.0) / 2.0;
     let y = rc.y;
-    rc.row(&tr("Format:"), CODEC, popup(&[tr("H.264 (most compatible)"), tr("HEVC (smaller files)")], (s.rec_codec == Codec::Hevc) as usize, CODEC), Some(half), 25.0);
+    // Codec names are long and frame rates short, so the codec popup takes more of the row.
+    // The right edge still lines up with the device popups below.
+    let fps_w = 120.0;
+    let codec_w = half * 2.0 - fps_w;
+    rc.row(&tr("Format:"), CODEC, popup(&[tr("H.264 (most compatible)"), tr("HEVC (smaller files)")], (s.rec_codec == Codec::Hevc) as usize, CODEC), Some(codec_w), 25.0);
     let fps = popup(&[tr("30 fps"), tr("60 fps")], (s.rec_fps == 60) as usize, FPS);
-    fps.setFrame(cg_rect(Rect::new(X + LABEL_W + 10.0 + half + 8.0, y, half, 25.0)));
+    fps.setFrame(cg_rect(Rect::new(X + LABEL_W + 10.0 + codec_w + 8.0, y, fps_w, 25.0)));
     rc.view.addSubview(&fps);
     rc.controls.push((FPS, fps));
     let mics = devices(false);
@@ -473,6 +477,11 @@ pub fn move_for_test() {
 
 pub fn window_number_for_test() -> Option<isize> {
     STATE.with(|s| s.borrow().as_ref().map(|s| s.window.windowNumber()))
+}
+
+/// The Settings window, for self-tests that draw it into an image.
+pub fn window_for_test() -> Option<objc2::rc::Retained<NSWindow>> {
+    STATE.with(|s| s.borrow().as_ref().map(|s| s.window.clone()))
 }
 
 pub fn close_for_test() {

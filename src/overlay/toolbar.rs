@@ -160,8 +160,14 @@ impl Toolbars {
         close.setFrame(frame(x, PAD, BTN, BTN));
         actions.addSubview(&close);
 
-        // Record bar.
-        let start_w = 104.0;
+        // Record bar. The Record button grows to fit its title, which runs longer in German
+        // and French.
+        let start = ui::text_button(mtm, &tr("Record"), Command::StartRecording);
+        start.setImage(ui::symbol("record.circle.fill", 13.0).as_deref());
+        start.setImagePosition(objc2_app_kit::NSCellImagePosition::ImageLeading);
+        start.setBezelColor(Some(&NSColor::systemRedColor()));
+        start.setKeyEquivalent(&ns("\r"));
+        let start_w = (start.fittingSize().width + 16.0).max(104.0);
         let rw = PAD * 2.0 + BTN * 4.0 + GAP * 2.0 + start_w;
         let record_bar = ui::hud_surface(mtm, frame(0.0, 0.0, rw, BTN + PAD * 2.0), RADIUS, true);
         let mic = ui::icon_button(mtm, "mic", &tr("Microphone"), Command::ToggleMic);
@@ -175,11 +181,6 @@ impl Toolbars {
         }
         record_bar.addSubview(&divider(mtm, frame(x + GAP / 2.0 - 0.5, PAD + 6.0, 1.0, BTN - 12.0)));
         x += GAP;
-        let start = ui::text_button(mtm, &tr("Record"), Command::StartRecording);
-        start.setImage(ui::symbol("record.circle.fill", 13.0).as_deref());
-        start.setImagePosition(objc2_app_kit::NSCellImagePosition::ImageLeading);
-        start.setBezelColor(Some(&NSColor::systemRedColor()));
-        start.setKeyEquivalent(&ns("\r"));
         start.setFrame(frame(x, PAD - 1.0, start_w, BTN + 2.0));
         record_bar.addSubview(&start);
         x += start_w + GAP;

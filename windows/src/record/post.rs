@@ -59,7 +59,16 @@ pub fn finished_hud(path: PathBuf, fell_back: bool) {
         actions.push((Icon::Trim, tr("Trim"), Command::Trim));
         actions.push((Icon::Gif, tr("Make GIF"), Command::ExportGif));
     }
-    let (w, h) = (330.0 * s, 96.0 * s);
+    let title = if fell_back {
+        tr("Saved locally · cloud folder missing")
+    } else if is_video {
+        tr("Recording saved")
+    } else {
+        tr("GIF saved")
+    };
+    // Wide enough for the title, which is longer in some languages, and the close button.
+    let title_w = d2d::measure(&d2d::layout(&title, 13.0 * s, d2d::WEIGHT_SEMIBOLD)).0;
+    let (w, h) = ((330.0 * s).max(title_w + 66.0 * s), 96.0 * s);
     let r = Rect::new(work.max_x() - w - 16.0 * s, work.max_y() - h - 16.0 * s, w, h);
     let mut buttons: Vec<Button> = actions
         .iter()
@@ -74,13 +83,6 @@ pub fn finished_hud(path: PathBuf, fell_back: bool) {
         .collect();
     buttons.push(Button { rect: Rect::new(w - 34.0 * s, 8.0 * s, 26.0 * s, 26.0 * s), cmd: Command::DismissHud, icon: Some(Icon::Close), label: None, tooltip: tr("Dismiss") });
     let name = path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
-    let title = if fell_back {
-        tr("Saved locally · cloud folder missing")
-    } else if is_video {
-        tr("Recording saved")
-    } else {
-        tr("GIF saved")
-    };
     let detail = format!("{name} · {}", util::tilde(path.parent().unwrap_or(&path)));
     let id = hud::show(r, s, Content::Saved { title, detail }, buttons, false, false);
     hud::dismiss_after(id, 10.0);

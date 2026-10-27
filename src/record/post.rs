@@ -141,14 +141,6 @@ pub fn finished_hud(path: PathBuf, fell_back: bool) {
         }
         v
     };
-    let btn = 30.0;
-    let w = (24.0 + btn * actions.len() as f64 + 30.0).max(300.0);
-    let h = 88.0;
-    let screen = hud::pointer_screen(mtm);
-    let frame = Rect::new(screen.max_x() - w - 16.0, screen.y + 16.0, w, h);
-    let panel = hud::panel(mtm, frame, objc2_app_kit::NSStatusWindowLevel);
-    let surface = ui::hud_surface(mtm, cg_rect(Rect::new(0.0, 0.0, w, h)), 10.0, false);
-
     let title = if fell_back {
         tr("Saved locally · cloud folder missing")
     } else if is_video {
@@ -158,6 +150,15 @@ pub fn finished_hud(path: PathBuf, fell_back: bool) {
     };
     let title = NSTextField::labelWithString(&ns(&title), mtm);
     title.setFont(Some(&NSFont::systemFontOfSize_weight(13.0, unsafe { NSFontWeightSemibold })));
+    // The panel is wide enough for its buttons and for the title, which is longer in some languages.
+    let btn = 30.0;
+    let w = (24.0 + btn * actions.len() as f64 + 30.0).max(300.0).max(title.fittingSize().width.ceil() + 50.0);
+    let h = 88.0;
+    let screen = hud::pointer_screen(mtm);
+    let frame = Rect::new(screen.max_x() - w - 16.0, screen.y + 16.0, w, h);
+    let panel = hud::panel(mtm, frame, objc2_app_kit::NSStatusWindowLevel);
+    let surface = ui::hud_surface(mtm, cg_rect(Rect::new(0.0, 0.0, w, h)), 10.0, false);
+
     title.setTextColor(Some(&NSColor::colorWithWhite_alpha(1.0, 0.95)));
     title.setFrame(cg_rect(Rect::new(16.0, h - 30.0, w - 50.0, 17.0)));
     surface.addSubview(&title);

@@ -399,14 +399,39 @@ fn draw(rt: &ID2D1RenderTarget, p: &Panel) {
     }
 }
 
+/// Shorten `s` to about `max` columns with an ellipsis in the middle. Chinese, Japanese and
+/// Korean characters take two columns.
 fn ellipsize(s: &str, max: usize) -> String {
-    let n = s.chars().count();
-    if n <= max {
+    let cols = |c: char| if is_wide(c) { 2 } else { 1 };
+    if s.chars().map(cols).sum::<usize>() <= max {
         return s.to_string();
     }
-    let head: String = s.chars().take(max / 2 - 1).collect();
-    let tail: String = s.chars().skip(n - (max / 2 - 1)).collect();
+    let half = max / 2 - 1;
+    let mut head = String::new();
+    let mut used = 0;
+    for c in s.chars() {
+        if used + cols(c) > half {
+            break;
+        }
+        used += cols(c);
+        head.push(c);
+    }
+    let mut tail = Vec::new();
+    used = 0;
+    for c in s.chars().rev() {
+        if used + cols(c) > half {
+            break;
+        }
+        used += cols(c);
+        tail.push(c);
+    }
+    let tail: String = tail.into_iter().rev().collect();
     format!("{head}…{tail}")
+}
+
+/// East Asian wide characters: Hangul, CJK ideographs and kana, full-width forms.
+fn is_wide(c: char) -> bool {
+    matches!(c as u32, 0x1100..=0x115F | 0x2E80..=0xA4CF | 0xAC00..=0xD7A3 | 0xF900..=0xFAFF | 0xFE30..=0xFE4F | 0xFF00..=0xFF60 | 0xFFE0..=0xFFE6)
 }
 
 /// A quiet confirmation near the pointer.
@@ -423,7 +448,7 @@ fn show_toast(title: &str, detail: Option<&str>, warn: bool, secs: f64) {
     let c = cursor();
     let (s, work, _) = monitor_at(c);
     let tw = d2d::measure(&d2d::layout(title, 13.0 * s, d2d::WEIGHT_SEMIBOLD)).0;
-    let dw = detail.map(|d| d2d::measure(&d2d::layout(d, 11.5 * s, d2d::WEIGHT_REGULAR)).0.min(420.0 * s)).unwrap_or(0.0);
+    let dw = detail.map(|d| d2d::measure(&d2d::layout(d, 11.5 * s, d2d::WEIGHT_REGULAR)).0.min(560.0 * s)).unwrap_or(0.0);
     let w = 40.0 * s + tw.max(dw) + 16.0 * s;
     let h = if detail.is_some() { 50.0 * s } else { 36.0 * s };
     let r = Rect::new(c.x + 16.0 * s, c.y + 18.0 * s, w, h).clamp_inside(&work.inset(8.0 * s));

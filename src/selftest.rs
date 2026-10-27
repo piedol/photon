@@ -200,6 +200,28 @@ fn grab_window(name: &str, number: isize) {
     util::log(format!("selftest grab {name}"));
 }
 
+/// Draw a window, title bar and toolbar included, into `$PHOTON_SHOTS/<name>.png`. Unlike
+/// `grab_window` this needs no screen recording permission, so it works for a dev build
+/// started next to the installed app; vibrancy draws flat, but text and layout are exact.
+fn draw_window(name: &str, window: &objc2_app_kit::NSWindow) {
+    use objc2_app_kit::{NSBitmapImageFileType, NSBitmapImageRep};
+    // SAFETY: the content view's superview is the window's frame view, owned by the window.
+    let Some(view) = window.contentView().and_then(|v| unsafe { v.superview() }) else { return };
+    let bounds = view.bounds();
+    let Some(rep): Option<objc2::rc::Retained<NSBitmapImageRep>> = view.bitmapImageRepForCachingDisplayInRect(bounds) else {
+        return;
+    };
+    view.cacheDisplayInRect_toBitmapImageRep(bounds, &rep);
+    let props = objc2_foundation::NSDictionary::new();
+    let Some(png) = (unsafe { rep.representationUsingType_properties(NSBitmapImageFileType::PNG, &props) }) else {
+        return;
+    };
+    let dir = std::env::var("PHOTON_SHOTS").unwrap_or_else(|_| "/tmp/photon-shots".into());
+    let _ = std::fs::create_dir_all(&dir);
+    let _ = std::fs::write(format!("{dir}/{name}.png"), png.to_vec());
+    util::log(format!("selftest drew {name}"));
+}
+
 /// `photon://selftest-showcase`: the README's overlay shots, docs/images/overlay.png and
 /// docs/images/markup.png (the same markup with the colour swatches open).
 /// Start `swift scripts/showcase-backdrop.swift` first: it centres an 820 × 590 pt page on the
@@ -270,9 +292,15 @@ pub fn run_settings_shots() {
     if std::env::var_os("PHOTON_DEV").is_none() {
         return;
     }
-    let shoot = |name: &'static str| {
+    // PHOTON_DRAW=1 draws the window instead of capturing it: no permission needed.
+    let draw = std::env::var_os("PHOTON_DRAW").is_some();
+    let shoot = move |name: &'static str| {
         move || {
-            if let Some(n) = crate::settings_window::window_number_for_test() {
+            if draw {
+                if let Some(w) = crate::settings_window::window_for_test() {
+                    draw_window(name, &w);
+                }
+            } else if let Some(n) = crate::settings_window::window_number_for_test() {
                 grab_window(name, n);
             }
         }
