@@ -29,6 +29,7 @@ mod naming;
 #[allow(dead_code)]
 mod selection;
 #[path = "../../src/i18n_text.rs"]
+#[allow(dead_code)]
 mod i18n_text;
 
 // Windows-native.
@@ -39,6 +40,8 @@ mod d2d;
 mod export;
 mod hotkey;
 mod hud;
+// `trn` and `language` have no caller yet: no Windows text shows a count.
+#[allow(dead_code)]
 mod i18n;
 mod keys;
 mod overlay;

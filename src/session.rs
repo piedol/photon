@@ -19,6 +19,7 @@ use crate::annotate::render::{self, Source};
 use crate::capture::{self, cg_rect, Display, Snapshot};
 use crate::commands::Command;
 use crate::geometry::{pt, Point, Rect};
+use crate::i18n::{tr, trf};
 use crate::keys::vk;
 use crate::overlay::chrome::Chrome;
 use crate::overlay::selection::{Release, Selection};
@@ -114,7 +115,7 @@ pub fn start(mode: Mode) {
         }
         Err(e) => {
             util::log(format!("capture failed: {e}"));
-            crate::hud::message("Couldn't capture the screen", Some(&e));
+            crate::hud::message(&tr("Couldn't capture the screen"), Some(&e));
         }
     });
 }
@@ -279,7 +280,10 @@ impl Session {
             let px = sc.sel.rect.map(|r| r.pixel_size(sc.display.scale)).unwrap_or((0, 0));
             // In record mode a clicked window is recorded on its own; say so on the badge.
             let label = match (&sc.picked_window, self.mode) {
-                (Some((_, app)), Mode::Record) => Some(format!("{} window only", app.as_deref().unwrap_or("This"))),
+                (Some((_, app)), Mode::Record) => Some(match app {
+                    Some(app) => trf("{app} window only", &[("app", app)]),
+                    None => tr("This window only"),
+                }),
                 _ => None,
             };
             self.toolbars.layout(sc.sel.rect, sc.bounds, px, dragging, label.as_deref());

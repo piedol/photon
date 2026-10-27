@@ -14,6 +14,7 @@ use crate::annotate::model::{Rgba, Tool, PALETTE, PALETTE_NAMES};
 use crate::capture::cg_rect;
 use crate::commands::Command;
 use crate::geometry::Rect;
+use crate::i18n::tr;
 use crate::overlay::chrome;
 use crate::ui;
 use crate::util::ns;
@@ -98,7 +99,7 @@ impl Toolbars {
         let mut y = h - PAD - BTN;
         let mut tool_buttons = Vec::new();
         for t in Tool::ALL {
-            let b = ui::icon_button(mtm, t.symbol(), t.tooltip(), Command::Tool(t.index()));
+            let b = ui::icon_button(mtm, t.symbol(), &t.tooltip(), Command::Tool(t.index()));
             b.setFrame(frame(PAD, y, BTN, BTN));
             rounded_bg(&b);
             tools.addSubview(&b);
@@ -107,15 +108,15 @@ impl Toolbars {
         }
         tools.addSubview(&divider(mtm, frame(PAD + 4.0, y + BTN - 1.0 - GAP / 2.0 + 4.0, BTN - 8.0, 1.0)));
         y -= GAP;
-        let color_button = swatch(mtm, frame(PAD + 6.0, y + 6.0, BTN - 12.0, BTN - 12.0), PALETTE[0], Command::CustomColor, "Color");
+        let color_button = swatch(mtm, frame(PAD + 6.0, y + 6.0, BTN - 12.0, BTN - 12.0), PALETTE[0], Command::CustomColor, &tr("Color"));
         color_button.setTag(Command::ToggleSwatches.tag());
         tools.addSubview(&color_button);
         y -= BTN;
-        let stroke_button = ui::icon_button(mtm, "circle.fill", "Stroke size  ([ ] or scroll)", Command::CycleStroke);
+        let stroke_button = ui::icon_button(mtm, "circle.fill", &tr("Stroke size  ([ ] or scroll)"), Command::CycleStroke);
         stroke_button.setFrame(frame(PAD, y, BTN, BTN));
         tools.addSubview(&stroke_button);
         y -= BTN;
-        let undo = ui::icon_button(mtm, "arrow.uturn.backward", "Undo  (⌘Z)", Command::Undo);
+        let undo = ui::icon_button(mtm, "arrow.uturn.backward", &tr("Undo  (⌘Z)"), Command::Undo);
         undo.setFrame(frame(PAD, y, BTN, BTN));
         tools.addSubview(&undo);
 
@@ -131,31 +132,31 @@ impl Toolbars {
             swatch_buttons.push(b);
             x += sw + 6.0;
         }
-        let custom = ui::icon_button(mtm, "eyedropper", "Custom color…", Command::CustomColor);
+        let custom = ui::icon_button(mtm, "eyedropper", &tr("Custom color…"), Command::CustomColor);
         custom.setFrame(frame(x - 2.0, PAD, sw + 4.0, sw + 4.0));
         swatches.addSubview(&custom);
         swatches.setHidden(true);
 
         // Action bar.
-        let items: [(&str, &str, Command); 5] = [
-            ("record.circle", "Record this area", Command::RecordSelection),
-            ("pin", "Pin to screen", Command::Pin),
-            ("printer", "Print  (⌘P)", Command::Print),
-            ("square.and.arrow.down", "Save  (⌘S)", Command::Save),
-            ("doc.on.doc", "Copy  (⌘C or ↩)", Command::Copy),
+        let items: [(&str, String, Command); 5] = [
+            ("record.circle", tr("Record this area"), Command::RecordSelection),
+            ("pin", tr("Pin to screen"), Command::Pin),
+            ("printer", tr("Print  (⌘P)"), Command::Print),
+            ("square.and.arrow.down", tr("Save  (⌘S)"), Command::Save),
+            ("doc.on.doc", tr("Copy  (⌘C or ↩)"), Command::Copy),
         ];
         let aw = PAD * 2.0 + BTN * (items.len() + 1) as f64 + GAP;
         let actions = ui::hud_surface(mtm, frame(0.0, 0.0, aw, BTN + PAD * 2.0), RADIUS, true);
         let mut x = PAD;
         for (sym, tip, cmd) in items {
-            let b = ui::icon_button(mtm, sym, tip, cmd);
+            let b = ui::icon_button(mtm, sym, &tip, cmd);
             b.setFrame(frame(x, PAD, BTN, BTN));
             actions.addSubview(&b);
             x += BTN;
         }
         actions.addSubview(&divider(mtm, frame(x + GAP / 2.0 - 0.5, PAD + 6.0, 1.0, BTN - 12.0)));
         x += GAP;
-        let close = ui::icon_button(mtm, "xmark", "Close  (esc)", Command::Close);
+        let close = ui::icon_button(mtm, "xmark", &tr("Close  (esc)"), Command::Close);
         close.setFrame(frame(x, PAD, BTN, BTN));
         actions.addSubview(&close);
 
@@ -163,9 +164,9 @@ impl Toolbars {
         let start_w = 104.0;
         let rw = PAD * 2.0 + BTN * 4.0 + GAP * 2.0 + start_w;
         let record_bar = ui::hud_surface(mtm, frame(0.0, 0.0, rw, BTN + PAD * 2.0), RADIUS, true);
-        let mic = ui::icon_button(mtm, "mic", "Microphone", Command::ToggleMic);
-        let audio = ui::icon_button(mtm, "speaker.wave.2", "System audio", Command::ToggleSystemAudio);
-        let cam = ui::icon_button(mtm, "video", "Webcam bubble", Command::ToggleWebcam);
+        let mic = ui::icon_button(mtm, "mic", &tr("Microphone"), Command::ToggleMic);
+        let audio = ui::icon_button(mtm, "speaker.wave.2", &tr("System audio"), Command::ToggleSystemAudio);
+        let cam = ui::icon_button(mtm, "video", &tr("Webcam bubble"), Command::ToggleWebcam);
         let mut x = PAD;
         for b in [&mic, &audio, &cam] {
             b.setFrame(frame(x, PAD, BTN, BTN));
@@ -174,7 +175,7 @@ impl Toolbars {
         }
         record_bar.addSubview(&divider(mtm, frame(x + GAP / 2.0 - 0.5, PAD + 6.0, 1.0, BTN - 12.0)));
         x += GAP;
-        let start = ui::text_button(mtm, "Record", Command::StartRecording);
+        let start = ui::text_button(mtm, &tr("Record"), Command::StartRecording);
         start.setImage(ui::symbol("record.circle.fill", 13.0).as_deref());
         start.setImagePosition(objc2_app_kit::NSCellImagePosition::ImageLeading);
         start.setBezelColor(Some(&NSColor::systemRedColor()));
@@ -182,7 +183,7 @@ impl Toolbars {
         start.setFrame(frame(x, PAD - 1.0, start_w, BTN + 2.0));
         record_bar.addSubview(&start);
         x += start_w + GAP;
-        let close = ui::icon_button(mtm, "xmark", "Cancel  (esc)", Command::Close);
+        let close = ui::icon_button(mtm, "xmark", &tr("Cancel  (esc)"), Command::Close);
         close.setFrame(frame(x, PAD, BTN, BTN));
         record_bar.addSubview(&close);
 

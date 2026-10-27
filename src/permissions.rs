@@ -7,6 +7,7 @@ use objc2_av_foundation::{AVAuthorizationStatus, AVCaptureDevice, AVMediaTypeAud
 use objc2_core_graphics::{CGPreflightScreenCaptureAccess, CGRequestScreenCaptureAccess};
 use objc2_foundation::{MainThreadMarker, NSURL};
 
+use crate::i18n::tr;
 use crate::util::ns;
 use crate::ui;
 
@@ -22,12 +23,12 @@ pub fn ask_screen() {
     let mtm = MainThreadMarker::new().unwrap();
     let alert = NSAlert::new(mtm);
     alert.setAlertStyle(NSAlertStyle::Informational);
-    alert.setMessageText(&ns("Photon needs Screen Recording access"));
-    alert.setInformativeText(&ns(
+    alert.setMessageText(&ns(&tr("Photon needs Screen Recording access")));
+    alert.setInformativeText(&ns(&tr(
         "Turn on Photon in System Settings › Privacy & Security › Screen & System Audio Recording, then press the shortcut again.",
-    ));
-    alert.addButtonWithTitle(&ns("Open System Settings"));
-    alert.addButtonWithTitle(&ns("Not Now"));
+    )));
+    alert.addButtonWithTitle(&ns(&tr("Open System Settings")));
+    alert.addButtonWithTitle(&ns(&tr("Not Now")));
     ui::app(mtm).activate();
     if alert.runModal() == objc2_app_kit::NSAlertFirstButtonReturn {
         open_settings("Privacy_ScreenCapture");
@@ -49,10 +50,8 @@ fn ask(media_video: bool, anchor: &'static str) {
         let block = RcBlock::new(|_granted: Bool| {});
         unsafe { AVCaptureDevice::requestAccessForMediaType_completionHandler(ty, &block) };
     } else if status == AVAuthorizationStatus::Denied || status == AVAuthorizationStatus::Restricted {
-        crate::hud::message(
-            if media_video { "Camera access is off for Photon" } else { "Microphone access is off for Photon" },
-            Some("Turn it on in System Settings › Privacy & Security."),
-        );
+        let title = if media_video { tr("Camera access is off for Photon") } else { tr("Microphone access is off for Photon") };
+        crate::hud::message(&title, Some(&tr("Turn it on in System Settings › Privacy & Security.")));
         open_settings(anchor);
     }
 }

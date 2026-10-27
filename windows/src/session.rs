@@ -23,6 +23,7 @@ use crate::capture::{self, Display, Snapshot};
 use crate::commands::Command;
 use crate::d2d::{self, rgba};
 use crate::geometry::{pt, Point, Rect};
+use crate::i18n::{tr, trf};
 use crate::keys::vk;
 use crate::model::{Document, Draft, Rgba, Shape, Style, Tool, PALETTE};
 use crate::overlay::{self, MouseKind, OverlayWindow};
@@ -110,7 +111,7 @@ pub fn start(mode: Mode) {
             open(mode, snapshot, front_app);
             util::log(format!("overlay shown in {} ms", t0.elapsed().as_millis()));
         }
-        Err(e) => hud::message("Couldn't capture the screen", Some(&e)),
+        Err(e) => hud::message(&tr("Couldn't capture the screen"), Some(&e)),
     }
 }
 
@@ -234,7 +235,8 @@ impl Session {
         let sc = &self.screens[idx];
         let px = sc.sel.rect.map(|r| (r.w.round() as u32, r.h.round() as u32)).unwrap_or((0, 0));
         let label = match (&sc.picked_window, self.mode) {
-            (Some((_, app)), Mode::Record) => Some(format!("{} window only", app.as_deref().unwrap_or("This"))),
+            (Some((_, Some(app))), Mode::Record) => Some(trf("{app} window only", &[("app", app.as_str())])),
+            (Some((_, None)), Mode::Record) => Some(tr("This window only")),
             _ => None,
         };
         let (rect, bounds, dragging) = (sc.sel.rect, sc.bounds, sc.sel.is_dragging());

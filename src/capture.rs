@@ -22,6 +22,7 @@ use objc2_screen_capture_kit::{
 };
 
 use crate::geometry::{cg_to_appkit, Rect};
+use crate::i18n::tr;
 use crate::util::{self, MainBound};
 
 /// One display at the moment of capture.
@@ -161,7 +162,7 @@ pub fn capture_all(mtm: MainThreadMarker, done: impl FnOnce(Result<Snapshot, Str
     let handler = RcBlock::new(move |content: *mut SCShareableContent, error: *mut NSError| {
         let Some(content) = (unsafe { content.as_ref() }) else {
             let msg = unsafe { error.as_ref() }.map(|e| e.localizedDescription().to_string());
-            finish(Err(msg.unwrap_or_else(|| "Screen capture isn't available.".into())), Vec::new());
+            finish(Err(msg.unwrap_or_else(|| tr("Screen capture isn't available."))), Vec::new());
             return;
         };
         let sc_displays = unsafe { content.displays() };
@@ -173,7 +174,7 @@ pub fn capture_all(mtm: MainThreadMarker, done: impl FnOnce(Result<Snapshot, Str
             })
             .collect();
         if targets.is_empty() {
-            finish(Err("No displays to capture.".into()), Vec::new());
+            finish(Err(tr("No displays to capture.")), Vec::new());
             return;
         }
         let collector = Arc::new(Mutex::new(Collector { remaining: targets.len(), images: Vec::new(), error: None }));
@@ -197,7 +198,7 @@ pub fn capture_all(mtm: MainThreadMarker, done: impl FnOnce(Result<Snapshot, Str
                     Some(img) => c.images.push((id, unsafe { CFRetained::retain(img) })),
                     None => {
                         let msg = unsafe { error.as_ref() }.map(|e| e.localizedDescription().to_string());
-                        c.error = Some(msg.unwrap_or_else(|| "Capture failed.".into()));
+                        c.error = Some(msg.unwrap_or_else(|| tr("Capture failed.")));
                     }
                 }
                 c.remaining -= 1;

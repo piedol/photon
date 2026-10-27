@@ -87,7 +87,10 @@ impl Settings {
         let rule = |p: &str, kind: Kind| {
             let def = NamingRule::default_for(kind);
             NamingRule {
-                template: s(&format!("{p}Template")).filter(|t| !t.trim().is_empty()).unwrap_or(def.template),
+                template: s(&format!("{p}Template"))
+                    .filter(|t| !t.trim().is_empty())
+                    .map(|t| kind.template_from_store(&t))
+                    .unwrap_or(def.template),
                 date: s(&format!("{p}Date")).and_then(|k| DateFormat::from_key(&k)).unwrap_or(def.date),
                 time: s(&format!("{p}Time")).and_then(|k| TimeFormat::from_key(&k)).unwrap_or(def.time),
                 case: s(&format!("{p}Case")).and_then(|k| Case::from_key(&k)).unwrap_or(def.case),
@@ -151,8 +154,11 @@ impl Settings {
         put("recWebcamDevice", self.rec_webcam_device.clone().unwrap_or_default());
         put("toolColor", self.tool_color.to_string());
         put("stroke", self.stroke.to_string());
-        for (prefix, r) in [("shotName", &self.shot_naming), ("recName", &self.rec_naming)] {
-            put(&format!("{prefix}Template"), r.template.clone());
+        for (prefix, kind, r) in [
+            ("shotName", Kind::Screenshot, &self.shot_naming),
+            ("recName", Kind::Recording, &self.rec_naming),
+        ] {
+            put(&format!("{prefix}Template"), kind.template_for_store(&r.template));
             put(&format!("{prefix}Date"), r.date.key().into());
             put(&format!("{prefix}Time"), r.time.key().into());
             put(&format!("{prefix}Case"), r.case.key().into());

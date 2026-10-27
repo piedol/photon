@@ -20,6 +20,7 @@ use crate::annotate::model::Shape;
 use crate::annotate::render::{self, Source};
 use crate::capture::cg_rect;
 use crate::geometry::{view_to_image_px, Rect};
+use crate::i18n::{tr, trf};
 use crate::output::destination::{self, NameParts};
 use crate::output::naming::Kind;
 use crate::session::Finished;
@@ -96,23 +97,23 @@ pub fn copy(f: &Finished) {
     if s.shot_autosave {
         match autosave(f, &s) {
             Ok((path, fell_back)) => {
-                let detail = format!("Saved to {}", util::tilde(path.parent().unwrap_or(&path)));
-                let title = if fell_back { "Copied · cloud folder missing" } else { "Copied" };
-                hud::toast(title, Some(&detail));
+                let detail = trf("Saved to {folder}", &[("folder", &util::tilde(path.parent().unwrap_or(&path)))]);
+                let title = if fell_back { tr("Copied · cloud folder missing") } else { tr("Copied") };
+                hud::toast(&title, Some(&detail));
             }
-            Err(e) => hud::toast("Copied, but auto-save failed", Some(&e)),
+            Err(e) => hud::toast(&tr("Copied, but auto-save failed"), Some(&e)),
         }
     } else if ok {
-        hud::toast("Copied", None);
+        hud::toast(&tr("Copied"), None);
     } else {
-        hud::toast("Couldn't copy", None);
+        hud::toast(&tr("Couldn't copy"), None);
     }
 }
 
 fn autosave(f: &Finished, s: &Settings) -> Result<(PathBuf, bool), String> {
     let resolved = destination::resolve(&s.shot_dir, &Settings::default_shot_dir());
     let (path, counter) = destination::unique_path(&resolved.dir, &s.shot_naming, s.shot_counter, &name_parts(f), "png");
-    let data = png_data(&f.image, points(f)).ok_or("Couldn't encode PNG")?;
+    let data = png_data(&f.image, points(f)).ok_or_else(|| tr("Couldn't encode PNG"))?;
     destination::write_atomic(&path, &data.to_vec())?;
     settings::update(|st| st.shot_counter = counter + 1);
     Ok((path, resolved.fell_back))
@@ -148,7 +149,7 @@ pub fn save_with_panel(f: Finished) {
     let Some(path) = panel.URL().and_then(|u| u.path()).map(|p| PathBuf::from(p.to_string())) else { return };
     let jpeg = matches!(path.extension().and_then(|e| e.to_str()).map(str::to_ascii_lowercase).as_deref(), Some("jpg" | "jpeg"));
     let data = if jpeg { jpeg_data(&f.image, points(&f)) } else { png_data(&f.image, points(&f)) };
-    let result = data.ok_or_else(|| "Couldn't encode the image".to_string()).and_then(|d| destination::write_atomic(&path, &d.to_vec()));
+    let result = data.ok_or_else(|| tr("Couldn't encode the image")).and_then(|d| destination::write_atomic(&path, &d.to_vec()));
     ui::app(mtm).deactivate();
     match result {
         Ok(()) => {
@@ -157,9 +158,9 @@ pub fn save_with_panel(f: Finished) {
                 st.last_save_dir = parent;
                 st.shot_counter += 1;
             });
-            hud::toast("Saved", Some(&path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default()));
+            hud::toast(&tr("Saved"), Some(&path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default()));
         }
-        Err(e) => hud::toast("Couldn't save", Some(&e)),
+        Err(e) => hud::toast(&tr("Couldn't save"), Some(&e)),
     }
 }
 

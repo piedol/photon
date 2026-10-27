@@ -31,6 +31,7 @@ use windows::core::{w, PCWSTR};
 use crate::d2d;
 use crate::destination::{self, NameParts};
 use crate::geometry::Rect;
+use crate::i18n::{tr, trf};
 use crate::model::Shape;
 use crate::naming::Kind;
 use crate::render::{self, Source};
@@ -209,22 +210,22 @@ pub fn copy(f: &Finished) {
     if s.shot_autosave {
         match autosave(f, &s) {
             Ok((path, fell_back)) => {
-                let detail = format!("Saved to {}", util::tilde(path.parent().unwrap_or(&path)));
-                hud::toast(if fell_back { "Copied · cloud folder missing" } else { "Copied" }, Some(&detail));
+                let detail = trf("Saved to {folder}", &[("folder", &util::tilde(path.parent().unwrap_or(&path)))]);
+                hud::toast(&if fell_back { tr("Copied · cloud folder missing") } else { tr("Copied") }, Some(&detail));
             }
-            Err(e) => hud::message("Copied, but auto-save failed", Some(&e)),
+            Err(e) => hud::message(&tr("Copied, but auto-save failed"), Some(&e)),
         }
     } else if ok {
-        hud::toast("Copied", None);
+        hud::toast(&tr("Copied"), None);
     } else {
-        hud::message("Couldn't copy", None);
+        hud::message(&tr("Couldn't copy"), None);
     }
 }
 
 fn autosave(f: &Finished, s: &Settings) -> Result<(PathBuf, bool), String> {
     let resolved = destination::resolve(&s.shot_dir, &Settings::default_shot_dir());
     let (path, counter) = destination::unique_path(&resolved.dir, &s.shot_naming, s.shot_counter, &name_parts(f), "png");
-    let data = encode(&f.image, false).ok_or("Couldn't encode PNG")?;
+    let data = encode(&f.image, false).ok_or_else(|| tr("Couldn't encode PNG"))?;
     destination::write_atomic(&path, &data)?;
     settings::update(|st| st.shot_counter = counter + 1);
     Ok((path, resolved.fell_back))
@@ -241,7 +242,7 @@ pub fn save_with_dialog(f: Finished) {
     let name = destination::file_name_preview(&s.shot_naming, s.shot_counter, &name_parts(&f), "png");
     let Some(path) = save_dialog(&dir, &name) else { return };
     let jpeg = matches!(path.extension().and_then(|e| e.to_str()).map(str::to_ascii_lowercase).as_deref(), Some("jpg" | "jpeg"));
-    let result = encode(&f.image, jpeg).ok_or_else(|| "Couldn't encode the image".to_string()).and_then(|d| destination::write_atomic(&path, &d));
+    let result = encode(&f.image, jpeg).ok_or_else(|| tr("Couldn't encode the image")).and_then(|d| destination::write_atomic(&path, &d));
     match result {
         Ok(()) => {
             let parent = path.parent().map(Path::to_path_buf);
@@ -249,18 +250,19 @@ pub fn save_with_dialog(f: Finished) {
                 st.last_save_dir = parent;
                 st.shot_counter += 1;
             });
-            hud::toast("Saved", Some(&path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default()));
+            hud::toast(&tr("Saved"), Some(&path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default()));
         }
-        Err(e) => hud::message("Couldn't save", Some(&e)),
+        Err(e) => hud::message(&tr("Couldn't save"), Some(&e)),
     }
 }
 
 fn save_dialog(dir: &Path, name: &str) -> Option<PathBuf> {
     unsafe {
         let dlg: IFileSaveDialog = CoCreateInstance(&FileSaveDialog, None, CLSCTX_INPROC_SERVER).ok()?;
+        let (png, jpeg) = (W::new(&tr("PNG image")), W::new(&tr("JPEG image")));
         let specs = [
-            COMDLG_FILTERSPEC { pszName: w!("PNG image"), pszSpec: w!("*.png") },
-            COMDLG_FILTERSPEC { pszName: w!("JPEG image"), pszSpec: w!("*.jpg;*.jpeg") },
+            COMDLG_FILTERSPEC { pszName: png.p(), pszSpec: w!("*.png") },
+            COMDLG_FILTERSPEC { pszName: jpeg.p(), pszSpec: w!("*.jpg;*.jpeg") },
         ];
         let _ = dlg.SetFileTypes(&specs);
         let _ = dlg.SetDefaultExtension(w!("png"));

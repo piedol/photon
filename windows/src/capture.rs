@@ -130,7 +130,7 @@ pub fn capture_all() -> Result<Snapshot, String> {
         }
     }
     if shots.is_empty() {
-        return Err("Couldn't read the screen.".into());
+        return Err(crate::i18n::tr("Couldn't read the screen."));
     }
     Ok(Snapshot { shots, windows })
 }

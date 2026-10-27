@@ -23,6 +23,7 @@ use objc2_screen_capture_kit::{
     SCCaptureResolutionType,
 };
 
+use crate::i18n::tr;
 use crate::output::destination::{self, Destination, Folder, NameParts};
 use crate::output::naming::Kind;
 use crate::session::RecordTarget;
@@ -153,7 +154,10 @@ pub fn start(target: RecordTarget) {
     let window_mode = target.window_id.is_some();
     let indicator = (!window_mode).then(|| indicator::Outline::show(mtm, target.global_rect));
     if window_mode && s.rec_webcam {
-        hud::message("Webcam bubble is off for window recordings", Some("Select a region instead to include the camera."));
+        hud::message(
+            &tr("Webcam bubble is off for window recordings"),
+            Some(&tr("Select a region instead to include the camera.")),
+        );
         s.rec_webcam = false;
     }
     let webcam = if s.rec_webcam { webcam::Bubble::show(mtm, target.global_rect, s.rec_webcam_device.as_deref()) } else { None };
@@ -267,7 +271,7 @@ fn begin_capture() {
     let handler = RcBlock::new(move |content: *mut SCShareableContent, error: *mut NSError| {
         let Some(content) = (unsafe { content.as_ref() }) else {
             let msg = unsafe { error.as_ref() }.map(|e| e.localizedDescription().to_string());
-            let msg = msg.unwrap_or_else(|| "Screen capture isn't available.".into());
+            let msg = msg.unwrap_or_else(|| tr("Screen capture isn't available."));
             util::main_async(move || fail(&msg));
             return;
         };
@@ -292,7 +296,7 @@ fn configure_and_start(content: &SCShareableContent, bubble_id: Option<u32>) {
         let display = displays
             .iter()
             .find(|d| unsafe { d.displayID() } == r.target.display_id)
-            .ok_or("The display is no longer available.")?;
+            .ok_or_else(|| tr("The display is no longer available."))?;
         let me = std::process::id() as i32;
         let apps: Vec<_> = unsafe { content.applications() }.iter().filter(|a| unsafe { a.processID() } == me).collect();
         let keep: Vec<Retained<SCWindow>> = unsafe { content.windows() }
@@ -490,7 +494,7 @@ fn fail(msg: &str) {
         r.stream_stopped = true;
     });
     if had.is_some() {
-        hud::message("Recording stopped", Some(msg));
+        hud::message(&tr("Recording stopped"), Some(msg));
         mark_done(None);
     }
 }
@@ -521,7 +525,7 @@ fn maybe_finalize() {
     }
     post::join(segments, move |joined| match joined {
         Ok(file) => deliver(file, &target, &settings),
-        Err(e) => hud::message("Couldn't save the recording", Some(&e)),
+        Err(e) => hud::message(&tr("Couldn't save the recording"), Some(&e)),
     });
 }
 
@@ -547,6 +551,6 @@ fn deliver(file: PathBuf, target: &RecordTarget, s: &Settings) {
                 }
             post::finished_hud(saved, resolved.fell_back);
         }
-        Err(e) => hud::message("Couldn't save the recording", Some(&e)),
+        Err(e) => hud::message(&tr("Couldn't save the recording"), Some(&e)),
     }
 }

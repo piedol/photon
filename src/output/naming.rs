@@ -6,6 +6,8 @@
 
 use std::path::{Path, PathBuf};
 
+use crate::i18n::tr;
+
 /// Longest stem we produce, in bytes (macOS allows 255 per component).
 const MAX_STEM_BYTES: usize = 200;
 
@@ -21,7 +23,8 @@ macro_rules! keyed_enum {
             /// Every variant, in UI order.
             pub const ALL: [Self; [$($name::$variant),+].len()] = [$(Self::$variant),+];
 
-            /// Text for UI popups.
+            /// The English label: `{type}` renders it in file names, the date and time
+            /// popups show it as an example. Popups of words use `ui_label` instead.
             pub fn label(self) -> &'static str {
                 match self { $(Self::$variant => $label),+ }
             }
@@ -86,7 +89,28 @@ keyed_enum! {
     }
 }
 
+impl Case {
+    /// Text for the UI popup, in the user's language.
+    pub fn ui_label(self) -> String {
+        match self {
+            Self::AsTyped => tr("As typed"),
+            Self::Title => tr("Title Case"),
+            Self::Lower => tr("lowercase"),
+            Self::Upper => tr("UPPERCASE"),
+        }
+    }
+}
+
 impl Separator {
+    /// Text for the UI popup, in the user's language.
+    pub fn ui_label(self) -> String {
+        match self {
+            Self::Space => tr("Space"),
+            Self::Dash => tr("Dash  -"),
+            Self::Underscore => tr("Underscore  _"),
+        }
+    }
+
     fn as_char(self) -> char {
         match self {
             Self::Space => ' ',
@@ -159,15 +183,48 @@ pub struct NamingRule {
     pub separator: Separator,
 }
 
-impl NamingRule {
-    /// The built-in rule, e.g. "Screenshot 2026-10-24 at 09.41.12".
-    pub fn default_for(kind: Kind) -> Self {
-        let template = match kind {
+impl Kind {
+    /// The word `{type}` writes into file names, in the app's language.
+    pub fn file_word(self) -> String {
+        match self {
+            Kind::Screenshot => tr("Screenshot"),
+            Kind::Recording => tr("Recording"),
+        }
+    }
+
+    /// The default template as settings store it: always the English text, so a saved
+    /// default follows the app's language.
+    fn stored_default(self) -> &'static str {
+        match self {
             Kind::Screenshot => "{type} {date} at {time}",
             Kind::Recording => "Photon {type} {date} at {time}",
-        };
+        }
+    }
+
+    /// The default template in the app's language.
+    pub fn default_template(self) -> String {
+        match self {
+            Kind::Screenshot => tr("{type} {date} at {time}"),
+            Kind::Recording => tr("Photon {type} {date} at {time}"),
+        }
+    }
+
+    /// A template read from settings: the stored default becomes the default in the app's language.
+    pub fn template_from_store(self, stored: &str) -> String {
+        if stored == self.stored_default() { self.default_template() } else { stored.to_owned() }
+    }
+
+    /// The form to store a template in: the default, in any language, is stored as the English.
+    pub fn template_for_store(self, template: &str) -> String {
+        if template == self.default_template() { self.stored_default().to_owned() } else { template.to_owned() }
+    }
+}
+
+impl NamingRule {
+    /// The built-in rule, e.g. "Screenshot 2026-10-24 at 09.41.12" in English.
+    pub fn default_for(kind: Kind) -> Self {
         Self {
-            template: template.to_owned(),
+            template: kind.default_template(),
             date: DateFormat::Iso,
             time: TimeFormat::Dots,
             case: Case::AsTyped,
@@ -240,15 +297,19 @@ pub struct NameContext {
     pub counter: u32,
 }
 
-/// Template tokens with short descriptions, for UI chips.
-pub const TOKENS: [(&str, &str); 7] = [
-    ("{type}", "Screenshot or Recording"),
-    ("{date}", "Date"),
-    ("{time}", "Time"),
-    ("{app}", "Front app"),
-    ("{size}", "Size, e.g. 1440x900"),
-    ("{display}", "Display name"),
-    ("{counter}", "Running number"),
+/// Returns a token's short description in the user's language.
+pub type Describe = fn() -> String;
+
+/// Template tokens for UI chips, with their descriptions. The tokens themselves are
+/// part of the saved templates, so they are never translated.
+pub const TOKENS: [(&str, Describe); 7] = [
+    ("{type}", || tr("Screenshot or Recording")),
+    ("{date}", || tr("Date")),
+    ("{time}", || tr("Time")),
+    ("{app}", || tr("Front app")),
+    ("{size}", || tr("Size, e.g. 1440x900")),
+    ("{display}", || tr("Display name")),
+    ("{counter}", || tr("Running number")),
 ];
 
 /// Renders the file stem (no extension) for `ctx`.
@@ -266,7 +327,7 @@ pub fn render_stem(rule: &NamingRule, ctx: &NameContext) -> String {
     let stem = render_template(&fallback, rule, ctx);
     if stem.is_empty() {
         // Unreachable in practice: `{type}` always renders non-empty.
-        ctx.kind.label().to_owned()
+        ctx.kind.file_word()
     } else {
         stem
     }
@@ -389,7 +450,7 @@ fn expand_tokens(template: &str, rule: &NamingRule, ctx: &NameContext) -> String
 
 fn token_value(name: &str, rule: &NamingRule, ctx: &NameContext) -> Option<String> {
     let value = match name.to_ascii_lowercase().as_str() {
-        "type" => ctx.kind.label().to_owned(),
+        "type" => ctx.kind.file_word(),
         "date" => rule.date.render(&ctx.when),
         "time" => rule.time.render(&ctx.when),
         "app" => ctx.app.clone().unwrap_or_default(),

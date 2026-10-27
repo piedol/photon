@@ -21,6 +21,7 @@ use objc2_foundation::{NSNotification, NSObjectProtocol, NSString};
 use crate::capture::cg_rect;
 use crate::commands::Command;
 use crate::geometry::Rect;
+use crate::i18n::{tr, trf};
 use crate::keys::{self, vk, Shortcut};
 use crate::output::cloud;
 use crate::output::destination::{self, NameParts};
@@ -222,9 +223,12 @@ fn shortcut_button(sc: Shortcut, id: u16) -> Retained<NSView> {
 
 fn dest_options(current: &std::path::Path, default: PathBuf) -> (Vec<DestOption>, usize) {
     let folders = cloud::discover();
-    let mut opts = vec![DestOption { label: format!("{}  (default)", util::tilde(&default)), path: Some(default.clone()) }];
+    let mut opts = vec![DestOption {
+        label: trf("{folder}  (default)", &[("folder", &util::tilde(&default))]),
+        path: Some(default.clone()),
+    }];
     for f in &folders {
-        let label = if f.stale { format!("{}  (old)", f.label) } else { f.label.clone() };
+        let label = if f.stale { trf("{folder}  (old)", &[("folder", &f.label)]) } else { f.label.clone() };
         opts.push(DestOption { label: format!("{label} › Photon"), path: Some(f.default_target.clone()) });
     }
     let mut selected = opts.iter().position(|o| o.path.as_deref() == Some(current));
@@ -232,7 +236,7 @@ fn dest_options(current: &std::path::Path, default: PathBuf) -> (Vec<DestOption>
         opts.insert(1, DestOption { label: cloud::display_path(current, &folders), path: Some(current.to_path_buf()) });
         selected = Some(1);
     }
-    opts.push(DestOption { label: "Other Folder…".into(), path: None });
+    opts.push(DestOption { label: tr("Other Folder…"), path: None });
     (opts, selected.unwrap_or(0))
 }
 
@@ -244,7 +248,7 @@ fn naming_block(f: &mut Form, base: u16, rule: &NamingRule) {
     let field = NSTextField::textFieldWithString(&ns(&rule.template), mtm());
     field.setTag(Command::Setting(base + N_TEMPLATE).tag());
     unsafe { field.setDelegate(Some(&ui::text_delegate(mtm()))) };
-    f.row("File name:", base + N_TEMPLATE, Retained::into_super(Retained::into_super(field)), None, 22.0);
+    f.row(&tr("File name:"), base + N_TEMPLATE, Retained::into_super(Retained::into_super(field)), None, 22.0);
 
     // Token chips.
     let cx = X + LABEL_W + 10.0;
@@ -253,7 +257,7 @@ fn naming_block(f: &mut Form, base: u16, rule: &NamingRule) {
         let b = ui::text_button(mtm(), token, Command::Setting(base + N_TOKEN + i as u16));
         b.setBezelStyle(NSBezelStyle::Badge);
         b.setFont(Some(&NSFont::systemFontOfSize(10.5)));
-        b.setToolTip(Some(&ns(desc)));
+        b.setToolTip(Some(&ns(&desc())));
         let w = 14.0 + 6.2 * token.len() as f64;
         if x + w > f.width - X {
             x = cx;
@@ -268,14 +272,14 @@ fn naming_block(f: &mut Form, base: u16, rule: &NamingRule) {
     let labels = |v: Vec<&'static str>| v.into_iter().map(String::from).collect::<Vec<_>>();
     let row_y = f.y;
     let half = (f.width - (X + LABEL_W + 10.0) - X - 8.0) / 2.0;
-    f.row("Date / time:", base + N_DATE, popup(&labels(DateFormat::ALL.iter().map(|d| d.label()).collect()), pos(&DateFormat::ALL, rule.date), base + N_DATE), Some(half), 25.0);
+    f.row(&tr("Date / time:"), base + N_DATE, popup(&labels(DateFormat::ALL.iter().map(|d| d.label()).collect()), pos(&DateFormat::ALL, rule.date), base + N_DATE), Some(half), 25.0);
     let time = popup(&labels(TimeFormat::ALL.iter().map(|d| d.label()).collect()), pos(&TimeFormat::ALL, rule.time), base + N_TIME);
     time.setFrame(cg_rect(Rect::new(X + LABEL_W + 10.0 + half + 8.0, row_y, half, 25.0)));
     f.view.addSubview(&time);
     f.controls.push((base + N_TIME, time));
     let row_y = f.y;
-    f.row("Formatting:", base + N_CASE, popup(&labels(Case::ALL.iter().map(|d| d.label()).collect()), pos(&Case::ALL, rule.case), base + N_CASE), Some(half), 25.0);
-    let sep = popup(&labels(Separator::ALL.iter().map(|d| d.label()).collect()), pos(&Separator::ALL, rule.separator), base + N_SEP);
+    f.row(&tr("Formatting:"), base + N_CASE, popup(&Case::ALL.map(Case::ui_label), pos(&Case::ALL, rule.case), base + N_CASE), Some(half), 25.0);
+    let sep = popup(&Separator::ALL.map(Separator::ui_label), pos(&Separator::ALL, rule.separator), base + N_SEP);
     sep.setFrame(cg_rect(Rect::new(X + LABEL_W + 10.0 + half + 8.0, row_y, half, 25.0)));
     f.view.addSubview(&sep);
     f.controls.push((base + N_SEP, sep));
@@ -286,7 +290,7 @@ fn preview_label(f: &mut Form) -> Retained<NSTextField> {
     l.setFont(Some(&NSFont::monospacedSystemFontOfSize_weight(11.0, unsafe { objc2_app_kit::NSFontWeightRegular })));
     l.setTextColor(Some(&NSColor::secondaryLabelColor()));
     l.setLineBreakMode(objc2_app_kit::NSLineBreakMode::ByTruncatingMiddle);
-    f.label("Preview:", f.y, 17.0);
+    f.label(&tr("Preview:"), f.y, 17.0);
     let cx = X + LABEL_W + 10.0;
     l.setFrame(cg_rect(Rect::new(cx, f.y, f.width - cx - X, 17.0)));
     f.view.addSubview(&l);
@@ -309,7 +313,7 @@ fn devices(video: bool) -> Vec<(String, String)> {
 }
 
 fn device_popup(list: &[(String, String)], current: Option<&str>, id: u16) -> Retained<NSView> {
-    let mut items = vec!["System default".to_string()];
+    let mut items = vec![tr("System default")];
     items.extend(list.iter().map(|(_, n)| n.clone()));
     let sel = current.and_then(|c| list.iter().position(|(i, _)| i == c)).map(|i| i + 1).unwrap_or(0);
     popup(&items, sel, id)
@@ -334,7 +338,7 @@ pub fn show() {
         )
     };
     unsafe { window.setReleasedWhenClosed(false) };
-    window.setTitle(&ns("Photon Settings"));
+    window.setTitle(&ns(&tr("Photon Settings")));
     let tabs = NSTabView::initWithFrame(NSTabView::alloc(mtm), cg_rect(Rect::new(0.0, 0.0, w, h)));
     let inner_w = w - 20.0;
     let inner_h = h - 40.0;
@@ -345,33 +349,33 @@ pub fn show() {
 
     // General.
     let mut g = Form::new(inner_w, inner_h);
-    g.section("Shortcuts");
-    g.row("Screenshot:", SHOT_KEY, shortcut_button(s.shot_hotkey, SHOT_KEY), Some(140.0), 28.0);
-    g.row("Record screen:", REC_KEY, shortcut_button(s.record_hotkey, REC_KEY), Some(140.0), 28.0);
-    let hotkey_note = g.note("Click a shortcut, then press the new keys. It needs ⌘, ⌃ or ⌥. Esc cancels.");
-    g.section("Startup");
-    g.plain(LOGIN, checkbox("Launch Photon at login", LOGIN, app::login_item_enabled()), 20.0);
-    g.section("Scripting");
+    g.section(&tr("Shortcuts"));
+    g.row(&tr("Screenshot:"), SHOT_KEY, shortcut_button(s.shot_hotkey, SHOT_KEY), Some(140.0), 28.0);
+    g.row(&tr("Record screen:"), REC_KEY, shortcut_button(s.record_hotkey, REC_KEY), Some(140.0), 28.0);
+    let hotkey_note = g.note(&tr("Click a shortcut, then press the new keys. It needs ⌘, ⌃ or ⌥. Esc cancels."));
+    g.section(&tr("Startup"));
+    g.plain(LOGIN, checkbox(&tr("Launch Photon at login"), LOGIN, app::login_item_enabled()), 20.0);
+    g.section(&tr("Scripting"));
     g.note("open photon://capture · photon://record · photon://stop · photon://settings");
 
     // Screenshots.
     let mut sh = Form::new(inner_w, inner_h);
-    sh.section("After a capture");
-    sh.plain(0, Retained::into_super(Retained::into_super(NSTextField::labelWithString(&ns("Copy (⌘C or ↩) puts the image on the clipboard."), mtm))), 17.0);
-    sh.plain(SHOT_AUTOSAVE, checkbox("Also save a PNG automatically", SHOT_AUTOSAVE, s.shot_autosave), 20.0);
+    sh.section(&tr("After a capture"));
+    sh.plain(0, Retained::into_super(Retained::into_super(NSTextField::labelWithString(&ns(&tr("Copy (⌘C or ↩) puts the image on the clipboard.")), mtm))), 17.0);
+    sh.plain(SHOT_AUTOSAVE, checkbox(&tr("Also save a PNG automatically"), SHOT_AUTOSAVE, s.shot_autosave), 20.0);
     let (opts, sel) = dest_options(&s.shot_dir, Settings::default_shot_dir());
-    sh.row("Save to:", SHOT_DEST, popup(&opts.iter().map(|o| o.label.clone()).collect::<Vec<_>>(), sel, SHOT_DEST), None, 25.0);
+    sh.row(&tr("Save to:"), SHOT_DEST, popup(&opts.iter().map(|o| o.label.clone()).collect::<Vec<_>>(), sel, SHOT_DEST), None, 25.0);
     dests.insert(SHOT_DEST, opts);
     warnings.insert(SHOT_DEST, warning_label(&mut sh));
-    sh.section("File names");
+    sh.section(&tr("File names"));
     naming_block(&mut sh, SHOT_NAMING, &s.shot_naming);
     previews.insert(SHOT_NAMING, preview_label(&mut sh));
 
     // Recordings.
     let mut rc = Form::new(inner_w, inner_h);
-    rc.section("Saving");
+    rc.section(&tr("Saving"));
     let (opts, sel) = dest_options(&s.rec_dir, Settings::default_rec_dir());
-    rc.row("Save to:", REC_DEST, popup(&opts.iter().map(|o| o.label.clone()).collect::<Vec<_>>(), sel, REC_DEST), None, 25.0);
+    rc.row(&tr("Save to:"), REC_DEST, popup(&opts.iter().map(|o| o.label.clone()).collect::<Vec<_>>(), sel, REC_DEST), None, 25.0);
     dests.insert(REC_DEST, opts);
     warnings.insert(REC_DEST, warning_label(&mut rc));
     let also_path = s.rec_also_dir.clone().unwrap_or_else(|| {
@@ -383,43 +387,44 @@ pub fn show() {
             .map(|f| f.default_target.clone())
             .unwrap_or_else(Settings::default_rec_dir)
     });
-    rc.plain(REC_ALSO, checkbox("Also copy each recording to:", REC_ALSO, s.rec_also_copy), 20.0);
+    rc.plain(REC_ALSO, checkbox(&tr("Also copy each recording to:"), REC_ALSO, s.rec_also_copy), 20.0);
     let (opts, sel) = dest_options(&also_path, Settings::default_rec_dir());
     rc.plain(REC_ALSO_DEST, popup(&opts.iter().map(|o| o.label.clone()).collect::<Vec<_>>(), sel, REC_ALSO_DEST), 25.0);
     dests.insert(REC_ALSO_DEST, opts);
-    rc.section("File names");
+    rc.section(&tr("File names"));
     naming_block(&mut rc, REC_NAMING, &s.rec_naming);
     previews.insert(REC_NAMING, preview_label(&mut rc));
-    rc.section("Video and audio");
+    rc.section(&tr("Video and audio"));
     let half = (inner_w - (X + LABEL_W + 10.0) - X - 8.0) / 2.0;
     let y = rc.y;
-    rc.row("Format:", CODEC, popup(&["H.264 (most compatible)".into(), "HEVC (smaller files)".into()], (s.rec_codec == Codec::Hevc) as usize, CODEC), Some(half), 25.0);
-    let fps = popup(&["30 fps".into(), "60 fps".into()], (s.rec_fps == 60) as usize, FPS);
+    rc.row(&tr("Format:"), CODEC, popup(&[tr("H.264 (most compatible)"), tr("HEVC (smaller files)")], (s.rec_codec == Codec::Hevc) as usize, CODEC), Some(half), 25.0);
+    let fps = popup(&[tr("30 fps"), tr("60 fps")], (s.rec_fps == 60) as usize, FPS);
     fps.setFrame(cg_rect(Rect::new(X + LABEL_W + 10.0 + half + 8.0, y, half, 25.0)));
     rc.view.addSubview(&fps);
     rc.controls.push((FPS, fps));
     let mics = devices(false);
     let cams = devices(true);
-    rc.plain(SYS_AUDIO, checkbox("Record system audio", SYS_AUDIO, s.rec_system_audio), 20.0);
+    rc.plain(SYS_AUDIO, checkbox(&tr("Record system audio"), SYS_AUDIO, s.rec_system_audio), 20.0);
     let y = rc.y;
-    rc.plain(MIC, checkbox("Record microphone", MIC, s.rec_mic), 20.0);
+    rc.plain(MIC, checkbox(&tr("Record microphone"), MIC, s.rec_mic), 20.0);
     let micp = device_popup(&mics, s.rec_mic_device.as_deref(), MIC_DEVICE);
     micp.setFrame(cg_rect(Rect::new(X + LABEL_W + 10.0 + half + 8.0, y - 3.0, half, 25.0)));
     rc.view.addSubview(&micp);
     rc.controls.push((MIC_DEVICE, micp));
     let y = rc.y;
-    rc.plain(WEBCAM, checkbox("Webcam bubble", WEBCAM, s.rec_webcam), 20.0);
+    rc.plain(WEBCAM, checkbox(&tr("Webcam bubble"), WEBCAM, s.rec_webcam), 20.0);
     let camp = device_popup(&cams, s.rec_webcam_device.as_deref(), CAM_DEVICE);
     camp.setFrame(cg_rect(Rect::new(X + LABEL_W + 10.0 + half + 8.0, y - 3.0, half, 25.0)));
     rc.view.addSubview(&camp);
     rc.controls.push((CAM_DEVICE, camp));
-    rc.plain(CURSOR, checkbox("Show the pointer", CURSOR, s.rec_cursor), 20.0);
-    rc.plain(CLICKS, checkbox("Highlight clicks", CLICKS, s.rec_click_rings), 20.0);
-    rc.plain(COUNTDOWN, checkbox("3-second countdown", COUNTDOWN, s.rec_countdown), 20.0);
+    rc.plain(CURSOR, checkbox(&tr("Show the pointer"), CURSOR, s.rec_cursor), 20.0);
+    rc.plain(CLICKS, checkbox(&tr("Highlight clicks"), CLICKS, s.rec_click_rings), 20.0);
+    rc.plain(COUNTDOWN, checkbox(&tr("3-second countdown"), COUNTDOWN, s.rec_countdown), 20.0);
 
-    for (title, form) in [("General", g), ("Screenshots", sh), ("Recordings", rc)] {
-        let item = unsafe { NSTabViewItem::initWithIdentifier(NSTabViewItem::alloc(), Some(&ns(title))) };
-        item.setLabel(&ns(title));
+    let tab_list = [("General", tr("General"), g), ("Screenshots", tr("Screenshots"), sh), ("Recordings", tr("Recordings"), rc)];
+    for (id, title, form) in tab_list {
+        let item = unsafe { NSTabViewItem::initWithIdentifier(NSTabViewItem::alloc(), Some(&ns(id))) };
+        item.setLabel(&ns(&title));
         item.setView(Some(&form.view));
         tabs.addTabViewItem(&item);
         controls.extend(form.controls);
@@ -502,7 +507,7 @@ fn selected(id: u16) -> usize {
 }
 
 fn sample_parts(kind: Kind) -> NameParts {
-    NameParts { kind, app: Some("Safari".into()), size: Some((1440, 900)), display: Some("Built-in Display".into()) }
+    NameParts { kind, app: Some("Safari".into()), size: Some((1440, 900)), display: Some(tr("Built-in Display")) }
 }
 
 /// Update previews and warnings from current settings.
@@ -523,7 +528,10 @@ fn refresh() {
                     String::new()
                 } else {
                     let fallback = if id == SHOT_DEST { Settings::default_shot_dir() } else { Settings::default_rec_dir() };
-                    format!("This folder isn't available (signed out?). Files go to {} until it's back.", util::tilde(&fallback))
+                    trf(
+                        "This folder isn't available (signed out?). Files go to {folder} until it's back.",
+                        &[("folder", &util::tilde(&fallback))],
+                    )
                 };
                 w.setStringValue(&ns(&msg));
             }
@@ -548,7 +556,7 @@ fn choose_folder(start: &std::path::Path) -> Option<PathBuf> {
     panel.setCanChooseDirectories(true);
     panel.setCanChooseFiles(false);
     panel.setCanCreateDirectories(true);
-    panel.setPrompt(Some(&ns("Choose")));
+    panel.setPrompt(Some(&ns(&tr("Choose"))));
     panel.setDirectoryURL(Some(&objc2_foundation::NSURL::fileURLWithPath(&ns(&start.to_string_lossy()))));
     if panel.runModal() != NSModalResponseOK {
         return None;
@@ -750,7 +758,7 @@ fn set_key_title(id: u16, text: &str) {
 fn start_recording_key(id: u16) {
     stop_recording_key();
     hotkey::suspend();
-    set_key_title(id, "Press shortcut…");
+    set_key_title(id, &tr("Press shortcut…"));
     let block = RcBlock::new(move |e: NonNull<NSEvent>| -> *mut NSEvent {
         let e = unsafe { e.as_ref() };
         let code = e.keyCode();
@@ -766,7 +774,7 @@ fn start_recording_key(id: u16) {
             util::main_async(|| {
                 STATE.with(|s| {
                     if let Some(s) = s.borrow().as_ref() {
-                        s.hotkey_note.setStringValue(&ns("Add ⌘, ⌃ or ⌥ to the key. Esc cancels."));
+                        s.hotkey_note.setStringValue(&ns(&tr("Add ⌘, ⌃ or ⌥ to the key. Esc cancels.")));
                     }
                 })
             });
@@ -796,7 +804,7 @@ fn finish_recording_key(id: u16, sc: Option<Shortcut>) {
     if let Some(sc) = sc {
         settings::update(|s| if id == SHOT_KEY { s.shot_hotkey = sc } else { s.record_hotkey = sc });
         let errors = app::apply_hotkeys();
-        let note = if errors.is_empty() { "Saved.".to_string() } else { errors.join(" ") };
+        let note = if errors.is_empty() { tr("Saved.") } else { errors.join(" ") };
         STATE.with(|s| {
             if let Some(s) = s.borrow().as_ref() {
                 s.hotkey_note.setStringValue(&ns(&note));

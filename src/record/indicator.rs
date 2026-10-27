@@ -10,6 +10,7 @@ use objc2_quartz_core::{CALayer, CAShapeLayer, CATransaction};
 
 use crate::capture::cg_rect;
 use crate::geometry::Rect;
+use crate::i18n::tr;
 use crate::overlay::chrome::rgba;
 use crate::{hud, ui};
 
@@ -85,8 +86,8 @@ impl Countdown {
         label.setAlignment(NSTextAlignment::Center);
         label.setFrame(cg_rect(Rect::new(0.0, 56.0, w, 60.0)));
         surface.addSubview(&label);
-        let skip = ui::text_button(mtm, "Skip", crate::commands::Command::SkipCountdown);
-        skip.setToolTip(Some(&crate::util::ns("Start recording now")));
+        let skip = ui::text_button(mtm, &tr("Skip"), crate::commands::Command::SkipCountdown);
+        skip.setToolTip(Some(&crate::util::ns(&tr("Start recording now"))));
         skip.setFrame(cg_rect(Rect::new(18.0, 16.0, w - 36.0, 30.0)));
         surface.addSubview(&skip);
         panel.setContentView(Some(&surface));

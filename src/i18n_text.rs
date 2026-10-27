@@ -5,6 +5,7 @@
 //! translation. English has no catalog: the English text is the key.
 
 /// Every language with a catalog, as macOS names its `.lproj` folders.
+#[allow(dead_code)] // read by the catalog test
 pub const LANGUAGES: &[&str] = &["zh-Hans", "ja", "de", "fr", "es", "pt-BR", "ko"];
 
 /// Replace each `{name}` in `text` with its value.
@@ -27,6 +28,7 @@ pub fn is_singular(lang: &str, n: u64) -> bool {
 }
 
 /// Parse a catalog: a flat JSON object whose keys and values are all strings.
+#[allow(dead_code)] // the Windows edition's compiled-in catalogs; the Mac reads them through NSBundle
 pub fn parse_catalog(json: &str) -> Result<Vec<(String, String)>, String> {
     let mut p = Parser { s: json.as_bytes(), i: 0 };
     let mut out = Vec::new();
@@ -244,10 +246,10 @@ mod tests {
                     keys.insert(key, where_.clone());
                     if call == "trn(" {
                         let j = skip_ws(s, next);
-                        if s.get(j) == Some(&b',') {
-                            if let Some((other, _)) = literal(s, skip_ws(s, j + 1)) {
-                                keys.insert(other, where_);
-                            }
+                        if s.get(j) == Some(&b',')
+                            && let Some((other, _)) = literal(s, skip_ws(s, j + 1))
+                        {
+                            keys.insert(other, where_);
                         }
                     }
                 }

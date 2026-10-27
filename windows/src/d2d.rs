@@ -26,6 +26,7 @@ use windows::Win32::Graphics::Gdi::{
 use windows::Win32::Graphics::Imaging::{CLSID_WICImagingFactory, IWICImagingFactory};
 use windows::Win32::System::Com::{CLSCTX_INPROC_SERVER, CoCreateInstance};
 use windows::Win32::UI::WindowsAndMessaging::{ULW_ALPHA, UpdateLayeredWindow};
+use windows::core::HSTRING;
 use windows::core::w;
 use windows_numerics::Vector2;
 
@@ -133,7 +134,7 @@ pub fn text_format(size: f64, weight: DWRITE_FONT_WEIGHT) -> IDWriteTextFormat {
                 DWRITE_FONT_STYLE_NORMAL,
                 DWRITE_FONT_STRETCH_NORMAL,
                 size as f32,
-                w!("en-us"),
+                &HSTRING::from(text_locale()),
             )
             .expect("text format")
     }
@@ -252,5 +253,16 @@ impl Drop for Layered {
             let _ = DeleteObject(self.bmp.into());
             let _ = DeleteDC(self.dc);
         }
+    }
+}
+
+/// DirectWrite's text locale. Chinese, Japanese and Korean share characters but draw them
+/// differently, so this picks the shapes for the app's language.
+fn text_locale() -> &'static str {
+    match crate::i18n::language() {
+        "zh-Hans" => "zh-cn",
+        "ja" => "ja-jp",
+        "ko" => "ko-kr",
+        _ => "en-us",
     }
 }

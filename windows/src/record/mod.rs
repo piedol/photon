@@ -34,6 +34,7 @@ use windows_capture::window::Window;
 use crate::destination::{self, Destination, Folder, NameParts};
 use crate::geometry::Rect;
 use crate::hud::{self, Button, Content};
+use crate::i18n::{tr, trf};
 use crate::naming::Kind;
 use crate::session::RecordTarget;
 use crate::settings::{self, Codec, Settings};
@@ -244,7 +245,7 @@ pub fn start(target: RecordTarget) {
     let mut s = settings::get();
     let window_mode = target.window.is_some();
     if window_mode && s.rec_webcam {
-        hud::message("Webcam bubble is off for window recordings", Some("Select a region instead to include the camera."));
+        hud::message(&tr("Webcam bubble is off for window recordings"), Some(&tr("Select a region instead to include the camera.")));
         s.rec_webcam = false;
     }
     let outline = (!window_mode).then(|| show_outline(&target));
@@ -289,7 +290,7 @@ fn show_countdown(t: &RecordTarget) -> u64 {
     let (w, h) = (120.0 * s, 140.0 * s);
     let c = t.global_rect.mid();
     let r = Rect::new(c.x - w / 2.0, c.y - h / 2.0, w, h);
-    let skip = Button { rect: Rect::new(18.0 * s, h - 46.0 * s, w - 36.0 * s, 30.0 * s), cmd: Command::SkipCountdown, icon: None, label: Some("Skip".into()), tooltip: "Start recording now".into() };
+    let skip = Button { rect: Rect::new(18.0 * s, h - 46.0 * s, w - 36.0 * s, 30.0 * s), cmd: Command::SkipCountdown, icon: None, label: Some(tr("Skip")), tooltip: tr("Start recording now") };
     hud::show(r, s, Content::Countdown { n: 3 }, vec![skip], false, false)
 }
 
@@ -423,8 +424,8 @@ fn show_pill() {
     let r = Rect::new(t.global_rect.mid().x - w / 2.0, y, w, h).clamp_inside(&work.inset(4.0 * s));
     let b = 32.0 * s;
     let buttons = vec![
-        Button { rect: Rect::new(w - b * 2.0 - 8.0 * s, 4.0 * s, b, b), cmd: Command::PauseResume, icon: Some(Icon::Pause), label: None, tooltip: "Pause".into() },
-        Button { rect: Rect::new(w - b - 6.0 * s, 4.0 * s, b, b), cmd: Command::StopRecording, icon: Some(Icon::Stop), label: None, tooltip: "Stop and save".into() },
+        Button { rect: Rect::new(w - b * 2.0 - 8.0 * s, 4.0 * s, b, b), cmd: Command::PauseResume, icon: Some(Icon::Pause), label: None, tooltip: tr("Pause") },
+        Button { rect: Rect::new(w - b - 6.0 * s, 4.0 * s, b, b), cmd: Command::StopRecording, icon: Some(Icon::Stop), label: None, tooltip: tr("Stop and save") },
     ];
     let id = hud::show(r, s, Content::Pill { text: "00:00".into(), paused: false }, buttons, false, true);
     with(|r| r.pill = Some(id));
@@ -441,10 +442,10 @@ fn tick() {
             format!("{:02}:{:02}", secs / 60, secs % 60)
         };
         hud::update(id, |p| {
-            p.content = Content::Pill { text: if paused { format!("Paused {text}") } else { text }, paused };
+            p.content = Content::Pill { text: if paused { trf("Paused {time}", &[("time", &text)]) } else { text }, paused };
             if let Some(b) = p.buttons.first_mut() {
                 b.icon = Some(if paused { Icon::Play } else { Icon::Pause });
-                b.tooltip = if paused { "Resume".into() } else { "Pause".into() };
+                b.tooltip = if paused { tr("Resume") } else { tr("Pause") };
             }
         });
     }
@@ -512,7 +513,8 @@ pub fn stop(cancel: bool) {
             if cancelled || !have_file {
                 let _ = std::fs::remove_file(&path);
                 if !cancelled {
-                    hud::message("Couldn't save the recording", Some(err.as_deref().unwrap_or("No frames were captured.")));
+                    let detail = err.unwrap_or_else(|| tr("No frames were captured."));
+                    hud::message(&tr("Couldn't save the recording"), Some(&detail));
                 }
             } else {
                 deliver(path, &target, &s);
@@ -524,7 +526,7 @@ pub fn stop(cancel: bool) {
 
 fn fail(msg: &str) {
     util::log(format!("recording failed: {msg}"));
-    hud::message("Recording stopped", Some(msg));
+    hud::message(&tr("Recording stopped"), Some(msg));
     stop(true);
 }
 
@@ -550,6 +552,6 @@ fn deliver(file: PathBuf, target: &RecordTarget, s: &Settings) {
                 }
             post::finished_hud(saved, resolved.fell_back);
         }
-        Err(e) => hud::message("Couldn't save the recording", Some(&e)),
+        Err(e) => hud::message(&tr("Couldn't save the recording"), Some(&e)),
     }
 }

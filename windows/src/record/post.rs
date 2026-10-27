@@ -28,6 +28,7 @@ use crate::commands::Command;
 use crate::d2d;
 use crate::geometry::Rect;
 use crate::hud::{self, Button, Content};
+use crate::i18n::tr;
 use crate::toolbar::Icon;
 use crate::util;
 
@@ -49,14 +50,14 @@ pub fn finished_hud(path: PathBuf, fell_back: bool) {
     let c = hud::cursor();
     let (s, work, _) = hud::monitor_at(c);
     let btn = 34.0 * s;
-    let mut actions: Vec<(Icon, &str, Command)> = vec![
-        (Icon::Folder, "Show in Explorer", Command::Reveal),
-        (Icon::Copy, "Copy file", Command::CopyFile),
-        (Icon::Play, "Open", Command::OpenFile),
+    let mut actions: Vec<(Icon, String, Command)> = vec![
+        (Icon::Folder, tr("Show in Explorer"), Command::Reveal),
+        (Icon::Copy, tr("Copy file"), Command::CopyFile),
+        (Icon::Play, tr("Open"), Command::OpenFile),
     ];
     if is_video {
-        actions.push((Icon::Trim, "Trim", Command::Trim));
-        actions.push((Icon::Gif, "Make GIF", Command::ExportGif));
+        actions.push((Icon::Trim, tr("Trim"), Command::Trim));
+        actions.push((Icon::Gif, tr("Make GIF"), Command::ExportGif));
     }
     let (w, h) = (330.0 * s, 96.0 * s);
     let r = Rect::new(work.max_x() - w - 16.0 * s, work.max_y() - h - 16.0 * s, w, h);
@@ -68,14 +69,20 @@ pub fn finished_hud(path: PathBuf, fell_back: bool) {
             cmd: *cmd,
             icon: Some(*icon),
             label: None,
-            tooltip: (*tip).into(),
+            tooltip: tip.clone(),
         })
         .collect();
-    buttons.push(Button { rect: Rect::new(w - 34.0 * s, 8.0 * s, 26.0 * s, 26.0 * s), cmd: Command::DismissHud, icon: Some(Icon::Close), label: None, tooltip: "Dismiss".into() });
+    buttons.push(Button { rect: Rect::new(w - 34.0 * s, 8.0 * s, 26.0 * s, 26.0 * s), cmd: Command::DismissHud, icon: Some(Icon::Close), label: None, tooltip: tr("Dismiss") });
     let name = path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
-    let title = if fell_back { "Saved locally · cloud folder missing" } else if is_video { "Recording saved" } else { "GIF saved" };
+    let title = if fell_back {
+        tr("Saved locally · cloud folder missing")
+    } else if is_video {
+        tr("Recording saved")
+    } else {
+        tr("GIF saved")
+    };
     let detail = format!("{name} · {}", util::tilde(path.parent().unwrap_or(&path)));
-    let id = hud::show(r, s, Content::Saved { title: title.into(), detail }, buttons, false, false);
+    let id = hud::show(r, s, Content::Saved { title, detail }, buttons, false, false);
     hud::dismiss_after(id, 10.0);
     LAST.with(|l| *l.borrow_mut() = Some(Finished { path, hud: id }));
 }
@@ -134,7 +141,7 @@ pub fn command(cmd: Command) {
         }
         Command::CopyFile => {
             if copy_file(&path) {
-                hud::toast("File copied", Some("Paste it into Discord, Slack or Explorer"));
+                hud::toast(&tr("File copied"), Some(&tr("Paste it into Discord, Slack or Explorer")));
             }
             dismiss();
         }
@@ -183,12 +190,12 @@ fn copy_file(path: &Path) -> bool {
 
 /// Cut `[start, end)` seconds out of `path` without re-encoding, replacing it.
 pub fn apply_trim(path: PathBuf, start: f64, end: f64) {
-    hud::toast("Trimming…", None);
+    hud::toast(&tr("Trimming…"), None);
     std::thread::spawn(move || {
         let result = trim_file(&path, start, end);
         util::main_async(move || match result {
             Ok(()) => finished_hud(path, false),
-            Err(e) => hud::message("Couldn't trim the recording", Some(&e)),
+            Err(e) => hud::message(&tr("Couldn't trim the recording"), Some(&e)),
         });
     });
 }
@@ -198,7 +205,7 @@ fn trim_file(path: &Path, start: f64, end: f64) -> Result<(), String> {
         let _ = windows::Win32::System::Com::CoInitializeEx(None, windows::Win32::System::Com::COINIT_MULTITHREADED);
     }
     let e = |x: windows::core::Error| x.message().to_string();
-    let dir = path.parent().ok_or("bad path")?;
+    let dir = path.parent().ok_or_else(|| tr("bad path"))?;
     let stem = path.file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default();
     let tmp_name = format!("{stem}.trimming.mp4");
     let src = StorageFile::GetFileFromPathAsync(&HSTRING::from(path.as_os_str()))
@@ -218,7 +225,7 @@ fn trim_file(path: &Path, start: f64, end: f64) -> Result<(), String> {
     }
     let prep = t.PrepareFileTranscodeAsync(&src, &dst, &profile).map_err(e)?.join().map_err(e)?;
     if !prep.CanTranscode().map_err(e)? {
-        return Err("Windows can't trim this file.".into());
+        return Err(tr("Windows can't trim this file."));
     }
     prep.TranscodeAsync().map_err(e)?.join().map_err(e)?;
     drop((src, dst));
@@ -233,7 +240,7 @@ const GIF_MAX_SECONDS: f64 = 60.0;
 const GIF_MAX_WIDTH: u32 = 960;
 
 fn make_gif(video: PathBuf) {
-    hud::toast("Making GIF…", None);
+    hud::toast(&tr("Making GIF…"), None);
     let out = video.with_extension("gif");
     std::thread::spawn(move || {
         unsafe {
@@ -242,7 +249,7 @@ fn make_gif(video: PathBuf) {
         let result = write_gif(&video, &out).map(|()| out);
         util::main_async(move || match result {
             Ok(path) => finished_hud(path, false),
-            Err(e) => hud::message("Couldn't make the GIF", Some(&e)),
+            Err(e) => hud::message(&tr("Couldn't make the GIF"), Some(&e)),
         });
     });
 }
@@ -274,7 +281,7 @@ fn pv_bytes(b: &[u8]) -> PROPVARIANT {
 }
 
 fn write_gif(video: &Path, out: &Path) -> Result<(), String> {
-    let reader = RgbReader::file(video).ok_or("Couldn't open the recording.")?;
+    let reader = RgbReader::file(video).ok_or_else(|| tr("Couldn't open the recording."))?;
     let wic = d2d::wic();
     let e = |x: windows::core::Error| x.message().to_string();
     unsafe {
@@ -313,7 +320,7 @@ fn write_gif(video: &Path, out: &Path) -> Result<(), String> {
             let mut frame: Option<IWICBitmapFrameEncode> = None;
             let mut bag: Option<IPropertyBag2> = None;
             enc.CreateNewFrame(&mut frame, &mut bag).map_err(e)?;
-            let frame = frame.ok_or("frame")?;
+            let frame = frame.ok_or_else(|| tr("frame"))?;
             frame.Initialize(bag.as_ref()).map_err(e)?;
             frame.SetSize(w, h).map_err(e)?;
             let mut pf = GUID_WICPixelFormat8bppIndexed;
@@ -331,7 +338,7 @@ fn write_gif(video: &Path, out: &Path) -> Result<(), String> {
             frames += 1;
         }
         if frames == 0 {
-            return Err("The recording has no frames.".into());
+            return Err(tr("The recording has no frames."));
         }
         enc.Commit().map_err(e)?;
     }

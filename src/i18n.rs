@@ -27,6 +27,7 @@ pub fn trf(key: &str, args: &[(&str, &str)]) -> String {
     fill(&tr(key), args)
 }
 
+#[allow(dead_code)] // no text in the Mac app counts anything yet
 pub fn trn(n: u64, one: &str, other: &str) -> String {
     let key = if is_singular(language(), n) { one } else { other };
     trf(key, &[("n", &n.to_string())])

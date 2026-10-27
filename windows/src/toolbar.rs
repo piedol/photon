@@ -8,6 +8,7 @@ use windows::Win32::Graphics::Direct2D::{ID2D1RenderTarget, ID2D1SolidColorBrush
 
 use crate::d2d::{self, rgba};
 use crate::geometry::{pt, Point, Rect};
+use crate::i18n::tr;
 use crate::model::{Rgba, Tool, PALETTE, PALETTE_NAMES};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -39,22 +40,34 @@ pub enum Btn {
 impl Btn {
     pub fn tooltip(self) -> String {
         match self {
-            Btn::Tool(t) => t.tooltip().replace('⇧', "Shift"),
-            Btn::Color => "Color".into(),
-            Btn::Stroke => "Stroke size  ([ ] or scroll)".into(),
-            Btn::Undo => "Undo  (Ctrl+Z)".into(),
+            // The Mac's tool tooltips with ⇧ spelled out as Shift.
+            Btn::Tool(t) => match t {
+                Tool::Pen => tr("Pen"),
+                Tool::Line => tr("Line  (Shift for 45°)"),
+                Tool::Arrow => tr("Arrow  (Shift for 45°)"),
+                Tool::Rect => tr("Rectangle  (Shift for square)"),
+                Tool::Ellipse => tr("Ellipse  (Shift for circle)"),
+                Tool::Marker => tr("Marker"),
+                Tool::Text => tr("Text"),
+                Tool::Blur => tr("Pixelate to hide"),
+                Tool::Step => tr("Numbered step"),
+            },
+            Btn::Color => tr("Color"),
+            Btn::Stroke => tr("Stroke size  ([ ] or scroll)"),
+            Btn::Undo => tr("Undo  (Ctrl+Z)"),
+            // The shared palette names are already translated.
             Btn::Swatch(i) => PALETTE_NAMES[i].into(),
-            Btn::Custom => "Custom color…".into(),
-            Btn::Record => "Record this area".into(),
-            Btn::Pin => "Pin to screen".into(),
-            Btn::Print => "Print  (Ctrl+P)".into(),
-            Btn::Save => "Save  (Ctrl+S)".into(),
-            Btn::Copy => "Copy  (Ctrl+C or Enter)".into(),
-            Btn::Close => "Close  (Esc)".into(),
-            Btn::Mic => "Microphone".into(),
-            Btn::Audio => "System audio".into(),
-            Btn::Cam => "Webcam bubble".into(),
-            Btn::Start => "Start recording  (Enter)".into(),
+            Btn::Custom => tr("Custom color…"),
+            Btn::Record => tr("Record this area"),
+            Btn::Pin => tr("Pin to screen"),
+            Btn::Print => tr("Print  (Ctrl+P)"),
+            Btn::Save => tr("Save  (Ctrl+S)"),
+            Btn::Copy => tr("Copy  (Ctrl+C or Enter)"),
+            Btn::Close => tr("Close  (Esc)"),
+            Btn::Mic => tr("Microphone"),
+            Btn::Audio => tr("System audio"),
+            Btn::Cam => tr("Webcam bubble"),
+            Btn::Start => tr("Start recording  (Enter)"),
         }
     }
 }
@@ -261,7 +274,7 @@ impl Toolbars {
                     }
                     let white = d2d::brush(rt, rgba(1.0, 1.0, 1.0, 1.0));
                     unsafe { rt.FillEllipse(&d2d::ellipse(r.x + 20.0 * s, c.y, 5.0 * s, 5.0 * s), &white) };
-                    d2d::draw_text(rt, "Record", r.x + 32.0 * s, c.y - 9.5 * s, 13.0 * s, d2d::WEIGHT_SEMIBOLD, rgba(1.0, 1.0, 1.0, 1.0));
+                    d2d::draw_text(rt, &tr("Record"), r.x + 32.0 * s, c.y - 9.5 * s, 13.0 * s, d2d::WEIGHT_SEMIBOLD, rgba(1.0, 1.0, 1.0, 1.0));
                 }
                 Btn::Mic => icon(rt, if st.mic { Icon::Mic } else { Icon::MicOff }, c, s, if st.mic { &fg } else { &dim }),
                 Btn::Audio => icon(rt, if st.audio { Icon::Speaker } else { Icon::SpeakerOff }, c, s, if st.audio { &fg } else { &dim }),

@@ -6,6 +6,7 @@ use std::cell::Cell;
 use windows::Win32::UI::Input::KeyboardAndMouse::{HOT_KEY_MODIFIERS, MOD_NOREPEAT, RegisterHotKey, UnregisterHotKey};
 
 use crate::commands::Command;
+use crate::i18n::trf;
 use crate::keys::{vk, Shortcut};
 use crate::util;
 
@@ -35,11 +36,11 @@ pub fn install(shot: Shortcut, record: Shortcut) -> Vec<String> {
     let mut errors = Vec::new();
     let a = register(ID_SHOT, shot);
     if !a {
-        errors.push(format!("{} is already used by another app (screenshot).", shot.label()));
+        errors.push(trf("{shortcut} is already used by another app (screenshot).", &[("shortcut", &shot.label())]));
     }
     let b = register(ID_RECORD, record);
     if !b {
-        errors.push(format!("{} is already used by another app (recording).", record.label()));
+        errors.push(trf("{shortcut} is already used by another app (recording).", &[("shortcut", &record.label())]));
     }
     ACTIVE.with(|c| c.set((a.then_some(shot), b.then_some(record))));
     errors

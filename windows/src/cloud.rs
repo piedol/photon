@@ -124,7 +124,7 @@ pub fn discover() -> Vec<CloudFolder> {
         if let Some(folder) = reg_string(HKEY_CURRENT_USER, &sub, "UserFolder") {
             let email = reg_string(HKEY_CURRENT_USER, &sub, "UserEmail");
             let root = PathBuf::from(folder);
-            let label = email.or_else(|| Some(if acct == "Personal" { "Personal".into() } else { acct.clone() }));
+            let label = email.or_else(|| Some(if acct == "Personal" { crate::i18n::tr("Personal") } else { acct.clone() }));
             push(&mut out, Provider::OneDrive, label, root.clone(), root.join("Photon"));
         }
     }

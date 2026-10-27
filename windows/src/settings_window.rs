@@ -33,6 +33,7 @@ use windows::core::{w, PCWSTR};
 
 use crate::cloud;
 use crate::destination::{self, NameParts};
+use crate::i18n::{tr, trf};
 use crate::keys::{self, Shortcut};
 use crate::naming::{Case, DateFormat, Kind, NamingRule, Separator, TimeFormat, TOKENS};
 use crate::settings::{self, Codec, Settings};
@@ -248,7 +249,7 @@ fn fill_combo(h: HWND, items: &[String], sel: usize) {
 
 fn dest_options(current: &std::path::Path, default: PathBuf) -> (Vec<DestOption>, usize) {
     let folders = cloud::discover();
-    let mut opts = vec![DestOption { label: format!("{}  (default)", util::tilde(&default)), path: Some(default.clone()) }];
+    let mut opts = vec![DestOption { label: trf("{folder}  (default)", &[("folder", &util::tilde(&default))]), path: Some(default.clone()) }];
     for f in &folders {
         opts.push(DestOption { label: format!("{} › Photon", f.label), path: Some(f.default_target.clone()) });
     }
@@ -257,12 +258,12 @@ fn dest_options(current: &std::path::Path, default: PathBuf) -> (Vec<DestOption>
         opts.insert(1, DestOption { label: cloud::display_path(current, &folders), path: Some(current.to_path_buf()) });
         sel = Some(1);
     }
-    opts.push(DestOption { label: "Other folder…".into(), path: None });
+    opts.push(DestOption { label: tr("Other folder…"), path: None });
     (opts, sel.unwrap_or(0))
 }
 
-fn labels<T: Copy>(all: &[T], f: impl Fn(T) -> &'static str) -> Vec<String> {
-    all.iter().map(|x| f(*x).to_string()).collect()
+fn labels<T: Copy, S: Into<String>>(all: &[T], f: impl Fn(T) -> S) -> Vec<String> {
+    all.iter().map(|x| f(*x).into()).collect()
 }
 
 fn pos<T: PartialEq>(all: &[T], v: T) -> usize {
@@ -270,7 +271,7 @@ fn pos<T: PartialEq>(all: &[T], v: T) -> usize {
 }
 
 fn naming_block(f: &mut Form, base: u16, rule: &NamingRule) {
-    f.label("File name:", f.px(24.0));
+    f.label(&tr("File name:"), f.px(24.0));
     let (x, w) = (f.ctrl_x(), f.ctrl_w());
     let y = f.y;
     let edit = f.create(w!("EDIT"), &rule.template, WS_VISIBLE | WS_TABSTOP | WINDOW_STYLE(ES_AUTOHSCROLL as u32), WS_EX_CLIENTEDGE, (x, y, w, f.px(24.0)), Some(base + N_TEMPLATE));
@@ -289,17 +290,19 @@ fn naming_block(f: &mut Form, base: u16, rule: &NamingRule) {
         cx += bw + f.px(4.0);
     }
     f.y += f.px(32.0);
+    // The date and time choices are examples of the file name itself, so they stay as
+    // the shared code renders them; the case and separator choices are translated words.
     f.two_combos(
-        "Date / time:",
+        &tr("Date / time:"),
         (base + N_DATE, &labels(&DateFormat::ALL, |d| d.label()), pos(&DateFormat::ALL, rule.date)),
         (base + N_TIME, &labels(&TimeFormat::ALL, |d| d.label()), pos(&TimeFormat::ALL, rule.time)),
     );
     f.two_combos(
-        "Formatting:",
-        (base + N_CASE, &labels(&Case::ALL, |d| d.label()), pos(&Case::ALL, rule.case)),
-        (base + N_SEP, &labels(&Separator::ALL, |d| d.label()), pos(&Separator::ALL, rule.separator)),
+        &tr("Formatting:"),
+        (base + N_CASE, &labels(&Case::ALL, Case::ui_label), pos(&Case::ALL, rule.case)),
+        (base + N_SEP, &labels(&Separator::ALL, Separator::ui_label), pos(&Separator::ALL, rule.separator)),
     );
-    f.label("Preview:", f.px(20.0));
+    f.label(&tr("Preview:"), f.px(20.0));
     let (x, w) = (f.ctrl_x(), f.ctrl_w());
     let y = f.y;
     let p = f.create(w!("STATIC"), "", WS_VISIBLE, Default::default(), (x, y + f.px(2.0), w, f.px(20.0)), None);
@@ -376,11 +379,12 @@ pub fn show() {
     let c = hud::cursor();
     let (s, work, _) = hud::monitor_at(c);
     let (w, h) = ((640.0 * s) as i32, ((800.0 * s) as i32).min(work.h as i32 - 20));
+    let title = W::new(&tr("Photon Settings"));
     let hwnd = unsafe {
         CreateWindowExW(
             Default::default(),
             w!("PhotonSettings"),
-            w!("Photon Settings"),
+            title.p(),
             WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
             (work.mid().x - w as f64 / 2.0) as i32,
             (work.mid().y - h as f64 / 2.0) as i32,
@@ -422,7 +426,7 @@ pub fn show() {
     };
     unsafe {
         SendMessageW(tabs, WM_SETFONT, Some(WPARAM(font.0 as usize)), Some(LPARAM(1)));
-        for (i, name) in ["General", "Screenshots", "Recordings"].iter().enumerate() {
+        for (i, name) in [tr("General"), tr("Screenshots"), tr("Recordings")].iter().enumerate() {
             let mut t = util::wide(name);
             let item = TCITEMW { mask: TCIF_TEXT, pszText: windows::core::PWSTR(t.as_mut_ptr()), ..Default::default() };
             SendMessageW(tabs, TCM_INSERTITEMW, Some(WPARAM(i)), Some(LPARAM(&item as *const _ as isize)));
@@ -474,40 +478,40 @@ fn build(st: &mut State, s: f64, client_w: i32) {
 
     // General.
     let mut f = Form { st, tab: 0, y: top, s, left, width };
-    f.section("Shortcuts");
-    f.label("Screenshot:", f.px(28.0));
+    f.section(&tr("Shortcuts"));
+    f.label(&tr("Screenshot:"), f.px(28.0));
     let (x, y) = (f.ctrl_x(), f.y);
     f.create(w!("BUTTON"), &set.shot_hotkey.label(), WS_VISIBLE | WS_TABSTOP | WINDOW_STYLE(BS_PUSHBUTTON as u32), Default::default(), (x, y, f.px(160.0), f.px(28.0)), Some(SHOT_KEY));
     f.y += f.px(36.0);
-    f.label("Record screen:", f.px(28.0));
+    f.label(&tr("Record screen:"), f.px(28.0));
     let (x, y) = (f.ctrl_x(), f.y);
     f.create(w!("BUTTON"), &set.record_hotkey.label(), WS_VISIBLE | WS_TABSTOP | WINDOW_STYLE(BS_PUSHBUTTON as u32), Default::default(), (x, y, f.px(160.0), f.px(28.0)), Some(REC_KEY));
     f.y += f.px(36.0);
-    let note = f.note("Click a shortcut, then press the new keys. It needs Ctrl, Alt or Win. Esc cancels.");
+    let note = f.note(&tr("Click a shortcut, then press the new keys. It needs Ctrl, Alt or Win. Esc cancels."));
     f.st.note = note;
-    f.section("Startup");
-    f.checkbox(LOGIN, "Launch Photon at login", app::login_item_enabled());
-    f.section("Scripting");
+    f.section(&tr("Startup"));
+    f.checkbox(LOGIN, &tr("Launch Photon at login"), app::login_item_enabled());
+    f.section(&tr("Scripting"));
     f.note("photon://capture · photon://record · photon://stop · photon://settings");
 
     // Screenshots.
     let mut f = Form { st: f.st, tab: 1, y: top, s, left, width };
-    f.section("After a capture");
-    f.note("Copy (Ctrl+C or Enter) puts the image on the clipboard.");
-    f.checkbox(SHOT_AUTOSAVE, "Also save a PNG automatically", set.shot_autosave);
+    f.section(&tr("After a capture"));
+    f.note(&tr("Copy (Ctrl+C or Enter) puts the image on the clipboard."));
+    f.checkbox(SHOT_AUTOSAVE, &tr("Also save a PNG automatically"), set.shot_autosave);
     let (opts, sel) = dest_options(&set.shot_dir, Settings::default_shot_dir());
-    f.combo_row("Save to:", SHOT_DEST, &opts.iter().map(|o| o.label.clone()).collect::<Vec<_>>(), sel);
+    f.combo_row(&tr("Save to:"), SHOT_DEST, &opts.iter().map(|o| o.label.clone()).collect::<Vec<_>>(), sel);
     f.st.dests.push((SHOT_DEST, opts));
     let warn = f.note("");
     f.st.warnings.push((SHOT_DEST, warn));
-    f.section("File names");
+    f.section(&tr("File names"));
     naming_block(&mut f, SHOT_NAMING, &set.shot_naming);
 
     // Recordings.
     let mut f = Form { st: f.st, tab: 2, y: top, s, left, width };
-    f.section("Saving");
+    f.section(&tr("Saving"));
     let (opts, sel) = dest_options(&set.rec_dir, Settings::default_rec_dir());
-    f.combo_row("Save to:", REC_DEST, &opts.iter().map(|o| o.label.clone()).collect::<Vec<_>>(), sel);
+    f.combo_row(&tr("Save to:"), REC_DEST, &opts.iter().map(|o| o.label.clone()).collect::<Vec<_>>(), sel);
     f.st.dests.push((REC_DEST, opts));
     let warn = f.note("");
     f.st.warnings.push((REC_DEST, warn));
@@ -520,42 +524,42 @@ fn build(st: &mut State, s: f64, client_w: i32) {
             .map(|f| f.default_target.clone())
             .unwrap_or_else(Settings::default_rec_dir)
     });
-    f.checkbox(REC_ALSO, "Also copy each recording to:", set.rec_also_copy);
+    f.checkbox(REC_ALSO, &tr("Also copy each recording to:"), set.rec_also_copy);
     let (opts, sel) = dest_options(&also_path, Settings::default_rec_dir());
     let (x, w) = (f.ctrl_x(), f.ctrl_w());
     f.combo_at(REC_ALSO_DEST, &opts.iter().map(|o| o.label.clone()).collect::<Vec<_>>(), sel, x, w);
     f.y += f.px(34.0);
     f.st.dests.push((REC_ALSO_DEST, opts));
-    f.section("File names");
+    f.section(&tr("File names"));
     naming_block(&mut f, REC_NAMING, &set.rec_naming);
-    f.section("Video and audio");
+    f.section(&tr("Video and audio"));
     f.two_combos(
-        "Format:",
-        (CODEC, &["H.264 (most compatible)".to_string(), "HEVC (smaller files)".to_string()], (set.rec_codec == Codec::Hevc) as usize),
-        (FPS, &["30 fps".to_string(), "60 fps".to_string()], (set.rec_fps == 60) as usize),
+        &tr("Format:"),
+        (CODEC, &[tr("H.264 (most compatible)"), tr("HEVC (smaller files)")], (set.rec_codec == Codec::Hevc) as usize),
+        (FPS, &[tr("30 fps"), tr("60 fps")], (set.rec_fps == 60) as usize),
     );
     let half = (f.ctrl_w() - f.px(8.0)) / 2;
     let dx = f.ctrl_x() + half + f.px(8.0);
-    f.checkbox(SYS_AUDIO, "Record system audio", set.rec_system_audio);
+    f.checkbox(SYS_AUDIO, &tr("Record system audio"), set.rec_system_audio);
     let y = f.y;
-    f.checkbox(MIC, "Record microphone", set.rec_mic);
-    let mics: Vec<String> = std::iter::once("System default".to_string()).chain(f.st.mics.iter().map(|m| m.1.clone())).collect();
+    f.checkbox(MIC, &tr("Record microphone"), set.rec_mic);
+    let mics: Vec<String> = std::iter::once(tr("System default")).chain(f.st.mics.iter().map(|m| m.1.clone())).collect();
     let msel = set.rec_mic_device.as_ref().and_then(|id| f.st.mics.iter().position(|m| &m.0 == id)).map(|i| i + 1).unwrap_or(0);
     let save_y = f.y;
     f.y = y - f.px(2.0);
     f.combo_at(MIC_DEVICE, &mics, msel, dx, half);
     f.y = save_y;
     let y = f.y;
-    f.checkbox(WEBCAM, "Webcam bubble", set.rec_webcam);
-    let cams: Vec<String> = std::iter::once("System default".to_string()).chain(f.st.cams.iter().map(|m| m.1.clone())).collect();
+    f.checkbox(WEBCAM, &tr("Webcam bubble"), set.rec_webcam);
+    let cams: Vec<String> = std::iter::once(tr("System default")).chain(f.st.cams.iter().map(|m| m.1.clone())).collect();
     let csel = set.rec_webcam_device.as_ref().and_then(|id| f.st.cams.iter().position(|m| &m.0 == id)).map(|i| i + 1).unwrap_or(0);
     let save_y = f.y;
     f.y = y - f.px(2.0);
     f.combo_at(CAM_DEVICE, &cams, csel, dx, half);
     f.y = save_y;
-    f.checkbox(CURSOR, "Show the pointer", set.rec_cursor);
-    f.checkbox(CLICKS, "Highlight clicks", set.rec_click_rings);
-    f.checkbox(COUNTDOWN, "3-second countdown", set.rec_countdown);
+    f.checkbox(CURSOR, &tr("Show the pointer"), set.rec_cursor);
+    f.checkbox(CLICKS, &tr("Highlight clicks"), set.rec_click_rings);
+    f.checkbox(COUNTDOWN, &tr("3-second countdown"), set.rec_countdown);
 }
 
 fn show_tab(tab: usize) {
@@ -625,7 +629,7 @@ pub fn is_dialog_message(msg: &MSG) -> bool {
         if sc.is_valid() {
             finish_recording_key(id, Some(sc));
         } else if !matches!(key, keys::vk::SHIFT | keys::vk::CONTROL | keys::vk::MENU | keys::vk::LWIN | keys::vk::RWIN) {
-            set_note("Add Ctrl, Alt or Win to the key. Esc cancels.");
+            set_note(&tr("Add Ctrl, Alt or Win to the key. Esc cancels."));
         }
         return true;
     }
@@ -646,7 +650,7 @@ fn start_recording_key(id: u16) {
         }
     });
     if let Some(h) = ctl(id) {
-        set_text(h, "Press shortcut…");
+        set_text(h, &tr("Press shortcut…"));
         unsafe {
             let _ = SetFocus(Some(h));
         }
@@ -665,7 +669,7 @@ fn finish_recording_key(id: u16, sc: Option<Shortcut>) {
     if let Some(sc) = sc {
         settings::update(|s| if id == SHOT_KEY { s.shot_hotkey = sc } else { s.record_hotkey = sc });
         let errors = app::apply_hotkeys();
-        set_note(&if errors.is_empty() { "Saved.".to_string() } else { errors.join(" ") });
+        set_note(&if errors.is_empty() { tr("Saved.") } else { errors.join(" ") });
     }
     let s = settings::get();
     if let Some(h) = ctl(id) {
@@ -696,7 +700,7 @@ fn refresh() {
                 String::new()
             } else {
                 let fb = if *id == SHOT_DEST { Settings::default_shot_dir() } else { Settings::default_rec_dir() };
-                format!("This folder isn't available. Files go to {} until it's back.", util::tilde(&fb))
+                trf("This folder isn't available. Files go to {folder} until it's back.", &[("folder", &util::tilde(&fb))])
             };
             set_text(*h, &msg);
         }

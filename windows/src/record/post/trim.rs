@@ -32,6 +32,7 @@ use super::super::mf::{self, RgbReader};
 use crate::d2d::{self, rgba};
 use crate::geometry::{pt, Point, Rect};
 use crate::hud;
+use crate::i18n::{tr, trf};
 use crate::keys::vk;
 use crate::util;
 
@@ -195,7 +196,7 @@ pub fn open(path: PathBuf) {
         RegisterClassExW(&wc);
     });
     let Some(reader) = RgbReader::file(&path) else {
-        hud::message("Couldn't open the recording", None);
+        hud::message(&tr("Couldn't open the recording"), None);
         return;
     };
     let duration = reader.duration().max(0.1);
@@ -203,7 +204,8 @@ pub fn open(path: PathBuf) {
     let c = hud::cursor();
     let (s, work, _) = hud::monitor_at(c);
     let (w, h) = ((960.0 * s).min(work.w * 0.8), (640.0 * s).min(work.h * 0.8));
-    let title = format!("Trim · {}", path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default());
+    let file = path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
+    let title = trf("Trim · {file}", &[("file", &file)]);
     let hwnd = unsafe {
         let t = util::W::new(&title);
         match CreateWindowExW(
@@ -493,15 +495,15 @@ fn paint(hwnd: HWND, hdc: windows::Win32::Graphics::Gdi::HDC) {
             let endl = fmt(st.end);
             let ew = d2d::measure(&d2d::layout(&endl, 12.0 * s, d2d::WEIGHT_MEDIUM)).0;
             d2d::draw_text(&rt, &endl, strip.max_x() - ew, strip.max_y() + 8.0 * s, 12.0 * s, d2d::WEIGHT_MEDIUM, sec);
-            let len = format!("Keeping {}", fmt(st.end - st.start));
+            let len = trf("Keeping {time}", &[("time", &fmt(st.end - st.start))]);
             d2d::draw_text(&rt, &len, strip.x, lay.trim.y + 6.0 * s, 13.0 * s, d2d::WEIGHT_SEMIBOLD, rgba(1.0, 1.0, 1.0, 0.92));
             // Buttons.
             let cancel_fill = if st.hover == Some("cancel") { rgba(1.0, 1.0, 1.0, 0.2) } else { rgba(1.0, 1.0, 1.0, 0.12) };
             rt.FillRoundedRectangle(&d2d::rr(lay.cancel.x, lay.cancel.y, lay.cancel.w, lay.cancel.h, 7.0 * s), &d2d::brush(&rt, cancel_fill));
-            d2d::draw_text_centered(&rt, "Cancel", d2d::rect(lay.cancel.x, lay.cancel.y, lay.cancel.w, lay.cancel.h), 13.0 * s, d2d::WEIGHT_MEDIUM, rgba(1.0, 1.0, 1.0, 0.92));
+            d2d::draw_text_centered(&rt, &tr("Cancel"), d2d::rect(lay.cancel.x, lay.cancel.y, lay.cancel.w, lay.cancel.h), 13.0 * s, d2d::WEIGHT_MEDIUM, rgba(1.0, 1.0, 1.0, 0.92));
             let trim_fill = if st.hover == Some("trim") { rgba(1.0, 0.86, 0.2, 1.0) } else { yellow };
             rt.FillRoundedRectangle(&d2d::rr(lay.trim.x, lay.trim.y, lay.trim.w, lay.trim.h, 7.0 * s), &d2d::brush(&rt, trim_fill));
-            d2d::draw_text_centered(&rt, "Trim", d2d::rect(lay.trim.x, lay.trim.y, lay.trim.w, lay.trim.h), 13.0 * s, d2d::WEIGHT_SEMIBOLD, rgba(0.1, 0.08, 0.0, 1.0));
+            d2d::draw_text_centered(&rt, &tr("Trim"), d2d::rect(lay.trim.x, lay.trim.y, lay.trim.w, lay.trim.h), 13.0 * s, d2d::WEIGHT_SEMIBOLD, rgba(0.1, 0.08, 0.0, 1.0));
             if rt.EndDraw(None, None).is_err() {
                 st.rt = None;
             }

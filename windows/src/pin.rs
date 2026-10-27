@@ -21,6 +21,7 @@ use windows::core::w;
 use crate::d2d::{self, Layered, rgba};
 use crate::export;
 use crate::hud;
+use crate::i18n::tr;
 use crate::keys::vk;
 use crate::session::Finished;
 
@@ -94,11 +95,12 @@ pub fn show(f: Finished) {
     let pad = (SHADOW * f.scale).round();
     let r = f.global_rect;
     let (w, h) = (r.w + pad * 2.0, r.h + pad * 2.0);
+    let title = crate::util::W::new(&tr("Photon pin"));
     unsafe {
         let hwnd = CreateWindowExW(
             WS_EX_LAYERED | WS_EX_TOPMOST | WS_EX_TOOLWINDOW,
             w!("PhotonPin"),
-            w!("Photon pin"),
+            title.p(),
             WS_POPUP,
             (r.x - pad) as i32,
             (r.y - pad) as i32,
@@ -167,7 +169,7 @@ fn close(hwnd: HWND) {
 fn copy(hwnd: HWND) {
     let ok = PINS.with(|ps| ps.borrow().iter().find(|p| p.hwnd == hwnd).map(|p| export::copy_image_to_clipboard(&p.finished.image)));
     if ok == Some(true) {
-        hud::toast("Copied", None);
+        hud::toast(&tr("Copied"), None);
     }
 }
 
@@ -189,9 +191,12 @@ fn save(hwnd: HWND) {
 fn context_menu(hwnd: HWND) {
     unsafe {
         let Ok(menu) = CreatePopupMenu() else { return };
-        let _ = AppendMenuW(menu, MF_STRING, 1, w!("Copy\tCtrl+C"));
-        let _ = AppendMenuW(menu, MF_STRING, 2, w!("Save…"));
-        let _ = AppendMenuW(menu, MF_STRING, 3, w!("Close\tEsc"));
+        // The shortcut after the tab is Windows' accelerator column, not part of the text.
+        let items = [(1, format!("{}\tCtrl+C", tr("Copy"))), (2, tr("Save…")), (3, format!("{}\tEsc", tr("Close")))];
+        for (id, text) in &items {
+            let t = crate::util::W::new(text);
+            let _ = AppendMenuW(menu, MF_STRING, *id, t.p());
+        }
         let mut p = POINT::default();
         let _ = GetCursorPos(&mut p);
         let _ = SetForegroundWindow(hwnd);

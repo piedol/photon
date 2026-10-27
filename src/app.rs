@@ -14,6 +14,7 @@ use objc2_service_management::{SMAppService, SMAppServiceStatus};
 use objc2_foundation::NSString;
 
 use crate::commands::Command;
+use crate::i18n::{tr, trf};
 use crate::keys::{self, Shortcut};
 use crate::util::{self, ns};
 use crate::overlay::toolbar::Mode;
@@ -114,20 +115,20 @@ fn build_status_item(mtm: MainThreadMarker) {
 
     let menu = NSMenu::new(mtm);
     menu.setAutoenablesItems(false);
-    let shot_item = menu_item(mtm, "Capture Screenshot", Command::CaptureScreenshot);
-    let record_item = menu_item(mtm, "Record Screen", Command::RecordScreen);
-    let login_item = menu_item(mtm, "Launch at Login", Command::ToggleLogin);
+    let shot_item = menu_item(mtm, &tr("Capture Screenshot"), Command::CaptureScreenshot);
+    let record_item = menu_item(mtm, &tr("Record Screen"), Command::RecordScreen);
+    let login_item = menu_item(mtm, &tr("Launch at Login"), Command::ToggleLogin);
     menu.addItem(&shot_item);
     menu.addItem(&record_item);
     menu.addItem(&NSMenuItem::separatorItem(mtm));
-    menu.addItem(&menu_item(mtm, "Open Recordings Folder", Command::OpenRecordings));
+    menu.addItem(&menu_item(mtm, &tr("Open Recordings Folder"), Command::OpenRecordings));
     menu.addItem(&NSMenuItem::separatorItem(mtm));
-    let settings_item = menu_item(mtm, "Settings…", Command::OpenSettings);
+    let settings_item = menu_item(mtm, &tr("Settings…"), Command::OpenSettings);
     settings_item.setKeyEquivalent(&ns(","));
     menu.addItem(&settings_item);
     menu.addItem(&login_item);
     menu.addItem(&NSMenuItem::separatorItem(mtm));
-    let quit = menu_item(mtm, "Quit Photon", Command::Quit);
+    let quit = menu_item(mtm, &tr("Quit Photon"), Command::Quit);
     quit.setKeyEquivalent(&ns("q"));
     menu.addItem(&quit);
     menu.setDelegate(Some(&ui::menu_delegate(mtm)));
@@ -180,7 +181,7 @@ pub fn set_login_item(on: bool) -> Result<(), String> {
 
 pub fn toggle_login_item() {
     if let Err(e) = set_login_item(!login_item_enabled()) {
-        crate::hud::message("Couldn't change Launch at Login", Some(&e));
+        crate::hud::message(&tr("Couldn't change Launch at Login"), Some(&e));
     }
 }
 
@@ -220,7 +221,7 @@ pub fn set_recording_ui(on: bool) {
             }
             button.setContentTintColor(Some(&NSColor::systemRedColor()));
             button.setFont(Some(&NSFont::monospacedDigitSystemFontOfSize_weight(12.0, unsafe { NSFontWeightMedium })));
-            button.setToolTip(Some(&ns("Click to stop recording · right-click for options")));
+            button.setToolTip(Some(&ns(&tr("Click to stop recording · right-click for options"))));
         } else {
             unsafe {
                 button.setTarget(None);
@@ -255,7 +256,7 @@ pub fn refresh_recording_ui() {
     }
     let secs = record::elapsed().as_secs();
     let text = if record::is_paused() {
-        format!(" Paused {:02}:{:02}", secs / 60, secs % 60)
+        format!(" {}", trf("Paused {time}", &[("time", &format!("{:02}:{:02}", secs / 60, secs % 60))]))
     } else if secs >= 3600 {
         format!(" {}:{:02}:{:02}", secs / 3600, (secs / 60) % 60, secs % 60)
     } else {
@@ -286,10 +287,11 @@ pub fn status_clicked() {
     }
     let menu = NSMenu::new(mtm);
     menu.setAutoenablesItems(false);
-    menu.addItem(&menu_item(mtm, "Stop and Save", Command::StopRecording));
-    menu.addItem(&menu_item(mtm, if record::is_paused() { "Resume" } else { "Pause" }, Command::PauseResume));
+    menu.addItem(&menu_item(mtm, &tr("Stop and Save"), Command::StopRecording));
+    let pause = if record::is_paused() { tr("Resume") } else { tr("Pause") };
+    menu.addItem(&menu_item(mtm, &pause, Command::PauseResume));
     menu.addItem(&NSMenuItem::separatorItem(mtm));
-    menu.addItem(&menu_item(mtm, "Discard Recording", Command::Setting(999)));
+    menu.addItem(&menu_item(mtm, &tr("Discard Recording"), Command::Setting(999)));
     SHELL.with(|sh| {
         if let Some(sh) = sh.borrow().as_ref()
             && let Some(button) = sh.item.button(mtm) {

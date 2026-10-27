@@ -7,6 +7,7 @@ use global_hotkey::hotkey::HotKey;
 use global_hotkey::{GlobalHotKeyEvent, GlobalHotKeyManager, HotKeyState};
 
 use crate::commands::Command;
+use crate::i18n::trf;
 use crate::keys::Shortcut;
 use crate::util;
 
@@ -32,7 +33,7 @@ pub fn install(shot: Shortcut, record: Shortcut) -> Vec<String> {
             match GlobalHotKeyManager::new() {
                 Ok(manager) => *cell = Some(Registered { manager, active: Vec::new() }),
                 Err(e) => {
-                    errors.push(format!("Hotkeys unavailable: {e}"));
+                    errors.push(trf("Hotkeys unavailable: {error}", &[("error", &e.to_string())]));
                     return;
                 }
             }
@@ -57,9 +58,15 @@ pub fn install(shot: Shortcut, record: Shortcut) -> Vec<String> {
         let reg = cell.as_mut().unwrap();
         let old = std::mem::take(&mut reg.active);
         let _ = reg.manager.unregister_all(&old);
-        for (shortcut, slot, name) in [(shot, &SHOT_ID, "screenshot"), (record, &RECORD_ID, "recording")] {
+        for (shortcut, slot, is_shot) in [(shot, &SHOT_ID, true), (record, &RECORD_ID, false)] {
+            let label = shortcut.label();
             let Some(hk) = shortcut.hotkey() else {
-                errors.push(format!("The {name} shortcut {} isn't supported.", shortcut.label()));
+                let args = [("shortcut", label.as_str())];
+                errors.push(if is_shot {
+                    trf("The screenshot shortcut {shortcut} isn't supported.", &args)
+                } else {
+                    trf("The recording shortcut {shortcut} isn't supported.", &args)
+                });
                 continue;
             };
             match reg.manager.register(hk) {
@@ -67,10 +74,15 @@ pub fn install(shot: Shortcut, record: Shortcut) -> Vec<String> {
                     slot.store(hk.id(), Ordering::Relaxed);
                     reg.active.push(hk);
                 }
-                Err(e) => errors.push(format!(
-                    "{} is already used by another app ({name}): {e}",
-                    shortcut.label()
-                )),
+                Err(e) => {
+                    let e = e.to_string();
+                    let args = [("shortcut", label.as_str()), ("error", e.as_str())];
+                    errors.push(if is_shot {
+                        trf("{shortcut} is already used by another app (screenshot): {error}", &args)
+                    } else {
+                        trf("{shortcut} is already used by another app (recording): {error}", &args)
+                    });
+                }
             }
         }
     });

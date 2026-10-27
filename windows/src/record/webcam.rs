@@ -20,6 +20,7 @@ use windows::core::w;
 use super::mf::{self, RgbReader};
 use crate::d2d::{self, Layered, rgba};
 use crate::geometry::Rect;
+use crate::i18n::tr;
 use crate::{hud, util};
 
 const SIZE: f64 = 168.0;
@@ -64,11 +65,12 @@ impl Bubble {
         });
         let size = (SIZE * scale).min(region.w * 0.4).min(region.h * 0.4).max(72.0 * scale).round();
         let r = Rect::new(region.max_x() - size - INSET * scale, region.max_y() - size - INSET * scale, size, size);
+        let title = util::W::new(&tr("Photon camera"));
         let hwnd = unsafe {
             CreateWindowExW(
                 WS_EX_LAYERED | WS_EX_TOPMOST | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE,
                 w!("PhotonCam"),
-                w!("Photon camera"),
+                title.p(),
                 WS_POPUP,
                 r.x as i32,
                 r.y as i32,
@@ -93,7 +95,7 @@ impl Bubble {
                 }
                 mf::startup();
                 let Some(reader) = RgbReader::camera(device.as_deref()) else {
-                    util::main_async(|| hud::message("Couldn't start the camera", Some("Check Settings › Privacy › Camera and that no other app is using it.")));
+                    util::main_async(|| hud::message(&tr("Couldn't start the camera"), Some(&tr("Check Settings › Privacy › Camera and that no other app is using it."))));
                     return;
                 };
                 while !stop.load(Ordering::Relaxed) {

@@ -45,7 +45,7 @@ impl Shortcut {
         if self.mods & CONTROL != 0 { parts.push("Ctrl".into()); }
         if self.mods & ALT != 0 { parts.push("Alt".into()); }
         if self.mods & SHIFT != 0 { parts.push("Shift".into()); }
-        parts.push(key_label(self.key).unwrap_or_else(|| format!("Key {}", self.key)));
+        parts.push(key_label(self.key).unwrap_or_else(|| crate::i18n::trf("Key {code}", &[("code", &self.key.to_string())])));
         parts.join("+")
     }
 

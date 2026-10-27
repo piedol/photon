@@ -16,6 +16,7 @@ use objc2_foundation::{NSRect, NSString};
 
 use crate::capture::cg_rect;
 use crate::geometry::Rect;
+use crate::i18n::tr;
 use crate::keys::vk;
 use crate::overlay::window::OverlayWindow;
 use crate::session::Finished;
@@ -52,9 +53,9 @@ define_class!(
         fn right_mouse_down(&self, e: &NSEvent) {
             let mtm = self.mtm();
             let menu = NSMenu::new(mtm);
-            for (title, action) in [("Copy", sel!(copyPin:)), ("Save…", sel!(savePin:)), ("Close", sel!(closePin:))] {
+            for (title, action) in [(tr("Copy"), sel!(copyPin:)), (tr("Save…"), sel!(savePin:)), (tr("Close"), sel!(closePin:))] {
                 let item = unsafe {
-                    NSMenuItem::initWithTitle_action_keyEquivalent(NSMenuItem::alloc(mtm), &ns(title), Some(action), &NSString::new())
+                    NSMenuItem::initWithTitle_action_keyEquivalent(NSMenuItem::alloc(mtm), &ns(&title), Some(action), &NSString::new())
                 };
                 unsafe { item.setTarget(Some(self)) };
                 menu.addItem(&item);
@@ -126,7 +127,7 @@ pub fn show(f: Finished) {
         layer.setBorderWidth(0.5);
         layer.setBorderColor(Some(&crate::overlay::chrome::rgba(1.0, 1.0, 1.0, 0.25)));
     }
-    view.setToolTip(Some(&ns("Drag to move · scroll for opacity · double-click to close")));
+    view.setToolTip(Some(&ns(&tr("Drag to move · scroll for opacity · double-click to close"))));
     w.setContentView(Some(&view));
     w.makeKeyAndOrderFront(None);
     w.makeFirstResponder(Some(&view));
@@ -149,7 +150,7 @@ fn copy(id: u64) {
         if let Some(pin) = p.borrow().iter().find(|x| x.id == id) {
             let f = &pin.finished;
             export::copy_image_to_pasteboard(&f.image, (f.global_rect.w, f.global_rect.h));
-            hud::toast("Copied", None);
+            hud::toast(&tr("Copied"), None);
         }
     });
 }

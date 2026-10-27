@@ -33,6 +33,7 @@ use windows::core::{w, PCWSTR};
 
 use crate::commands::Command;
 use crate::d2d::{self, rgba};
+use crate::i18n::{tr, trf};
 use crate::toolbar::Mode;
 use crate::util::{self, W};
 use crate::{hotkey, record, session, settings, settings_window};
@@ -111,12 +112,12 @@ pub fn set_login_item(on: bool) -> Result<(), String> {
     } else {
         reg_delete(RUN_KEY, "Photon") || !login_item_enabled()
     };
-    if ok { Ok(()) } else { Err("Windows refused the change.".into()) }
+    if ok { Ok(()) } else { Err(tr("Windows refused the change.")) }
 }
 
 pub fn toggle_login_item() {
     if let Err(e) = set_login_item(!login_item_enabled()) {
-        crate::hud::message("Couldn't change Launch at Login", Some(&e));
+        crate::hud::message(&tr("Couldn't change Launch at Login"), Some(&e));
     }
 }
 
@@ -408,7 +409,12 @@ pub fn refresh_recording_ui() {
     let on = RECORDING_UI.with(|c| c.get());
     let tip = if on {
         let secs = record::elapsed().as_secs();
-        format!("Photon: {} {:02}:{:02} (click to stop)", if record::is_paused() { "paused" } else { "recording" }, secs / 60, secs % 60)
+        let time = format!("{:02}:{:02}", secs / 60, secs % 60);
+        if record::is_paused() {
+            trf("Photon: paused {time} (click to stop)", &[("time", &time)])
+        } else {
+            trf("Photon: recording {time} (click to stop)", &[("time", &time)])
+        }
     } else {
         "Photon".to_string()
     };
@@ -437,20 +443,21 @@ fn tray_menu(hwnd: HWND) {
             let _ = AppendMenuW(menu, flags, id, t.p());
         };
         if record::is_active() {
-            add(M_STOP, "Stop and Save", MF_STRING);
-            add(M_PAUSE, if record::is_paused() { "Resume" } else { "Pause" }, MF_STRING);
+            add(M_STOP, &tr("Stop and Save"), MF_STRING);
+            add(M_PAUSE, &if record::is_paused() { tr("Resume") } else { tr("Pause") }, MF_STRING);
             let _ = AppendMenuW(menu, MF_SEPARATOR, 0, None);
-            add(M_DISCARD, "Discard Recording", MF_STRING);
+            add(M_DISCARD, &tr("Discard Recording"), MF_STRING);
         } else {
-            add(M_SHOT, &format!("Capture Screenshot\t{}", s.shot_hotkey.label()), MF_STRING);
-            add(M_RECORD, &format!("Record Screen\t{}", s.record_hotkey.label()), MF_STRING);
+            // The shortcut after the tab is Windows' accelerator column, not part of the text.
+            add(M_SHOT, &format!("{}\t{}", tr("Capture Screenshot"), s.shot_hotkey.label()), MF_STRING);
+            add(M_RECORD, &format!("{}\t{}", tr("Record Screen"), s.record_hotkey.label()), MF_STRING);
             let _ = AppendMenuW(menu, MF_SEPARATOR, 0, None);
-            add(M_FOLDER, "Open Recordings Folder", MF_STRING);
+            add(M_FOLDER, &tr("Open Recordings Folder"), MF_STRING);
             let _ = AppendMenuW(menu, MF_SEPARATOR, 0, None);
-            add(M_SETTINGS, "Settings…", MF_STRING);
-            add(M_LOGIN, "Launch at Login", if login_item_enabled() { MF_STRING | MF_CHECKED } else { MF_STRING });
+            add(M_SETTINGS, &tr("Settings…"), MF_STRING);
+            add(M_LOGIN, &tr("Launch at Login"), if login_item_enabled() { MF_STRING | MF_CHECKED } else { MF_STRING });
             let _ = AppendMenuW(menu, MF_SEPARATOR, 0, None);
-            add(M_QUIT, "Quit Photon", if session::is_open() { MF_STRING | MF_GRAYED } else { MF_STRING });
+            add(M_QUIT, &tr("Quit Photon"), if session::is_open() { MF_STRING | MF_GRAYED } else { MF_STRING });
         }
         let mut p = POINT::default();
         let _ = GetCursorPos(&mut p);

@@ -6,7 +6,12 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 
 use super::naming::{self, Kind, LocalTime, NameContext, NamingRule};
+use crate::i18n::{tr, trf};
 use crate::util;
+
+fn couldnt_create(dir: &Path, e: std::io::Error) -> String {
+    trf("Couldn't create {folder}: {error}", &[("folder", &util::tilde(dir)), ("error", &e.to_string())])
+}
 
 pub trait Destination {
     /// Deliver `file`, returning where it ended up.
@@ -18,7 +23,7 @@ pub struct Folder(pub PathBuf);
 
 impl Destination for Folder {
     fn deliver(&self, file: &Path, name: &str) -> Result<PathBuf, String> {
-        fs::create_dir_all(&self.0).map_err(|e| format!("Couldn't create {}: {e}", util::tilde(&self.0)))?;
+        fs::create_dir_all(&self.0).map_err(|e| couldnt_create(&self.0, e))?;
         let target = self.0.join(name);
         move_or_copy(file, &target)?;
         Ok(target)
@@ -91,8 +96,8 @@ pub fn file_name_preview(rule: &NamingRule, counter: u32, parts: &NameParts, ext
 
 /// Write bytes atomically (temp file in the same folder, then rename).
 pub fn write_atomic(target: &Path, bytes: &[u8]) -> Result<(), String> {
-    let dir = target.parent().ok_or("bad path")?;
-    fs::create_dir_all(dir).map_err(|e| format!("Couldn't create {}: {e}", util::tilde(dir)))?;
+    let dir = target.parent().ok_or_else(|| tr("bad path"))?;
+    fs::create_dir_all(dir).map_err(|e| couldnt_create(dir, e))?;
     let tmp = dir.join(format!(".photon-{}.tmp", std::process::id()));
     let mut f = fs::File::create(&tmp).map_err(|e| e.to_string())?;
     f.write_all(bytes).map_err(|e| e.to_string())?;
@@ -108,7 +113,8 @@ pub fn move_or_copy(from: &Path, to: &Path) -> Result<(), String> {
     if fs::rename(from, to).is_ok() {
         return Ok(());
     }
-    fs::copy(from, to).map_err(|e| format!("Couldn't save to {}: {e}", util::tilde(to)))?;
+    fs::copy(from, to)
+        .map_err(|e| trf("Couldn't save to {path}: {error}", &[("path", &util::tilde(to)), ("error", &e.to_string())]))?;
     let _ = fs::remove_file(from);
     Ok(())
 }

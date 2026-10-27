@@ -51,7 +51,10 @@ fn load_rule(d: &NSUserDefaults, prefix: &str, kind: Kind) -> NamingRule {
     let def = NamingRule::default_for(kind);
     let s = |k: &str| d.stringForKey(&ns(&format!("{prefix}{k}"))).map(|v| v.to_string());
     NamingRule {
-        template: s("Template").filter(|t| !t.trim().is_empty()).unwrap_or(def.template),
+        template: s("Template")
+            .filter(|t| !t.trim().is_empty())
+            .map(|t| kind.template_from_store(&t))
+            .unwrap_or(def.template),
         date: s("Date").and_then(|k| DateFormat::from_key(&k)).unwrap_or(def.date),
         time: s("Time").and_then(|k| TimeFormat::from_key(&k)).unwrap_or(def.time),
         case: s("Case").and_then(|k| Case::from_key(&k)).unwrap_or(def.case),
@@ -59,9 +62,9 @@ fn load_rule(d: &NSUserDefaults, prefix: &str, kind: Kind) -> NamingRule {
     }
 }
 
-fn save_rule(d: &NSUserDefaults, prefix: &str, r: &NamingRule) {
+fn save_rule(d: &NSUserDefaults, prefix: &str, kind: Kind, r: &NamingRule) {
     let set = |k: &str, v: &str| unsafe { d.setObject_forKey(Some(&ns(v)), &ns(&format!("{prefix}{k}"))) };
-    set("Template", &r.template);
+    set("Template", &kind.template_for_store(&r.template));
     set("Date", r.date.key());
     set("Time", r.time.key());
     set("Case", r.case.key());
@@ -140,8 +143,8 @@ impl Settings {
         set_s("recWebcamDevice", self.rec_webcam_device.as_deref());
         d.setInteger_forKey(self.tool_color as isize, &ns("toolColor"));
         d.setInteger_forKey(self.stroke as isize, &ns("stroke"));
-        save_rule(&d, "shotName", &self.shot_naming);
-        save_rule(&d, "recName", &self.rec_naming);
+        save_rule(&d, "shotName", Kind::Screenshot, &self.shot_naming);
+        save_rule(&d, "recName", Kind::Recording, &self.rec_naming);
         d.setInteger_forKey(self.shot_counter as isize, &ns("shotCounter"));
         d.setInteger_forKey(self.rec_counter as isize, &ns("recCounter"));
     }

@@ -1,6 +1,9 @@
 //! Annotation document: vector shapes in view-local points, plus undo. Pure logic.
 
+use std::sync::LazyLock;
+
 use crate::geometry::{constrain_45, constrain_square, pt, Point, Rect};
+use crate::i18n::tr;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Rgba(pub f64, pub f64, pub f64, pub f64);
@@ -25,7 +28,12 @@ pub const PALETTE: [Rgba; 8] = [
     Rgba::hex(0x1C1C1E), // black
     Rgba::hex(0xFFFFFF), // white
 ];
-pub const PALETTE_NAMES: [&str; 8] = ["Red", "Orange", "Yellow", "Green", "Blue", "Purple", "Black", "White"];
+/// The palette's colour names in the user's language, in `PALETTE` order. Translated once
+/// and kept for the life of the process, so callers can hold them as `&'static str`.
+pub static PALETTE_NAMES: LazyLock<[&'static str; 8]> = LazyLock::new(|| {
+    [tr("Red"), tr("Orange"), tr("Yellow"), tr("Green"), tr("Blue"), tr("Purple"), tr("Black"), tr("White")]
+        .map(|name| &*name.leak())
+});
 
 /// Three stroke sizes: thin, medium, thick.
 pub const STROKES: [f64; 3] = [2.0, 4.0, 7.0];
@@ -69,17 +77,17 @@ impl Tool {
         }
     }
 
-    pub fn tooltip(self) -> &'static str {
+    pub fn tooltip(self) -> String {
         match self {
-            Tool::Pen => "Pen",
-            Tool::Line => "Line  (⇧ for 45°)",
-            Tool::Arrow => "Arrow  (⇧ for 45°)",
-            Tool::Rect => "Rectangle  (⇧ for square)",
-            Tool::Ellipse => "Ellipse  (⇧ for circle)",
-            Tool::Marker => "Marker",
-            Tool::Text => "Text",
-            Tool::Blur => "Pixelate to hide",
-            Tool::Step => "Numbered step",
+            Tool::Pen => tr("Pen"),
+            Tool::Line => tr("Line  (⇧ for 45°)"),
+            Tool::Arrow => tr("Arrow  (⇧ for 45°)"),
+            Tool::Rect => tr("Rectangle  (⇧ for square)"),
+            Tool::Ellipse => tr("Ellipse  (⇧ for circle)"),
+            Tool::Marker => tr("Marker"),
+            Tool::Text => tr("Text"),
+            Tool::Blur => tr("Pixelate to hide"),
+            Tool::Step => tr("Numbered step"),
         }
     }
 }

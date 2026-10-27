@@ -11,6 +11,7 @@ use objc2_quartz_core::CALayer;
 
 use crate::capture::cg_rect;
 use crate::geometry::Rect;
+use crate::i18n::tr;
 use crate::overlay::chrome::rgba;
 use crate::util::{self, MainBound};
 use crate::hud;
@@ -66,7 +67,7 @@ impl Bubble {
         root.addSublayer(&preview);
         view.setLayer(Some(&root));
         view.setWantsLayer(true);
-        view.setToolTip(Some(&crate::util::ns("Drag to move the camera bubble")));
+        view.setToolTip(Some(&crate::util::ns(&tr("Drag to move the camera bubble"))));
         panel.setContentView(Some(&view));
         panel.orderFrontRegardless();
 

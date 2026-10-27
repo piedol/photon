@@ -27,6 +27,7 @@ use objc2_image_io::{
 use crate::capture::cg_rect;
 use crate::commands::Command;
 use crate::geometry::Rect;
+use crate::i18n::{tr, trf};
 use crate::output::destination;
 use crate::util::{self, ns, MainBound};
 use crate::{hud, ui};
@@ -44,7 +45,7 @@ fn passthrough(asset: &AVAsset, range: Option<CMTimeRange>, out: PathBuf, done: 
     let Some(export) = (unsafe {
         AVAssetExportSession::initWithAsset_presetName(AVAssetExportSession::alloc(), asset, AVAssetExportPresetPassthrough)
     }) else {
-        return done(Err("Couldn't prepare the export.".into()));
+        return done(Err(tr("Couldn't prepare the export.")));
     };
     unsafe {
         export.setOutputURL(Some(&file_url(&out)));
@@ -62,7 +63,7 @@ fn passthrough(asset: &AVAsset, range: Option<CMTimeRange>, out: PathBuf, done: 
         let result = if status == AVAssetExportSessionStatus::Completed {
             Ok(out.clone())
         } else {
-            Err(err.unwrap_or_else(|| "Export failed.".into()))
+            Err(err.unwrap_or_else(|| tr("Export failed.")))
         };
         util::main_async(move || {
             let job = JOBS.with(|j| {
@@ -128,15 +129,15 @@ pub fn finished_hud(path: PathBuf, fell_back: bool) {
     let mtm = MainThreadMarker::new().unwrap();
     dismiss_finished();
     let is_video = path.extension().is_some_and(|e| e == "mp4" || e == "mov");
-    let actions: Vec<(&str, &str, Command)> = {
+    let actions: Vec<(&str, String, Command)> = {
         let mut v = vec![
-            ("folder", "Show in Finder", Command::Reveal),
-            ("doc.on.doc", "Copy file", Command::CopyFile),
-            ("play.rectangle", "Open", Command::OpenFile),
+            ("folder", tr("Show in Finder"), Command::Reveal),
+            ("doc.on.doc", tr("Copy file"), Command::CopyFile),
+            ("play.rectangle", tr("Open"), Command::OpenFile),
         ];
         if is_video {
-            v.push(("timeline.selection", "Trim", Command::Trim));
-            v.push(("photo.stack", "Make GIF", Command::ExportGif));
+            v.push(("timeline.selection", tr("Trim"), Command::Trim));
+            v.push(("photo.stack", tr("Make GIF"), Command::ExportGif));
         }
         v
     };
@@ -148,10 +149,14 @@ pub fn finished_hud(path: PathBuf, fell_back: bool) {
     let panel = hud::panel(mtm, frame, objc2_app_kit::NSStatusWindowLevel);
     let surface = ui::hud_surface(mtm, cg_rect(Rect::new(0.0, 0.0, w, h)), 10.0, false);
 
-    let title = NSTextField::labelWithString(
-        &ns(if fell_back { "Saved locally · cloud folder missing" } else if is_video { "Recording saved" } else { "GIF saved" }),
-        mtm,
-    );
+    let title = if fell_back {
+        tr("Saved locally · cloud folder missing")
+    } else if is_video {
+        tr("Recording saved")
+    } else {
+        tr("GIF saved")
+    };
+    let title = NSTextField::labelWithString(&ns(&title), mtm);
     title.setFont(Some(&NSFont::systemFontOfSize_weight(13.0, unsafe { NSFontWeightSemibold })));
     title.setTextColor(Some(&NSColor::colorWithWhite_alpha(1.0, 0.95)));
     title.setFrame(cg_rect(Rect::new(16.0, h - 30.0, w - 50.0, 17.0)));
@@ -165,13 +170,13 @@ pub fn finished_hud(path: PathBuf, fell_back: bool) {
     detail.setFrame(cg_rect(Rect::new(16.0, h - 48.0, w - 32.0, 15.0)));
     surface.addSubview(&detail);
 
-    let close = ui::icon_button(mtm, "xmark", "Dismiss", Command::DismissHud);
+    let close = ui::icon_button(mtm, "xmark", &tr("Dismiss"), Command::DismissHud);
     close.setFrame(cg_rect(Rect::new(w - 34.0, h - 32.0, 24.0, 24.0)));
     surface.addSubview(&close);
 
     let mut x = 10.0;
     for (sym, tip, cmd) in actions {
-        let b = ui::icon_button(mtm, sym, tip, cmd);
+        let b = ui::icon_button(mtm, sym, &tip, cmd);
         b.setFrame(cg_rect(Rect::new(x, 8.0, btn, btn)));
         surface.addSubview(&b);
         x += btn + 2.0;
@@ -210,7 +215,7 @@ pub fn command(cmd: Command) {
             let objs: Retained<NSArray<objc2::runtime::ProtocolObject<dyn objc2_app_kit::NSPasteboardWriting>>> = unsafe { Retained::cast_unchecked(objs) };
             pb.writeObjects(&objs);
             dismiss_finished();
-            hud::toast("File copied", Some("Paste it into Discord, Slack or Finder"));
+            hud::toast(&tr("File copied"), Some(&tr("Paste it into Discord, Slack or Finder")));
         }
         Command::OpenFile => {
             NSWorkspace::sharedWorkspace().openURL(&file_url(&path));
@@ -256,7 +261,8 @@ fn trim(path: PathBuf) {
         )
     };
     unsafe { window.setReleasedWhenClosed(false) };
-    window.setTitle(&ns(&format!("Trim · {}", path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default())));
+    let file = path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
+    window.setTitle(&ns(&trf("Trim · {file}", &[("file", &file)])));
     window.setLevel(objc2_app_kit::NSFloatingWindowLevel);
     let view = unsafe { AVPlayerView::initWithFrame(AVPlayerView::alloc(mtm), cg_rect(Rect::new(0.0, 0.0, w, h))) };
     unsafe {
@@ -283,7 +289,7 @@ fn begin_trim_when_ready(path: PathBuf, attempt: u32) {
             util::main_after(0.1, move || begin_trim_when_ready(path, attempt + 1));
         } else {
             close_trim();
-            hud::message("Couldn't open the trimmer", None);
+            hud::message(&tr("Couldn't open the trimmer"), None);
         }
         return;
     }
@@ -331,9 +337,9 @@ fn apply_trim(path: PathBuf, range: CMTimeRange) {
     passthrough(&a, Some(range), out, move |r| match r {
         Ok(tmp) => match std::fs::rename(&tmp, &original) {
             Ok(()) => finished_hud(original, false),
-            Err(e) => hud::message("Couldn't replace the recording", Some(&e.to_string())),
+            Err(e) => hud::message(&tr("Couldn't replace the recording"), Some(&e.to_string())),
         },
-        Err(e) => hud::message("Couldn't trim the recording", Some(&e)),
+        Err(e) => hud::message(&tr("Couldn't trim the recording"), Some(&e)),
     });
 }
 
@@ -344,7 +350,7 @@ const GIF_MAX_SECONDS: f64 = 60.0;
 const GIF_MAX_WIDTH: f64 = 960.0;
 
 fn make_gif(video: PathBuf) {
-    hud::toast("Making GIF…", None);
+    hud::toast(&tr("Making GIF…"), None);
     let out = video.with_extension("gif");
     let job = MainBound((video, out));
     dispatch2::DispatchQueue::global_queue(dispatch2::GlobalQueueIdentifier::QualityOfService(
@@ -359,7 +365,7 @@ fn make_gif(video: PathBuf) {
             let whole = r;
             match whole.0 {
                 Ok(path) => finished_hud(path, false),
-                Err(e) => hud::message("Couldn't make the GIF", Some(&e)),
+                Err(e) => hud::message(&tr("Couldn't make the GIF"), Some(&e)),
             }
         });
     });
@@ -379,7 +385,7 @@ fn write_gif(video: &Path, out: &Path) -> Result<(), String> {
     let a = asset(video);
     let total = unsafe { a.duration().seconds() };
     if !total.is_finite() || total <= 0.0 {
-        return Err("The recording has no frames.".into());
+        return Err(tr("The recording has no frames."));
     }
     let secs = total.min(GIF_MAX_SECONDS);
     let frames = (secs * GIF_FPS).ceil().max(1.0) as usize;
@@ -396,7 +402,7 @@ fn write_gif(video: &Path, out: &Path) -> Result<(), String> {
     let gif_type = NSString::from_str("com.compuserve.gif");
     let cf_type: &CFString = unsafe { &*(Retained::as_ptr(&gif_type) as *const CFString) };
     let dest: CFRetained<CGImageDestination> =
-        unsafe { CGImageDestination::with_url(cf_url, cf_type, frames, None) }.ok_or("Couldn't create the GIF file.")?;
+        unsafe { CGImageDestination::with_url(cf_url, cf_type, frames, None) }.ok_or_else(|| tr("Couldn't create the GIF file."))?;
 
     let loop_props = cf_dict(&[unsafe { kCGImagePropertyGIFLoopCount }], &[&NSNumber::new_i32(0)]);
     let file_props = cf_dict(&[unsafe { kCGImagePropertyGIFDictionary }], &[&loop_props]);
@@ -412,7 +418,7 @@ fn write_gif(video: &Path, out: &Path) -> Result<(), String> {
             unsafe { dest.add_image(&img, Some(as_cf(&frame_props))) };
         }
     }
-    if unsafe { dest.finalize() } { Ok(()) } else { Err("Couldn't write the GIF.".into()) }
+    if unsafe { dest.finalize() } { Ok(()) } else { Err(tr("Couldn't write the GIF.")) }
 }
 
 #[allow(unused)]
