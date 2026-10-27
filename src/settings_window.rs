@@ -466,6 +466,10 @@ pub fn move_for_test() {
     }
 }
 
+pub fn window_number_for_test() -> Option<isize> {
+    STATE.with(|s| s.borrow().as_ref().map(|s| s.window.windowNumber()))
+}
+
 pub fn close_for_test() {
     let w = STATE.with(|s| s.borrow().as_ref().map(|s| s.window.clone()));
     if let Some(w) = w {

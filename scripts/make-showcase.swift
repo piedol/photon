@@ -13,7 +13,7 @@ let blue = RGB(r: 0.04, g: 0.52, b: 1.0)   // #0A84FF, the system accent Photon'
 // Expected sizes of the 2x captures (pixels), for the placeholders and the layout.
 let overlay = CGSize(width: 1456, height: 1064)   // a full-screen capture, cropped to the selection and its bars
 let countdown = CGSize(width: 232, height: 272)   // the countdown panel, a window capture
-let saved = CGSize(width: 600, height: 176)       // the "Recording saved" panel, a window capture
+let saved = CGSize(width: 600, height: 176)       // recording.png: the "Recording saved" panel, a window capture
 
 // MARK: - Family toolkit
 // The same block sits in Photon's, Tamka's, Kipimo's and Kivuko's make-showcase.swift,
@@ -328,10 +328,10 @@ do {
                            Glow(x: Double(margin + 300), top: Double(oTop + o.height - 120), radius: 520, alpha: 0.10)])
     c.nameBlock(appName, ["Screenshots, markup", "and screen recording"], x: margin, top: oTop + 10)
     let cd = c.size("countdown.png", expect: countdown)
-    let sv = c.size("saved.png", expect: saved)
+    let sv = c.size("recording.png", expect: saved)
     let bottom = oTop + o.height
     c.shot("countdown.png", expect: countdown, x: margin, top: bottom - cd.height)
-    c.shot("saved.png", expect: saved, x: margin + cd.width + 48, top: bottom - sv.height)
+    c.shot("recording.png", expect: saved, x: margin + cd.width + 48, top: bottom - sv.height)
     c.shot("overlay.png", expect: overlay, x: ox, top: oTop, corner: 24)
     c.write("showcase.png")
 }

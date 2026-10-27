@@ -55,6 +55,8 @@ open photon://selftest
 | `photon://selftest-window` | Click-a-window recording, countdown Skip, stop through the screenshot shortcut's command |
 | `photon://selftest-escape` | Esc cancels the overlay and the countdown, and nothing is saved |
 | `photon://selftest-settings` | Opens Settings and screenshots each tab |
+| `photon://selftest-showcase` | The README's overlay shots, over the page from `swift scripts/showcase-backdrop.swift` |
+| `photon://selftest-settings-shots` | Each Settings tab as a window capture without its shadow |
 
 Screenshots go to `$PHOTON_SHOTS` (default `/tmp/photon-shots`), and logs go to stderr.
 

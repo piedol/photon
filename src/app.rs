@@ -150,6 +150,8 @@ pub fn open_url(host: &str) {
         "selftest-settings" => return crate::selftest::run_settings(),
         "selftest-window" => return crate::selftest::run_window(),
         "selftest-escape" => return crate::selftest::run_escape(),
+        "selftest-showcase" => return crate::selftest::run_showcase(),
+        "selftest-settings-shots" => return crate::selftest::run_settings_shots(),
         _ => return,
     };
     handle(cmd);

@@ -70,7 +70,7 @@ To remove Photon, see [Uninstalling](docs/deployment.md#uninstalling) for the Ma
 ## Taking a screenshot
 
 <p align="center">
-  <img src="docs/images/markup.png" width="820" alt="A screenshot being marked up in Photon, with the colour and stroke options of the tool palette">
+  <img src="docs/images/markup.png" width="520" alt="Marking up a screenshot in Photon: the tool palette with its colour swatches open">
 </p>
 
 1. Press **⇧⌘9** (Windows: **Ctrl+Shift+9**). Every screen freezes at full resolution, so what you mark up is exactly what was there.
@@ -85,7 +85,7 @@ The markup tools are a pen, line, arrow, rectangle, ellipse, highlighter and tex
 ## Recording your screen
 
 <p align="center">
-  <img src="docs/images/recording.png" width="820" alt="The panel Photon shows after a recording, with Show in Finder, Copy file, Open, Trim and Make GIF">
+  <img src="docs/images/recording.png" width="300" alt="The Recording saved panel, with buttons to show the file, copy it, open it, trim it and make a GIF">
 </p>
 
 1. Press **⇧⌘0** (Windows: **Ctrl+Shift+0**).
@@ -100,7 +100,7 @@ When you stop, a panel offers **Copy file** (which pastes straight into chat app
 ## Saving and sharing
 
 <p align="center">
-  <img src="docs/images/settings.png" width="520" alt="Photon's Settings window">
+  <img src="docs/images/settings.png" width="520" alt="Photon's Settings, Screenshots tab">
 </p>
 
 - Screenshots go to the clipboard. Turn on auto-save to also keep a copy in a folder.

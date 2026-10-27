@@ -178,3 +178,114 @@ pub fn run_escape() {
     ];
     run_steps(steps);
 }
+
+/// A crop of the screen, without the cursor, in points from the primary display's top-left
+/// corner, saved as $PHOTON_SHOTS/<name>.png (2x on a Retina display).
+fn grab(name: &str, x: f64, y: f64, w: f64, h: f64) {
+    let dir = std::env::var("PHOTON_SHOTS").unwrap_or_else(|_| "/tmp/photon-shots".into());
+    let _ = std::fs::create_dir_all(&dir);
+    let _ = std::process::Command::new("/usr/sbin/screencapture")
+        .args(["-x", &format!("-R{x},{y},{w},{h}"), &format!("{dir}/{name}.png")])
+        .status();
+    util::log(format!("selftest grab {name}"));
+}
+
+/// One window, without its shadow, as $PHOTON_SHOTS/<name>.png.
+fn grab_window(name: &str, number: isize) {
+    let dir = std::env::var("PHOTON_SHOTS").unwrap_or_else(|_| "/tmp/photon-shots".into());
+    let _ = std::fs::create_dir_all(&dir);
+    let _ = std::process::Command::new("/usr/sbin/screencapture")
+        .args(["-x", "-o", "-l", &number.to_string(), &format!("{dir}/{name}.png")])
+        .status();
+    util::log(format!("selftest grab {name}"));
+}
+
+/// `photon://selftest-showcase`: the README's overlay shots, docs/images/overlay.png and
+/// docs/images/markup.png (the same markup with the colour swatches open).
+/// Start `swift scripts/showcase-backdrop.swift` first: it centres an 820 × 590 pt page on the
+/// primary display. This selects the page's (80, 80, 640, 420) rect, marks it up, and saves a
+/// 728 × 532 pt crop holding the selection, its size badge, the tool palette and the action bar.
+/// The numbers match `page`, `selection` and `crop` in that script.
+pub fn run_showcase() {
+    if std::env::var_os("PHOTON_DEV").is_none() {
+        return;
+    }
+    let mtm = objc2::MainThreadMarker::new().unwrap();
+    let Some(screen) = objc2_app_kit::NSScreen::screens(mtm).firstObject().map(|s| s.frame()) else {
+        return;
+    };
+    let (w, h) = (screen.size.width, screen.size.height);
+    // The page's top-left corner in view points (bottom-left origin).
+    let (left, top) = ((w - 820.0) / 2.0, (h - 590.0) / 2.0 + 590.0);
+    // Page points (top-left origin) to view points.
+    let p = move |x: f64, y: f64| (left + x, top - y);
+    let click = move |x: f64, y: f64| {
+        let (vx, vy) = p(x, y);
+        session::mouse_at(0, MouseKind::Down, pt(vx, vy), false);
+        session::mouse_at(0, MouseKind::Up, pt(vx, vy), false);
+    };
+    let steps: Vec<(f64, Step)> = vec![
+        (0.0, Box::new(|| session::start(Mode::Screenshot))),
+        (1.0, Box::new(move || drag(p(80.0, 500.0), p(720.0, 80.0), false))),
+        (0.3, Box::new(move || {
+            session::command(Command::Color(0)); // red
+            session::command(Command::Stroke(1)); // medium
+            tool(3); // a box around Wednesday and Thursday
+            drag(p(219.0, 358.0), p(317.0, 188.0), false);
+            tool(8); // step 1 on its corner
+            click(219.0, 188.0);
+            tool(2); // an arrow from the note to the box
+            drag(p(566.0, 438.0), p(324.0, 296.0), false);
+            tool(6); // the note, its top-left at the click
+            click(520.0, 444.0);
+            session::set_text_for_test("Best days yet");
+        })),
+        (0.2, Box::new(move || {
+            let _ = session::text_finished(true);
+            session::command(Command::Color(2)); // yellow
+            session::command(Command::Stroke(2));
+            tool(5); // highlight the top referrer
+            drag(p(138.0, 423.0), p(236.0, 423.0), false);
+            session::command(Command::Color(0));
+            session::command(Command::Stroke(1));
+            tool(7); // pixelate an address
+            drag(p(256.0, 438.0), p(396.0, 462.0), false);
+            tool(8); // step 2 beside it
+            click(414.0, 450.0);
+            tool(2); // leave the arrow selected in the palette
+        })),
+        (0.8, Box::new(move || grab("overlay", left + 56.0, h - top + 32.0, 728.0, 532.0))),
+        // markup.png: the colour swatches open beside the palette, over the right of the page.
+        (0.1, Box::new(|| session::command(Command::ToggleSwatches))),
+        (0.5, Box::new(move || grab("markup", left + 488.0, h - top + 132.0, 548.0, 424.0))),
+        (0.2, Box::new(session::close)),
+        (0.2, Box::new(|| util::log("selftest done"))),
+    ];
+    run_steps(steps);
+}
+
+/// `photon://selftest-settings-shots`: each Settings tab as a window capture without its
+/// shadow: settings-general.png, settings-screenshots.png, settings-recordings.png.
+pub fn run_settings_shots() {
+    if std::env::var_os("PHOTON_DEV").is_none() {
+        return;
+    }
+    let shoot = |name: &'static str| {
+        move || {
+            if let Some(n) = crate::settings_window::window_number_for_test() {
+                grab_window(name, n);
+            }
+        }
+    };
+    let steps: Vec<(f64, Step)> = vec![
+        (0.0, Box::new(crate::settings_window::show)),
+        (0.8, Box::new(shoot("settings-general"))),
+        (0.1, Box::new(|| crate::settings_window::select_tab(1))),
+        (0.6, Box::new(shoot("settings-screenshots"))),
+        (0.1, Box::new(|| crate::settings_window::select_tab(2))),
+        (0.6, Box::new(shoot("settings-recordings"))),
+        (0.1, Box::new(crate::settings_window::close_for_test)),
+        (0.2, Box::new(|| util::log("selftest done"))),
+    ];
+    run_steps(steps);
+}
