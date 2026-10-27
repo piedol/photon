@@ -3,9 +3,10 @@
 1 ICON "photon.ico"
 1 RT_MANIFEST "photon.manifest"
 
+// Keep these versions in step with windows/Cargo.toml.
 VS_VERSION_INFO VERSIONINFO
-FILEVERSION 0,1,0,0
-PRODUCTVERSION 0,1,0,0
+FILEVERSION 0,1,1,0
+PRODUCTVERSION 0,1,1,0
 FILEOS VOS_NT_WINDOWS32
 FILETYPE VFT_APP
 BEGIN
@@ -15,12 +16,12 @@ BEGIN
     BEGIN
       VALUE "CompanyName", "piedol"
       VALUE "FileDescription", "Photon"
-      VALUE "FileVersion", "0.1.0"
+      VALUE "FileVersion", "0.1.1"
       VALUE "InternalName", "Photon"
       VALUE "LegalCopyright", "Copyright (c) 2026 piedol. GPL-3.0-or-later"
       VALUE "OriginalFilename", "Photon.exe"
       VALUE "ProductName", "Photon"
-      VALUE "ProductVersion", "0.1.0"
+      VALUE "ProductVersion", "0.1.1"
     END
   END
   BLOCK "VarFileInfo"
