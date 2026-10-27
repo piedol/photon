@@ -12,7 +12,7 @@
   <a href="https://github.com/piedol/photon/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/piedol/photon?color=1c1c1e&label=release"></a>
   <img alt="macOS 15 or later on Apple silicon" src="https://img.shields.io/badge/macOS-15%2B%20·%20Apple%20silicon-1c1c1e?logo=apple">
   <img alt="Windows 10 and 11" src="https://img.shields.io/badge/Windows-10%20·%2011-1c1c1e">
-  <a href="LICENSE.md"><img alt="License: PolyForm Noncommercial 1.0.0" src="https://img.shields.io/badge/license-PolyForm%20Noncommercial-1c1c1e"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-1c1c1e" alt="License: GPL-3.0-or-later"></a>
 </p>
 
 <p align="center">
@@ -180,11 +180,6 @@ On macOS, Photon calls Apple's frameworks through [objc2](https://github.com/mad
 
 ## License
 
-Photon is source-available under the [PolyForm Noncommercial License 1.0.0](LICENSE.md).
+Copyright 2026 piedol.
 
-- It's free for personal, hobby, research and educational use, and for nonprofits, schools and government bodies.
-- Forks and changes are welcome for the same purposes.
-- Commercial use, including use inside a company, needs a separate license. Open an issue to ask about one.
-- Anyone who shares Photon or a fork must include the license and this notice, unchanged:
-
-  > Required Notice: Copyright (c) 2026 piedol (https://github.com/piedol/photon)
+Photon is free software under the [GNU General Public License v3.0 or later](LICENSE). You can use, study, share and change it, including at work. If you distribute a modified version, you must release its source under the same license.

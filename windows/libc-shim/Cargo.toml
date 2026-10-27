@@ -2,7 +2,7 @@
 name = "photon-libc-shim"
 version = "0.1.0"
 edition = "2024"
-license = "PolyForm-Noncommercial-1.0.0"
+license = "GPL-3.0-or-later"
 publish = false
 description = "The few libc time functions Photon's shared naming code uses, mapped to the Windows C runtime."
 

@@ -68,7 +68,7 @@ The repo is `piedol/photon`. Releases are cut from `main`.
 
 App builds are published as GitHub Releases tagged `vX.Y.Z` (the version in `Cargo.toml` and `windows/Cargo.toml`), each with two files:
 - `Photon-macOS-arm64.zip`: `dist/Photon.app` from `scripts/bundle.sh`, zipped with `ditto -c -k --keepParent dist/Photon.app Photon-macOS-arm64.zip`.
-- `Photon-windows-x64.zip`: `windows\target\release\Photon.exe` plus `LICENSE.md`, built on Windows with `cargo build --release` (see [windows.md](windows.md)).
+- `Photon-windows-x64.zip`: `windows\target\release\Photon.exe` plus `LICENSE`, built on Windows with `cargo build --release` (see [windows.md](windows.md)).
 
 ```bash
 gh release create v0.1.0 Photon-macOS-arm64.zip Photon-windows-x64.zip --title "Photon 0.1.0" --notes-file notes.md

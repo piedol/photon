@@ -17,7 +17,7 @@ BEGIN
       VALUE "FileDescription", "Photon"
       VALUE "FileVersion", "0.1.0"
       VALUE "InternalName", "Photon"
-      VALUE "LegalCopyright", "Copyright (c) 2026 piedol. PolyForm Noncommercial 1.0.0"
+      VALUE "LegalCopyright", "Copyright (c) 2026 piedol. GPL-3.0-or-later"
       VALUE "OriginalFilename", "Photon.exe"
       VALUE "ProductName", "Photon"
       VALUE "ProductVersion", "0.1.0"
