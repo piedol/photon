@@ -9,6 +9,8 @@ mod export;
 mod geometry;
 mod hotkey;
 mod hud;
+mod i18n;
+mod i18n_text;
 mod keys;
 mod output;
 mod overlay;

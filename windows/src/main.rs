@@ -28,6 +28,8 @@ mod naming;
 #[path = "../../src/overlay/selection.rs"]
 #[allow(dead_code)]
 mod selection;
+#[path = "../../src/i18n_text.rs"]
+mod i18n_text;
 
 // Windows-native.
 mod app;
@@ -37,6 +39,7 @@ mod d2d;
 mod export;
 mod hotkey;
 mod hud;
+mod i18n;
 mod keys;
 mod overlay;
 mod pin;

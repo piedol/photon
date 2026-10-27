@@ -97,6 +97,31 @@ Expect about 12 MB right after launch and about 45 MB after the first capture, f
 3. Draw it in `annotate::render::draw_shape`. It's then automatically on screen and in exports.
 4. The palette picks it up from `Tool::ALL` and grows by a button's height.
 
+## Translations
+
+Photon is translated into Simplified Chinese, Japanese, German, French, Spanish, Brazilian Portuguese and Korean. The Mac app uses the language macOS picks for it (your preferred languages in System Settings › General › Language & Region, or the one set for Photon there). The Windows edition follows Windows' display language, and `PHOTON_LANG=de` overrides it.
+
+Text the user sees goes through the calls in `src/i18n.rs` (Mac) and `windows/src/i18n.rs` (Windows), with the English text as the key:
+
+```rust
+tr("Quit Photon")                                // fixed text
+trf("Saved to {folder}", &[("folder", &name)])  // values in the text, by name
+trn(count, "{n} item", "{n} items")          // counts; both forms are literal
+```
+
+- Keys must be string literals, so the test below can find them. Translate whole sentences: `trf("Saved to {folder}", …)`, never `tr("Saved to") + &name`, because word order differs between languages.
+- Placeholders are named, `{folder}` rather than `{}`, so a translation can move them.
+- Leave untranslated: product and brand names, file names, URL schemes, settings keys, log and debug output, and the self-tests.
+- Each language is a flat JSON object in `locales/<lang>.json`, from the English text to the translation. `scripts/bundle.sh` turns each into `<lang>.lproj/Localizable.strings` in the app bundle. The Windows edition compiles the same catalogs in. The camera and microphone permission prompts come from `resources/Info.plist`; `bundle.sh` translates them into `InfoPlist.strings` from the same catalogs.
+
+`cargo test` runs `catalogs_match_the_source`, which fails when a catalog is missing a key, still has a key the code no longer uses, or has different placeholders from the English. Add the new English text to every catalog when you add a string.
+
+To see the app in a language without changing your Mac's settings:
+
+```bash
+open /Applications/Photon.app --args -AppleLanguages '(de)'
+```
+
 ## Project layout
 
 ```text

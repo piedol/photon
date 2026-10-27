@@ -34,6 +34,24 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp target/aarch64-apple-darwin/release/Photon "$APP/Contents/MacOS/Photon"
 sed -e "s/__VERSION__/$VERSION/" -e "s/__BUILD__/$BUILD/" resources/Info.plist > "$APP/Contents/Info.plist"
 [[ -f assets/AppIcon.icns ]] && cp assets/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
+# Translations: locales/<lang>.json becomes <lang>.lproj/Localizable.strings. The empty
+# en.lproj lists English among Photon's languages, so macOS can choose it.
+mkdir -p "$APP/Contents/Resources/en.lproj"
+printf '{}' > "$APP/Contents/Resources/en.lproj/Localizable.strings"
+plutil -convert binary1 "$APP/Contents/Resources/en.lproj/Localizable.strings"
+for catalog in locales/*.json; do
+  lang=$(basename "$catalog" .json)
+  mkdir -p "$APP/Contents/Resources/$lang.lproj"
+  plutil -convert binary1 -o "$APP/Contents/Resources/$lang.lproj/Localizable.strings" "$catalog"
+  # The permission prompts' text: each *UsageDescription in Info.plist, looked up by its English.
+  python3 -I -c '
+import json, plistlib, sys
+info = plistlib.load(open(sys.argv[1], "rb"))
+catalog = json.load(open(sys.argv[2]))
+out = {k: catalog[v] for k, v in info.items() if k.endswith("UsageDescription") and v in catalog}
+plistlib.dump(out, open(sys.argv[3], "wb"), fmt=plistlib.FMT_BINARY)
+' "$APP/Contents/Info.plist" "$catalog" "$APP/Contents/Resources/$lang.lproj/InfoPlist.strings"
+done
 
 if [[ -n $IDENTITY ]] && security find-identity -v -p codesigning | grep -qF -- "\"$IDENTITY\""; then
   codesign --force --options runtime "$TS" \
