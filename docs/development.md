@@ -60,6 +60,12 @@ open photon://selftest
 
 Screenshots go to `$PHOTON_SHOTS` (default `/tmp/photon-shots`), and logs go to stderr.
 
+To run a build from `dist/` while the installed Photon keeps running, start the test at launch instead of with a link, here in German:
+
+```bash
+PHOTON_DEV=1 PHOTON_SELFTEST=selftest-settings-shots dist/Photon.app/Contents/MacOS/Photon -AppleLanguages '(de)'
+```
+
 The self-tests capture whatever is on screen, and the recording tests save files to your recordings folder. Delete those files afterwards.
 
 Useful log lines:

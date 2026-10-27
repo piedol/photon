@@ -56,6 +56,13 @@ pub fn launched(mtm: MainThreadMarker) {
         crate::permissions::ask_screen();
     }
     util::log("launched");
+    // Developer mode can start a self-test at launch, for a build run next to the installed
+    // app, where photon:// links would reach the installed copy.
+    if std::env::var_os("PHOTON_DEV").is_some()
+        && let Ok(test) = std::env::var("PHOTON_SELFTEST")
+    {
+        open_url(&test);
+    }
 }
 
 /// (Re)register hotkeys from settings and refresh the menu labels.
