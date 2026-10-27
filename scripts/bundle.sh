@@ -21,6 +21,9 @@ BUILD=$(git rev-list --count HEAD 2>/dev/null || echo 1)
 # in the keychain. Without either, the app gets an ad-hoc signature.
 IDENTITY=${PHOTON_SIGN_IDENTITY:-$(security find-identity -v -p codesigning | sed -n 's/.*"\(Developer ID Application: [^"]*\)".*/\1/p' | head -1)}
 
+# Keep build-machine paths (home folder, checkout) out of the binary's panic messages.
+# The encoded form separates flags with 0x1f, so paths with spaces work.
+export CARGO_ENCODED_RUSTFLAGS="--remap-path-prefix=$HOME/.cargo=/cargo"$'\x1f'"--remap-path-prefix=$PWD=/photon"
 cargo build --release --target aarch64-apple-darwin
 
 APP=dist/Photon.app

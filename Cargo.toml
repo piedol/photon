@@ -1,6 +1,6 @@
 [package]
 name = "photon"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 description = "Screenshot, markup and screen recording for Apple silicon Macs"
 license = "PolyForm-Noncommercial-1.0.0"

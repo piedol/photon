@@ -72,6 +72,12 @@ cd windows
 cargo build --release
 ```
 
+For a release build, keep your user folder's path out of the binary first:
+
+```powershell
+$env:RUSTFLAGS = "--remap-path-prefix=$env:USERPROFILE\.cargo=C:\cargo --remap-path-prefix=$((Get-Location).Path)=C:\photon"
+```
+
 The program is `windows\target\release\Photon.exe`. Run the unit tests with `cargo test --release`.
 
 On a Mac you can type-check the Windows code without linking it:
