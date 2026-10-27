@@ -42,9 +42,9 @@ impl Shortcut {
     pub fn label(self) -> String {
         let mut parts: Vec<String> = Vec::new();
         if self.mods & WIN != 0 { parts.push("Win".into()); }
-        if self.mods & CONTROL != 0 { parts.push("Ctrl".into()); }
+        if self.mods & CONTROL != 0 { parts.push(crate::i18n::tr("Ctrl")); }
         if self.mods & ALT != 0 { parts.push("Alt".into()); }
-        if self.mods & SHIFT != 0 { parts.push("Shift".into()); }
+        if self.mods & SHIFT != 0 { parts.push(crate::i18n::tr("Shift")); }
         parts.push(key_label(self.key).unwrap_or_else(|| crate::i18n::trf("Key {code}", &[("code", &self.key.to_string())])));
         parts.join("+")
     }
@@ -74,7 +74,7 @@ pub fn key_label(vk: u16) -> Option<String> {
         0x70..=0x87 => format!("F{}", vk - 0x6F),
         0x20 => "Space".into(),
         0x2C => "PrtScn".into(),
-        0x0D => "Enter".into(),
+        0x0D => crate::i18n::tr("Enter"),
         0x09 => "Tab".into(),
         0x2D => "Insert".into(),
         0x2E => "Delete".into(),
