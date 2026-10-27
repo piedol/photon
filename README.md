@@ -29,6 +29,8 @@ Photon takes screenshots and screen recordings from the menu bar. Press **⇧⌘
 
 The program file is under 1 MB on both the Mac and Windows. On the Mac, Photon uses about 12 MB of memory at launch and about 45 MB after the first capture. It makes no network connections.
 
+Photon is in English, Simplified Chinese, Japanese, German, French, Spanish, Brazilian Portuguese and Korean, and follows your system language. On a Mac you can set Photon's language in System Settings › General › Language & Region › Applications.
+
 ## Contents
 
 - [Download](#download)
