@@ -5,7 +5,7 @@
 <h1 align="center">Photon</h1>
 
 <p align="center">
-  A screenshot, markup and screen recording app for macOS and Windows.
+  Screenshots, markup and screen recording for macOS and Windows, written in Rust.
 </p>
 
 <p align="center">
@@ -27,7 +27,7 @@
 
 Photon takes screenshots and screen recordings from the menu bar. Press **⇧⌘9** (Windows: **Ctrl+Shift+9**) and the screen freezes while you select an area, mark it up and copy it. **⇧⌘0** records a region, a window or a whole screen at 60 fps, and afterwards you can trim the recording or turn it into a GIF.
 
-Photon is written in Rust and makes no network connections. Its program file is under 1 MB on both the Mac and Windows.
+The program file is under 1 MB on both the Mac and Windows. On the Mac, Photon uses about 12 MB of memory at launch and about 45 MB after the first capture. It makes no network connections.
 
 ## Contents
 
