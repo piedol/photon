@@ -363,8 +363,15 @@ fn present(alert: Retained<NSAlert>, buttons: &[(Retained<NSButton>, u8)]) {
     alert.layout();
     let window = alert.window();
     window.center();
-    ui::app(mtm()).activate();
+    // The answer to a check arrives after the menu has closed, without fresh user input, and
+    // macOS 14's cooperative activation then refuses `activate`, leaving the window behind
+    // other apps' windows. The older call still brings it forward.
+    let app = ui::app(mtm());
+    app.activate();
+    #[allow(deprecated)]
+    app.activateIgnoringOtherApps(true);
     window.makeKeyAndOrderFront(None);
+    window.orderFrontRegardless();
     ALERT.with(|a| *a.borrow_mut() = Some(alert));
 }
 
