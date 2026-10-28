@@ -19,8 +19,8 @@ use windows::Win32::UI::HiDpi::{AdjustWindowRectExForDpi, GetDpiForWindow};
 use windows::Win32::UI::Input::KeyboardAndMouse::SetFocus;
 use windows::Win32::UI::WindowsAndMessaging::{
     BS_DEFPUSHBUTTON, BS_PUSHBUTTON, CreateWindowExW, DefWindowProcW, DestroyWindow, ES_AUTOVSCROLL, ES_MULTILINE,
-    ES_READONLY, HMENU, IDCANCEL, IDOK, IsDialogMessageW, IsWindow, LoadIconW, MSG, RegisterClassExW, SW_SHOW,
-    SWP_NOZORDER, SendMessageW, SetForegroundWindow, SetWindowPos, ShowWindow, WINDOW_EX_STYLE, WINDOW_STYLE, WM_CLOSE,
+    ES_READONLY, HMENU, HWND_NOTOPMOST, HWND_TOPMOST, IDCANCEL, IDOK, IsDialogMessageW, IsWindow, LoadIconW, MSG,
+    RegisterClassExW, SW_SHOW, SWP_NOMOVE, SWP_NOSIZE, SWP_NOZORDER, SendMessageW, SetForegroundWindow, SetWindowPos, ShowWindow, WINDOW_EX_STYLE, WINDOW_STYLE, WM_CLOSE,
     WM_COMMAND, WM_CTLCOLORSTATIC, WM_DESTROY, WM_SETFONT, WNDCLASSEXW, WS_CAPTION, WS_CHILD, WS_EX_CLIENTEDGE,
     WS_OVERLAPPED, WS_SYSMENU, WS_TABSTOP, WS_VISIBLE, WS_VSCROLL,
 };
@@ -548,6 +548,11 @@ fn present(title: &str, text: &str, notes: Option<&str>, buttons: &[(String, u8)
         let (fw, fh) = (frame.right - frame.left, frame.bottom - frame.top);
         let _ = SetWindowPos(hwnd, None, (work.mid().x - fw as f64 / 2.0) as i32, (work.mid().y - fh as f64 / 2.0) as i32, fw, fh, SWP_NOZORDER);
         let _ = ShowWindow(hwnd, SW_SHOW);
+        // The answer to a check arrives after the tray menu has closed, and Windows may refuse
+        // SetForegroundWindow then, leaving the window behind others. Raising it through the
+        // topmost band and back puts it on top without keeping it there.
+        let _ = SetWindowPos(hwnd, Some(HWND_TOPMOST), 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+        let _ = SetWindowPos(hwnd, Some(HWND_NOTOPMOST), 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
         let _ = SetForegroundWindow(hwnd);
         let _ = SetFocus(Some(first));
     }
