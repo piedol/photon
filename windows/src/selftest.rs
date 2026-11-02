@@ -138,6 +138,25 @@ pub fn run(which: &str) {
             (3.0, Box::new(|| shot("15-trim"))),
             (0.2, Box::new(crate::record::post::close_trim_for_test)),
         ],
+        // Pick 1080p in the record bar for one recording of almost the whole screen, then
+        // open the record overlay again: it's back on the Settings default.
+        "selftest-resolution" => vec![
+            (0.0, Box::new(|| session::start(Mode::Record))),
+            (0.8, Box::new(move || drag((w * 0.02, h * 0.03), (w * 0.98, h * 0.94)))),
+            (0.3, Box::new(|| shot("40-record-bar"))),
+            (0.1, Box::new(|| session::command(Command::ToggleResolutions))),
+            (0.3, Box::new(|| shot("41-size-list"))),
+            (0.1, Box::new(|| session::command(Command::Resolution(3)))),
+            (0.3, Box::new(|| shot("42-1080p-chosen"))),
+            (0.1, Box::new(|| session::command(Command::StartRecording))),
+            (0.8, Box::new(|| crate::commands::run(Command::SkipCountdown))),
+            (4.0, Box::new(|| crate::commands::run(Command::CaptureScreenshot))),
+            (6.0, Box::new(|| crate::record::post::command(Command::DismissHud))),
+            (0.5, Box::new(|| session::start(Mode::Record))),
+            (0.8, Box::new(move || drag((w * 0.02, h * 0.03), (w * 0.98, h * 0.94)))),
+            (0.3, Box::new(|| shot("43-next-recording"))),
+            (0.1, Box::new(|| session::command(Command::Close))),
+        ],
         "selftest-settings" => vec![
             (0.0, Box::new(crate::settings_window::show)),
             (0.8, Box::new(|| shot("20-general"))),

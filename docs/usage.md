@@ -66,7 +66,7 @@ Pins stay until you close them or quit Photon. They're not saved anywhere.
    - **Click a window** to record *only that window*. The badge reads "… window only". The video follows the window and never shows other windows, even when you switch apps or windows cover it.
    - **Click empty desktop** to record the whole display.
 2. In the record bar, toggle **microphone**, **system audio** and the **webcam bubble**. These toggles are remembered. The webcam bubble isn't available for window recordings.
-3. On the Mac, the size chip beside the toggles sets the largest size for this recording: **Native**, **4K**, **1440p**, **1080p** or **720p**. It starts at **Resolution** in Settings › Recordings, and the next recording starts there again. When the video will be scaled down, the badge shows both sizes, such as `3000 × 1800 → 1800 × 1080`.
+3. The size chip beside the toggles sets the largest size for this recording: **Native**, **4K**, **1440p**, **1080p** or **720p**. It starts at **Resolution** in Settings › Recordings, and the next recording starts there again. When the video will be scaled down, the badge shows both sizes, such as `3000 × 1800 → 1800 × 1080`.
 4. Press **Record** or ↩.
 
 ### While recording

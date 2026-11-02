@@ -29,6 +29,7 @@ use crate::model::{Document, Draft, Rgba, Shape, Style, Tool, PALETTE};
 use crate::overlay::{self, MouseKind, OverlayWindow};
 use crate::render::{self, Source};
 use crate::selection::{Handle, Release, Selection};
+use crate::settings::Resolution;
 use crate::toolbar::{Btn, DrawState, Mode, Toolbars};
 use crate::util;
 use crate::{export, hotkey, hud, pin, record, settings};
@@ -75,6 +76,8 @@ pub struct Session {
     mic: bool,
     audio: bool,
     cam: bool,
+    /// The record bar's size for this recording. Starts at the Settings default and isn't saved.
+    resolution: Resolution,
 }
 
 thread_local! {
@@ -173,6 +176,7 @@ fn open(mode: Mode, snapshot: Snapshot, front_app: Option<String>) {
         mic: s.rec_mic,
         audio: s.rec_system_audio,
         cam: s.rec_webcam,
+        resolution: s.rec_resolution,
     };
     SESSION.with(|cell| *cell.borrow_mut() = Some(session));
     hotkey::set_escape(true);
@@ -239,9 +243,14 @@ impl Session {
             (Some((_, None)), Mode::Record) => Some(tr("This window only")),
             _ => None,
         };
+        // In record mode, show the size the video will be saved at when it's smaller.
+        let out = (self.mode == Mode::Record)
+            .then(|| self.resolution.fit(px.0 as f64, px.1 as f64))
+            .map(|(w, h)| (w as u32, h as u32))
+            .filter(|o| o.0 + 1 < px.0 || o.1 + 1 < px.1);
         let (rect, bounds, dragging) = (sc.sel.rect, sc.bounds, sc.sel.is_dragging());
         self.toolbars.set_scale(sc.display.scale);
-        self.toolbars.layout(rect, bounds, px, dragging, label.as_deref());
+        self.toolbars.layout(rect, bounds, px, out, dragging, label.as_deref());
         self.invalidate(idx);
     }
 
@@ -273,7 +282,7 @@ impl Session {
     fn select_tool(&mut self, tool: Option<Tool>) {
         self.commit_text();
         self.tool = if self.tool == tool { None } else { tool };
-        self.toolbars.swatches_shown = false;
+        self.toolbars.hide_popovers();
         self.relayout();
     }
 
@@ -358,8 +367,7 @@ impl Session {
                 self.commit_text();
                 return None;
             }
-            if self.toolbars.swatches_shown {
-                self.toolbars.swatches_shown = false;
+            if self.toolbars.hide_popovers() {
                 self.relayout();
             }
             if idx != self.active {
@@ -557,6 +565,7 @@ impl Session {
                     mic: self.mic,
                     audio: self.audio,
                     cam: self.cam,
+                    resolution: self.resolution,
                     hover: self.hover_btn,
                 };
                 self.toolbars.draw(&rt, &st);
@@ -616,6 +625,8 @@ fn btn_command(b: Btn) -> Command {
         Btn::Mic => Command::ToggleMic,
         Btn::Audio => Command::ToggleSystemAudio,
         Btn::Cam => Command::ToggleWebcam,
+        Btn::Res => Command::ToggleResolutions,
+        Btn::ResOption(i) => Command::Resolution(i as u8),
         Btn::Start => Command::StartRecording,
     }
 }
@@ -728,14 +739,13 @@ pub fn char_input(c: u32) -> bool {
     .unwrap_or(false)
 }
 
-/// Esc: cancel text, then the swatch strip, then the whole selection.
+/// Esc: cancel text, then the swatch strip or the list of sizes, then the whole selection.
 pub fn escape() {
     let close_all = with(|s| {
         if s.text.is_some() {
             s.cancel_text();
             false
-        } else if s.toolbars.swatches_shown {
-            s.toolbars.swatches_shown = false;
+        } else if s.toolbars.hide_popovers() {
             s.relayout();
             false
         } else {
@@ -788,6 +798,8 @@ pub struct RecordTarget {
     pub front_app: Option<String>,
     /// Record only this window (follows it, ignores everything around it).
     pub window: Option<isize>,
+    /// The largest size to save the video at, from the record bar.
+    pub resolution: Resolution,
 }
 
 fn record_target() -> Option<RecordTarget> {
@@ -802,6 +814,7 @@ fn record_target() -> Option<RecordTarget> {
             display_name: sc.display.name.clone(),
             front_app: sc.picked_window.as_ref().and_then(|w| w.1.clone()).or_else(|| s.front_app.clone()),
             window: sc.picked_window.as_ref().map(|w| w.0),
+            resolution: s.resolution,
         })
     })
     .flatten()
@@ -831,6 +844,21 @@ pub fn command(cmd: Command) {
         Command::ToggleSwatches => {
             with(|s| {
                 s.toolbars.swatches_shown = !s.toolbars.swatches_shown;
+                s.toolbars.res_shown = false;
+                s.relayout();
+            });
+        }
+        Command::ToggleResolutions => {
+            with(|s| {
+                s.toolbars.res_shown = !s.toolbars.res_shown;
+                s.toolbars.swatches_shown = false;
+                s.relayout();
+            });
+        }
+        Command::Resolution(i) => {
+            with(|s| {
+                s.resolution = Resolution::ALL[(i as usize).min(Resolution::ALL.len() - 1)];
+                s.toolbars.res_shown = false;
                 s.relayout();
             });
         }

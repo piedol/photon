@@ -36,8 +36,6 @@ Photon for Windows is a native Windows edition with the same features as the Mac
 
 Both shortcuts can be changed in **Settings › General**, as on the Mac.
 
-The **Resolution** setting and the record bar's size chip are on the Mac only for now. Windows recordings are saved at the screen's full resolution.
-
 ## Where things are stored
 
 | What | Where |
@@ -64,6 +62,7 @@ Measured on Windows 10 at 2560×1440:
 - About 40 ms from the shortcut to the frozen overlay.
 - About 5 MB of private memory at launch. After captures it settles around 30 to 45 MB committed, while the resident set is trimmed to under 1 MB when idle.
 - Recording uses the GPU's hardware H.264 or HEVC encoder at 60 fps and writes straight to disk.
+- When **Resolution** scales a recording down, Photon averages the captured pixels into the smaller frame on the CPU, across up to 8 threads. A 3318 × 2033 area at 1080p (1762 × 1080) recorded at the full 60 fps on a Ryzen 7 7800X3D.
 
 ## Building from source
 
@@ -100,6 +99,7 @@ The Windows edition reuses the Mac app's platform-free code by including those f
 - `output/naming.rs` (file-name templates)
 - `output/destination.rs` (folders and fallbacks)
 - `commands.rs`
+- `resolution.rs` (the recording sizes)
 
 The OS-facing code is Windows-native:
 
@@ -126,7 +126,7 @@ $env:PHOTON_DEV = 1; $env:PHOTON_LOG = 1; .\Photon.exe
 start photon://selftest
 ```
 
-Available sessions: `selftest`, `selftest-record`, `selftest-trim`, `selftest-trim-apply`, `selftest-gif`, `selftest-window`, `selftest-misc`, `selftest-webcam`, `selftest-settings`, `selftest-escape` and `selftest-plain`. Screenshots go to `%PHOTON_SHOTS%` (default `%TEMP%\photon-shots`).
+Available sessions: `selftest`, `selftest-record`, `selftest-trim`, `selftest-trim-apply`, `selftest-gif`, `selftest-window`, `selftest-misc`, `selftest-webcam`, `selftest-settings`, `selftest-escape`, `selftest-plain` and `selftest-resolution`. Screenshots go to `%PHOTON_SHOTS%` (default `%TEMP%\photon-shots`).
 
 The self-tests capture whatever is on screen and save recording files, so delete those afterwards. With `PHOTON_DEV` set, Photon's own panels are not hidden from captures, so they appear in the test screenshots.
 

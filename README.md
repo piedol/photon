@@ -98,7 +98,7 @@ The markup tools are a pen, line, arrow, rectangle, ellipse, highlighter and tex
 
 Recordings are 60 fps H.264, or HEVC for smaller files, encoded in hardware and written straight to disk. System audio is recorded by default. You can add your microphone and a webcam bubble (not available when recording a window), highlight your clicks, and pause and resume.
 
-On the Mac, recordings are saved at the screen's full resolution unless you set **Resolution** in Settings › Recordings to 4K, 1440p, 1080p or 720p. Choose 1080p or 720p for videos you'll send through WhatsApp or other chat apps, which shrink large videos. At 1080p a full 16-inch MacBook Pro screen is saved at 1670 × 1080. The size chip in the record bar changes it for the next recording and leaves the setting as it is.
+Recordings are saved at the screen's full resolution unless you set **Resolution** in Settings › Recordings to 4K, 1440p, 1080p or 720p. Choose 1080p or 720p for videos you'll send through WhatsApp or other chat apps, which shrink large videos. At 1080p a full 16-inch MacBook Pro screen is saved at 1670 × 1080. The size chip in the record bar changes it for the next recording and leaves the setting as it is.
 
 When you stop, a panel offers **Copy file** (which pastes straight into chat apps and email), **Open**, **Trim** (cuts the start and end without re-encoding), **Make GIF** (a looping 12 fps GIF of the first 60 seconds, up to 960 px wide) and **Show in Finder**.
 

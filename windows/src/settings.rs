@@ -9,6 +9,8 @@ use crate::keys::Shortcut;
 use crate::naming::{Case, DateFormat, Kind, NamingRule, Separator, TimeFormat};
 use crate::util;
 
+pub use crate::resolution::Resolution;
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Codec {
     H264,
@@ -29,6 +31,8 @@ pub struct Settings {
     pub rec_also_dir: Option<PathBuf>,
     pub rec_codec: Codec,
     pub rec_fps: u32,
+    /// The default for each recording; the record bar can change it for one recording.
+    pub rec_resolution: Resolution,
     pub rec_system_audio: bool,
     pub rec_mic: bool,
     pub rec_mic_device: Option<String>,
@@ -113,6 +117,7 @@ impl Settings {
             rec_also_dir: s("recAlsoDir").map(PathBuf::from),
             rec_codec: if s("recCodec").as_deref() == Some("hevc") { Codec::Hevc } else { Codec::H264 },
             rec_fps: if i("recFps", 60) == 30 { 30 } else { 60 },
+            rec_resolution: s("recResolution").and_then(|k| Resolution::from_key(&k)).unwrap_or(Resolution::Native),
             rec_system_audio: b("recSystemAudio", true),
             rec_mic: b("recMic", false),
             rec_mic_device: s("recMicDevice"),
@@ -151,6 +156,7 @@ impl Settings {
         put("recAlsoDir", p(&self.rec_also_dir));
         put("recCodec", if self.rec_codec == Codec::Hevc { "hevc" } else { "h264" }.into());
         put("recFps", self.rec_fps.to_string());
+        put("recResolution", self.rec_resolution.key().into());
         put("recSystemAudio", (self.rec_system_audio as u8).to_string());
         put("recMic", (self.rec_mic as u8).to_string());
         put("recMicDevice", self.rec_mic_device.clone().unwrap_or_default());

@@ -37,7 +37,7 @@ use crate::hud::{self, Button, Content};
 use crate::i18n::{tr, trf};
 use crate::naming::Kind;
 use crate::session::RecordTarget;
-use crate::settings::{self, Codec, Settings};
+use crate::settings::{self, Codec, Resolution, Settings};
 use crate::toolbar::Icon;
 use crate::commands::Command;
 use crate::util;
@@ -91,6 +91,8 @@ pub struct Flags {
     crop: Option<(u32, u32, u32, u32)>,
     codec: Codec,
     fps: u32,
+    /// The largest size to save at; frames are scaled down to fit.
+    resolution: Resolution,
     audio: bool,
     frames: Arc<AtomicU64>,
     failed: Arc<Mutex<Option<String>>>,
@@ -99,6 +101,8 @@ pub struct Flags {
 pub struct Handler {
     encoder: Option<VideoEncoder>,
     size: (u32, u32),
+    /// Output pixels per captured pixel (x, y) when the video is scaled down.
+    scale: Option<(f64, f64)>,
     flags: Flags,
     last_ts: AtomicI64,
     scratch: Vec<u8>,
@@ -114,8 +118,19 @@ impl Handler {
         if self.encoder.is_some() {
             return Ok(());
         }
+        let (cw, ch) = (w, h);
         let (w, h) = (even(w), even(h));
         let f = &self.flags;
+        // Scale down to fit the chosen resolution. The first frame sets the size. Fit the
+        // captured size itself, as the overlay's badge does, so the two agree.
+        let (fw, fh) = f.resolution.fit(cw as f64, ch as f64);
+        let (w, h) = if (fw as u32) < w || (fh as u32) < h {
+            self.scale = Some((fw as f64 / cw as f64, fh as f64 / ch as f64));
+            (fw as u32, fh as u32)
+        } else {
+            (w, h)
+        };
+        util::log(format!("recording at {w} × {h} ({:?})", f.resolution));
         let bitrate = ((w as f64 * h as f64 * f.fps as f64 * 0.1) as u32).clamp(4_000_000, 40_000_000);
         let video = VideoSettingsBuilder::new(w, h)
             .sub_type(if f.codec == Codec::Hevc { VideoSettingsSubType::HEVC } else { VideoSettingsSubType::H264 })
@@ -134,7 +149,7 @@ impl GraphicsCaptureApiHandler for Handler {
     type Error = String;
 
     fn new(ctx: Context<Self::Flags>) -> Result<Self, Self::Error> {
-        Ok(Handler { encoder: None, size: (0, 0), flags: ctx.flags, last_ts: AtomicI64::new(-1), scratch: Vec::new(), padded: Vec::new() })
+        Ok(Handler { encoder: None, size: (0, 0), scale: None, flags: ctx.flags, last_ts: AtomicI64::new(-1), scratch: Vec::new(), padded: Vec::new() })
     }
 
     fn on_frame_arrived(&mut self, frame: &mut Frame, _control: InternalCaptureControl) -> Result<(), Self::Error> {
@@ -165,12 +180,16 @@ impl GraphicsCaptureApiHandler for Handler {
         // also pads or crops a window that changed size into the fixed video size.
         self.padded.clear();
         self.padded.resize((ow * oh * 4) as usize, 0);
-        let rows = bh.min(oh) as usize;
-        let cols = (bw.min(ow) * 4) as usize;
-        for r in 0..rows {
-            let s = r * (bw * 4) as usize;
-            let d = (oh as usize - 1 - r) * (ow * 4) as usize;
-            self.padded[d..d + cols].copy_from_slice(&bytes[s..s + cols]);
+        if let Some((kx, ky)) = self.scale {
+            downscale_flip(bytes, bw, bh, &mut self.padded, ow, oh, kx, ky);
+        } else {
+            let rows = bh.min(oh) as usize;
+            let cols = (bw.min(ow) * 4) as usize;
+            for r in 0..rows {
+                let s = r * (bw * 4) as usize;
+                let d = (oh as usize - 1 - r) * (ow * 4) as usize;
+                self.padded[d..d + cols].copy_from_slice(&bytes[s..s + cols]);
+            }
         }
         let data: &[u8] = &self.padded;
         if let Some(enc) = &mut self.encoder {
@@ -186,6 +205,61 @@ impl GraphicsCaptureApiHandler for Handler {
         util::main_async(|| stop(false));
         Ok(())
     }
+}
+
+/// Scale BGRA `src` (`sw × sh`, top-down, no row padding) by `kx` and `ky` (both under 1)
+/// into `dst` (`ow × oh`, bottom-up), averaging the captured pixels behind each output
+/// pixel so text stays readable. Output pixels past the scaled frame are left as they are.
+/// Rows are split across threads: a 4K frame is about 33 million bytes to read.
+#[allow(clippy::too_many_arguments)]
+fn downscale_flip(src: &[u8], sw: u32, sh: u32, dst: &mut [u8], ow: u32, oh: u32, kx: f64, ky: f64) {
+    let span = |i: u32, k: f64, max: u32| {
+        let a = ((i as f64 / k) as u32).min(max - 1);
+        let b = (((i + 1) as f64 / k) as u32).clamp(a + 1, max);
+        (a as usize, b as usize)
+    };
+    let nx = ((sw as f64 * kx).round() as u32).min(ow);
+    let ny = ((sh as f64 * ky).round() as u32).min(oh);
+    if sw == 0 || sh == 0 || nx == 0 || ny == 0 {
+        return;
+    }
+    let xs: Vec<(usize, usize)> = (0..nx).map(|x| span(x, kx, sw)).collect();
+    let ys: Vec<(usize, usize)> = (0..ny).map(|y| span(y, ky, sh)).collect();
+    let stride = sw as usize * 4;
+    let row_bytes = ow as usize * 4;
+    let threads = std::thread::available_parallelism().map(|n| n.get()).unwrap_or(4).min(8);
+    let rows_per = (oh as usize).div_ceil(threads);
+    std::thread::scope(|scope| {
+        for (chunk_i, chunk) in dst.chunks_mut(rows_per * row_bytes).enumerate() {
+            let (xs, ys) = (&xs, &ys);
+            scope.spawn(move || {
+                for (j, out_row) in chunk.chunks_mut(row_bytes).enumerate() {
+                    // Destination row r holds output row oh - 1 - r.
+                    let r = chunk_i * rows_per + j;
+                    let y = oh as usize - 1 - r;
+                    let Some(&(y0, y1)) = ys.get(y) else { continue };
+                    for (x, &(x0, x1)) in xs.iter().enumerate() {
+                        let mut acc = [0u32; 4];
+                        for sy in y0..y1 {
+                            let row = &src[sy * stride..];
+                            for sx in x0..x1 {
+                                let p = &row[sx * 4..sx * 4 + 4];
+                                acc[0] += p[0] as u32;
+                                acc[1] += p[1] as u32;
+                                acc[2] += p[2] as u32;
+                                acc[3] += p[3] as u32;
+                            }
+                        }
+                        let n = ((y1 - y0) * (x1 - x0)) as u32;
+                        let d = &mut out_row[x * 4..x * 4 + 4];
+                        for c in 0..4 {
+                            d[c] = ((acc[c] + n / 2) / n) as u8;
+                        }
+                    }
+                }
+            });
+        }
+    });
 }
 
 type Control = CaptureControl<Handler, String>;
@@ -337,6 +411,7 @@ fn begin_capture() {
             crop,
             codec: s.rec_codec,
             fps: s.rec_fps,
+            resolution: t.resolution,
             audio: audio_on,
             frames: r.frames.clone(),
             failed: r.failed.clone(),
@@ -538,7 +613,10 @@ fn deliver(file: PathBuf, target: &RecordTarget, s: &Settings) {
     let parts = NameParts {
         kind: Kind::Recording,
         app: target.front_app.clone(),
-        size: Some((target.region.w as u32, target.region.h as u32)),
+        size: Some({
+            let (w, h) = target.resolution.fit(target.region.w, target.region.h);
+            (w as u32, h as u32)
+        }),
         display: Some(target.display_name.clone()),
     };
     let (path, counter) = destination::unique_path(&resolved.dir, &s.rec_naming, s.rec_counter, &parts, "mp4");
@@ -555,5 +633,33 @@ fn deliver(file: PathBuf, target: &RecordTarget, s: &Settings) {
             post::finished_hud(saved, resolved.fell_back);
         }
         Err(e) => hud::message(&tr("Couldn't save the recording"), Some(&e)),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::downscale_flip;
+
+    /// A 4 × 2 frame of grey levels, halved to 2 × 1: each output pixel is the average
+    /// of a 2 × 2 block.
+    #[test]
+    fn halves_by_averaging() {
+        let levels = [0u8, 40, 100, 200, 20, 60, 100, 0];
+        let src: Vec<u8> = levels.iter().flat_map(|&v| [v, v, v, 255]).collect();
+        let mut dst = vec![0u8; 2 * 4];
+        downscale_flip(&src, 4, 2, &mut dst, 2, 1, 0.5, 0.5);
+        assert_eq!(&dst[0..4], &[30, 30, 30, 255]);
+        assert_eq!(&dst[4..8], &[100, 100, 100, 255]);
+    }
+
+    /// Rows come out bottom-up, as the encoder expects.
+    #[test]
+    fn flips_rows() {
+        let src: Vec<u8> = [10u8, 10, 200, 200].iter().flat_map(|&v| [v, v, v, 255]).collect();
+        let mut dst = vec![0u8; 2 * 4];
+        // 1 × 4 down to 1 × 2.
+        downscale_flip(&src, 1, 4, &mut dst, 1, 2, 1.0, 0.5);
+        assert_eq!(dst[0], 200);
+        assert_eq!(dst[4], 10);
     }
 }

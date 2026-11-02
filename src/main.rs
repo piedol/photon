@@ -17,6 +17,7 @@ mod overlay;
 mod permissions;
 mod pin;
 mod record;
+mod resolution;
 mod selftest;
 mod session;
 mod settings;

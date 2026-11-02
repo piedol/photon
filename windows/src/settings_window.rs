@@ -36,7 +36,7 @@ use crate::destination::{self, NameParts};
 use crate::i18n::{tr, trf};
 use crate::keys::{self, Shortcut};
 use crate::naming::{Case, DateFormat, Kind, NamingRule, Separator, TimeFormat, TOKENS};
-use crate::settings::{self, Codec, Settings};
+use crate::settings::{self, Codec, Resolution, Settings};
 use crate::util::{self, W};
 use crate::{app, hotkey, hud};
 
@@ -60,6 +60,7 @@ const CAM_DEVICE: u16 = 76;
 const CURSOR: u16 = 77;
 const CLICKS: u16 = 78;
 const COUNTDOWN: u16 = 79;
+const RESOLUTION: u16 = 80;
 const N_TEMPLATE: u16 = 0;
 const N_DATE: u16 = 1;
 const N_TIME: u16 = 2;
@@ -542,6 +543,11 @@ fn build(st: &mut State, s: f64, client_w: i32) {
         (CODEC, &[tr("H.264 (most compatible)"), tr("HEVC (smaller files)")], (set.rec_codec == Codec::Hevc) as usize),
         (FPS, &[tr("30 fps"), tr("60 fps")], (set.rec_fps == 60) as usize),
     );
+    f.label(&tr("Resolution:"), f.px(26.0));
+    let res_labels: Vec<String> = Resolution::ALL.iter().map(|r| r.label()).collect();
+    let (x, w) = (f.ctrl_x(), (f.ctrl_w() - f.px(8.0)) / 2);
+    f.combo_at(RESOLUTION, &res_labels, set.rec_resolution.index(), x, w);
+    f.y += f.px(34.0);
     let half = (f.ctrl_w() - f.px(8.0)) / 2;
     let dx = f.ctrl_x() + half + f.px(8.0);
     f.checkbox(SYS_AUDIO, &tr("Record system audio"), set.rec_system_audio);
@@ -871,6 +877,10 @@ pub fn changed(id: u16) {
         FPS => {
             let sixty = selected(id) == 1;
             settings::update(|s| s.rec_fps = if sixty { 60 } else { 30 });
+        }
+        RESOLUTION => {
+            let r = Resolution::ALL[selected(id).min(Resolution::ALL.len() - 1)];
+            settings::update(|s| s.rec_resolution = r);
         }
         SYS_AUDIO => {
             let on = is_on(id);

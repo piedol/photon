@@ -10,6 +10,7 @@ use crate::d2d::{self, rgba};
 use crate::geometry::{pt, Point, Rect};
 use crate::i18n::tr;
 use crate::model::{Rgba, Tool, PALETTE, PALETTE_NAMES};
+use crate::settings::Resolution;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Mode {
@@ -34,6 +35,10 @@ pub enum Btn {
     Mic,
     Audio,
     Cam,
+    /// The size chip in the record bar.
+    Res,
+    /// A row in the chip's list, by its index in `Resolution::ALL`.
+    ResOption(usize),
     Start,
 }
 
@@ -67,6 +72,8 @@ impl Btn {
             Btn::Mic => tr("Microphone"),
             Btn::Audio => tr("System audio"),
             Btn::Cam => tr("Webcam bubble"),
+            Btn::Res => tr("Resolution for this recording"),
+            Btn::ResOption(i) => Resolution::ALL[i].label(),
             Btn::Start => tr("Start recording  (Enter)"),
         }
     }
@@ -81,6 +88,7 @@ pub struct DrawState {
     pub mic: bool,
     pub audio: bool,
     pub cam: bool,
+    pub resolution: Resolution,
     pub hover: Option<Btn>,
 }
 
@@ -88,6 +96,8 @@ pub struct Toolbars {
     pub mode: Mode,
     scale: f64,
     pub swatches_shown: bool,
+    /// The record bar's list of sizes is open.
+    pub res_shown: bool,
     items: Vec<(Btn, Rect)>,
     panels: Vec<Rect>,
     badge: Option<(Rect, String)>,
@@ -101,7 +111,7 @@ const RADIUS: f64 = 10.0;
 
 impl Toolbars {
     pub fn new(mode: Mode, scale: f64) -> Toolbars {
-        Toolbars { mode, scale, swatches_shown: false, items: Vec::new(), panels: Vec::new(), badge: None }
+        Toolbars { mode, scale, swatches_shown: false, res_shown: false, items: Vec::new(), panels: Vec::new(), badge: None }
     }
 
     pub fn set_scale(&mut self, scale: f64) {
@@ -114,6 +124,14 @@ impl Toolbars {
         self.badge = None;
     }
 
+    /// Close the swatch strip and the list of sizes. True if either was open.
+    pub fn hide_popovers(&mut self) -> bool {
+        let was = self.swatches_shown || self.res_shown;
+        self.swatches_shown = false;
+        self.res_shown = false;
+        was
+    }
+
     pub fn hit(&self, p: Point) -> Option<Btn> {
         self.items.iter().rev().find(|(_, r)| r.contains(p)).map(|(b, _)| *b)
     }
@@ -123,8 +141,9 @@ impl Toolbars {
     }
 
 
-    /// Place everything around `sel` (pixels, y-down) inside `bounds`.
-    pub fn layout(&mut self, sel: Option<Rect>, bounds: Rect, px: (u32, u32), dragging: bool, label: Option<&str>) {
+    /// Place everything around `sel` (pixels, y-down) inside `bounds`. `out` is the size the
+    /// recording will be saved at, when that's smaller than `px`.
+    pub fn layout(&mut self, sel: Option<Rect>, bounds: Rect, px: (u32, u32), out: Option<(u32, u32)>, dragging: bool, label: Option<&str>) {
         self.clear();
         let Some(sel) = sel else { return };
         let s = self.scale;
@@ -132,9 +151,13 @@ impl Toolbars {
         let inner = bounds.inset(edge);
 
         // Size badge above the top-left corner, or inside when there's no room.
-        let text = match label {
-            Some(l) => format!("{l} · {} × {}", px.0, px.1),
+        let size = match out {
+            Some(o) => format!("{} × {} → {} × {}", px.0, px.1, o.0, o.1),
             None => format!("{} × {}", px.0, px.1),
+        };
+        let text = match label {
+            Some(l) => format!("{l} · {size}"),
+            None => size,
         };
         let (tw, _) = d2d::measure(&d2d::layout(&text, 12.0 * s, d2d::WEIGHT_MEDIUM));
         let bh = 24.0 * s;
@@ -151,12 +174,18 @@ impl Toolbars {
         // Bottom bar: below the selection, else above, else inside.
         let bar: Vec<Btn> = match self.mode {
             Mode::Screenshot => vec![Btn::Record, Btn::Pin, Btn::Print, Btn::Save, Btn::Copy, Btn::Close],
-            Mode::Record => vec![Btn::Mic, Btn::Audio, Btn::Cam, Btn::Start, Btn::Close],
+            Mode::Record => vec![Btn::Mic, Btn::Audio, Btn::Cam, Btn::Res, Btn::Start, Btn::Close],
         };
         let start_w = 104.0 * s;
-        let bar_w = pad * 2.0
-            + bar.iter().map(|b| if *b == Btn::Start { start_w } else { btn }).sum::<f64>()
-            + gap;
+        let text_w = |t: &str| d2d::measure(&d2d::layout(t, 12.0 * s, d2d::WEIGHT_MEDIUM)).0;
+        // The size chip is as wide as its longest name, plus the chevrons.
+        let res_w = Resolution::ALL.iter().map(|r| text_w(&r.short_label())).fold(0.0, f64::max) + 28.0 * s;
+        let width = |b: &Btn| match b {
+            Btn::Start => start_w,
+            Btn::Res => res_w,
+            _ => btn,
+        };
+        let bar_w = pad * 2.0 + bar.iter().map(width).sum::<f64>() + gap;
         let bar_h = btn + pad * 2.0;
         let mut by = sel.max_y() + gap;
         if by + bar_h > bounds.max_y() - edge {
@@ -173,9 +202,29 @@ impl Toolbars {
             if last {
                 x += gap; // divider before Close
             }
-            let w = if *b == Btn::Start { start_w } else { btn };
+            let w = width(b);
             self.items.push((*b, Rect::new(x, bar_r.y + pad, w, btn)));
             x += w;
+        }
+
+        // The list of sizes opens under the chip, or above it near the bottom edge.
+        let chip = self.items.iter().find(|(b, _)| *b == Btn::Res).map(|(_, r)| *r);
+        if let (true, Some(chip)) = (self.res_shown, chip) {
+            let row_h = 26.0 * s;
+            let n = Resolution::ALL.len();
+            let list_w = (Resolution::ALL.iter().map(|r| text_w(&r.label())).fold(0.0, f64::max) + 32.0 * s + pad * 2.0)
+                .max(res_w + pad * 2.0);
+            let list_h = pad * 2.0 + row_h * n as f64;
+            let mut ly = bar_r.max_y() + 4.0 * s;
+            if ly + list_h > bounds.max_y() - edge {
+                ly = bar_r.y - 4.0 * s - list_h;
+            }
+            let list = Rect::new(chip.mid().x - list_w / 2.0, ly, list_w, list_h).clamp_inside(&inner);
+            self.panels.push(list);
+            for i in 0..n {
+                let row = Rect::new(list.x + pad, list.y + pad + row_h * i as f64, list_w - pad * 2.0, row_h);
+                self.items.push((Btn::ResOption(i), row));
+            }
         }
 
         if self.mode == Mode::Screenshot {
@@ -251,7 +300,8 @@ impl Toolbars {
             }
         }
         for (btn, r) in &self.items {
-            let selected = matches!(btn, Btn::Tool(t) if Some(*t) == st.tool);
+            let selected = matches!(btn, Btn::Tool(t) if Some(*t) == st.tool)
+                || matches!(btn, Btn::ResOption(i) if *i == st.resolution.index());
             let hovered = st.hover == Some(*btn);
             unsafe {
                 if selected {
@@ -279,6 +329,24 @@ impl Toolbars {
                 Btn::Mic => icon(rt, if st.mic { Icon::Mic } else { Icon::MicOff }, c, s, if st.mic { &fg } else { &dim }),
                 Btn::Audio => icon(rt, if st.audio { Icon::Speaker } else { Icon::SpeakerOff }, c, s, if st.audio { &fg } else { &dim }),
                 Btn::Cam => icon(rt, if st.cam { Icon::Camera } else { Icon::CameraOff }, c, s, if st.cam { &fg } else { &dim }),
+                Btn::Res => {
+                    let white = rgba(1.0, 1.0, 1.0, 0.92);
+                    let label = st.resolution.short_label();
+                    d2d::draw_text_centered(rt, &label, d2d::rect(r.x + 2.0 * s, r.y, r.w - 16.0 * s, r.h), 12.0 * s, d2d::WEIGHT_MEDIUM, white);
+                    // Up and down chevrons, like a pop-up menu.
+                    let (cx, w) = (r.max_x() - 10.0 * s, (1.4 * s) as f32);
+                    for dir in [-1.0, 1.0] {
+                        let (y0, y1) = (c.y + dir * 2.0 * s, c.y + dir * 5.0 * s);
+                        unsafe {
+                            rt.DrawLine(d2d::v2(cx - 3.0 * s, y0), d2d::v2(cx, y1), &fg, w, None);
+                            rt.DrawLine(d2d::v2(cx, y1), d2d::v2(cx + 3.0 * s, y0), &fg, w, None);
+                        }
+                    }
+                }
+                Btn::ResOption(i) => {
+                    let label = Resolution::ALL[*i].label();
+                    d2d::draw_text_centered(rt, &label, d2d::rect(r.x, r.y, r.w, r.h), 12.0 * s, d2d::WEIGHT_MEDIUM, rgba(1.0, 1.0, 1.0, 0.95));
+                }
                 Btn::Stroke => {
                     let rad = [2.5, 4.0, 6.0][st.stroke.min(2)] * s;
                     unsafe { rt.FillEllipse(&d2d::ellipse(c.x, c.y, rad, rad), &fg) };

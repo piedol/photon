@@ -31,6 +31,8 @@ mod selection;
 #[path = "../../src/i18n_text.rs"]
 #[allow(dead_code)]
 mod i18n_text;
+#[path = "../../src/resolution.rs"]
+mod resolution;
 
 // Windows-native.
 mod app;
