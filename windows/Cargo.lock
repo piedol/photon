@@ -183,7 +183,7 @@ version = "0.1.0"
 
 [[package]]
 name = "photon-windows"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "embed-resource",
  "parking_lot",
