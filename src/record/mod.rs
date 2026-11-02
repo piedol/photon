@@ -60,6 +60,8 @@ struct Recording {
     indicator: Option<indicator::Outline>,
     webcam: Option<webcam::Bubble>,
     countdown: Option<indicator::Countdown>,
+    /// The size the video is saved at, once the stream is set up.
+    out_size: Option<(u32, u32)>,
 }
 
 thread_local! {
@@ -181,6 +183,7 @@ pub fn start(target: RecordTarget) {
         indicator,
         webcam,
         countdown,
+        out_size: None,
     };
     REC.with(|r| *r.borrow_mut() = Some(rec));
     app::set_recording_ui(true);
@@ -229,11 +232,6 @@ fn countdown_tick(n: u32) {
     } else {
         util::main_after(1.0, move || countdown_tick(n - 1));
     }
-}
-
-fn even(v: f64) -> usize {
-    let v = v.round() as usize;
-    (v + 1) & !1
 }
 
 fn new_segment_path() -> PathBuf {
@@ -312,15 +310,17 @@ fn configure_and_start(content: &SCShareableContent, bubble_id: Option<u32>) {
         let filter = match &window {
             Some(w) => unsafe {
                 let f = w.frame();
-                cfg.setWidth(even(f.size.width * t.scale));
-                cfg.setHeight(even(f.size.height * t.scale));
+                let (pw, ph) = t.resolution.fit(f.size.width * t.scale, f.size.height * t.scale);
+                cfg.setWidth(pw);
+                cfg.setHeight(ph);
                 cfg.setIgnoreShadowsSingleWindow(true);
                 SCContentFilter::initWithDesktopIndependentWindow(SCContentFilter::alloc(), w)
             },
             None => unsafe {
                 cfg.setSourceRect(crate::capture::cg_rect(t.source_rect));
-                cfg.setWidth(even(t.source_rect.w * t.scale));
-                cfg.setHeight(even(t.source_rect.h * t.scale));
+                let (pw, ph) = t.resolution.fit(t.source_rect.w * t.scale, t.source_rect.h * t.scale);
+                cfg.setWidth(pw);
+                cfg.setHeight(ph);
                 SCContentFilter::initWithDisplay_excludingApplications_exceptingWindows(
                     SCContentFilter::alloc(),
                     &display,
@@ -344,6 +344,8 @@ fn configure_and_start(content: &SCShareableContent, bubble_id: Option<u32>) {
                 cfg.setMicrophoneCaptureDeviceID(Some(&NSString::from_str(id)));
             }
         }
+        r.out_size = Some(unsafe { (cfg.width() as u32, cfg.height() as u32) });
+        util::log(format!("recording at {} × {} ({:?})", unsafe { cfg.width() }, unsafe { cfg.height() }, t.resolution));
         let delegate = ProtocolObject::from_ref(&*r.delegate);
         let stream = unsafe { SCStream::initWithFilter_configuration_delegate(SCStream::alloc(), &filter, &cfg, Some(delegate)) };
         let (output, path) = make_output(r);
@@ -511,7 +513,7 @@ fn maybe_finalize() {
         crate::hotkey::set_escape(false);
     }
     util::log(format!("finalizing {} segment(s)", rec.segments.len()));
-    let Recording { target, settings, segments, cancelled, indicator, webcam, .. } = rec;
+    let Recording { target, settings, segments, cancelled, indicator, webcam, out_size, .. } = rec;
     drop(indicator);
     drop(webcam);
     app::set_recording_ui(false);
@@ -524,18 +526,18 @@ fn maybe_finalize() {
         return;
     }
     post::join(segments, move |joined| match joined {
-        Ok(file) => deliver(file, &target, &settings),
+        Ok(file) => deliver(file, &target, &settings, out_size),
         Err(e) => hud::message(&tr("Couldn't save the recording"), Some(&e)),
     });
 }
 
-fn deliver(file: PathBuf, target: &RecordTarget, s: &Settings) {
+fn deliver(file: PathBuf, target: &RecordTarget, s: &Settings, out_size: Option<(u32, u32)>) {
     let resolved = destination::resolve(&s.rec_dir, &Settings::default_rec_dir());
     let _ = std::fs::create_dir_all(&resolved.dir);
     let parts = NameParts {
         kind: Kind::Recording,
         app: target.front_app.clone(),
-        size: Some(target.source_rect.pixel_size(target.scale)),
+        size: Some(out_size.unwrap_or_else(|| target.source_rect.pixel_size(target.scale))),
         display: Some(target.display_name.clone()),
     };
     let (path, counter) = destination::unique_path(&resolved.dir, &s.rec_naming, s.rec_counter, &parts, "mp4");

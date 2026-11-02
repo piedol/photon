@@ -24,6 +24,7 @@ use crate::keys::vk;
 use crate::overlay::chrome::Chrome;
 use crate::overlay::selection::{Release, Selection};
 use crate::overlay::toolbar::{Mode, Toolbars};
+use crate::settings::Resolution;
 use crate::overlay::window::{make_window, AnnotView, OverlayView, OverlayWindow};
 use crate::util::{self, ns};
 use crate::{export, permissions, pin, record, settings, ui};
@@ -62,6 +63,8 @@ pub struct Session {
     color: Rgba,
     color_index: Option<usize>,
     stroke: usize,
+    /// The record bar's size for this recording. Starts at the Settings default and isn't saved.
+    resolution: Resolution,
     pub doc: Document,
     draft: Option<Draft>,
     text: Option<TextEdit>,
@@ -186,6 +189,7 @@ fn open(mode: Mode, snapshot: Snapshot, front_app: Option<String>) {
     toolbars.set_stroke(s.stroke);
     toolbars.set_tool(None);
     toolbars.set_record_toggles(s.rec_mic, s.rec_system_audio, s.rec_webcam);
+    toolbars.set_resolution(s.rec_resolution);
     toolbars.attach(&screens[active].view);
 
     let session = Session {
@@ -197,6 +201,7 @@ fn open(mode: Mode, snapshot: Snapshot, front_app: Option<String>) {
         color,
         color_index: Some(s.tool_color),
         stroke: s.stroke,
+        resolution: s.rec_resolution,
         doc: Document::default(),
         draft: None,
         text: None,
@@ -286,7 +291,12 @@ impl Session {
                 }),
                 _ => None,
             };
-            self.toolbars.layout(sc.sel.rect, sc.bounds, px, dragging, label.as_deref());
+            // In record mode, show the size the video will be saved at when it's smaller.
+            let out = (self.mode == Mode::Record)
+                .then(|| self.resolution.fit(px.0 as f64, px.1 as f64))
+                .map(|(w, h)| (w as u32, h as u32))
+                .filter(|o| o.0 + 1 < px.0 || o.1 + 1 < px.1);
+            self.toolbars.layout(sc.sel.rect, sc.bounds, px, out, dragging, label.as_deref());
         }
     }
 
@@ -349,9 +359,7 @@ impl Session {
         self.commit_text();
         self.tool = if self.tool == tool { None } else { tool };
         self.toolbars.set_tool(self.tool);
-        if self.toolbars.swatches_shown() {
-            self.toolbars.toggle_swatches();
-        }
+        self.toolbars.hide_popovers();
     }
 
     fn set_stroke(&mut self, size: usize) {
@@ -435,9 +443,7 @@ impl Session {
                 self.commit_text();
                 return None;
             }
-            if self.toolbars.swatches_shown() {
-                self.toolbars.toggle_swatches();
-            }
+            self.toolbars.hide_popovers();
             if idx != self.active {
                 if !self.doc.is_empty() {
                     return None; // keep markup on its display
@@ -523,8 +529,7 @@ impl Session {
         let option = flags.contains(NSEventModifierFlags::Option);
         match code {
             vk::ESCAPE => {
-                if self.toolbars.swatches_shown() {
-                    self.toolbars.toggle_swatches();
+                if self.toolbars.hide_popovers() {
                     return Some(Command::DismissHud); // handled
                 }
                 return Some(Command::Close);
@@ -556,17 +561,14 @@ impl Session {
 }
 
 /// Esc (from the overlay or the temporary global shortcut): cancel text
-/// editing, then close the swatch strip, then cancel the whole selection.
+/// editing, then close the swatch strip or the list of sizes, then cancel the whole selection.
 pub fn escape() {
     let close_all = with(|s| {
         if s.text.is_some() {
             s.cancel_text();
             false
-        } else if s.toolbars.swatches_shown() {
-            s.toolbars.toggle_swatches();
-            false
         } else {
-            true
+            !s.toolbars.hide_popovers()
         }
     })
     .unwrap_or(false);
@@ -757,6 +759,8 @@ pub struct RecordTarget {
     pub front_app: Option<String>,
     /// Record only this window (follows it, ignores everything around it).
     pub window_id: Option<u32>,
+    /// The largest size to save the video at, from the record bar.
+    pub resolution: Resolution,
 }
 
 fn record_target() -> Option<RecordTarget> {
@@ -771,6 +775,7 @@ fn record_target() -> Option<RecordTarget> {
             display_name: sc.display.name.clone(),
             front_app: sc.picked_window.as_ref().and_then(|w| w.1.clone()).or_else(|| s.front_app.clone()),
             window_id: sc.picked_window.as_ref().map(|w| w.0),
+            resolution: s.resolution,
         })
     })
     .flatten()
@@ -855,6 +860,18 @@ pub fn command(cmd: Command) {
                 close();
                 record::start(t);
             }
+        }
+        Command::ToggleResolutions => {
+            with(|s| s.toolbars.toggle_resolutions());
+        }
+        Command::Resolution(i) => {
+            with(|s| {
+                s.resolution = Resolution::ALL[(i as usize).min(Resolution::ALL.len() - 1)];
+                s.toolbars.set_resolution(s.resolution);
+                s.toolbars.hide_popovers();
+                let active = s.active;
+                s.refresh(active);
+            });
         }
         Command::ToggleMic | Command::ToggleSystemAudio | Command::ToggleWebcam => {
             let st = settings::update(|st| match cmd {

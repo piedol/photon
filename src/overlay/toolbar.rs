@@ -16,6 +16,7 @@ use crate::commands::Command;
 use crate::geometry::Rect;
 use crate::i18n::tr;
 use crate::overlay::chrome;
+use crate::settings::Resolution;
 use crate::ui;
 use crate::util::ns;
 
@@ -43,6 +44,10 @@ pub struct Toolbars {
     mic: Retained<NSButton>,
     audio: Retained<NSButton>,
     cam: Retained<NSButton>,
+    res_button: Retained<NSButton>,
+    /// The record bar's list of sizes, opened from `res_button`.
+    pub res_list: Retained<NSVisualEffectView>,
+    res_rows: Vec<Retained<NSButton>>,
     pub badge: Retained<NSVisualEffectView>,
     badge_label: Retained<NSTextField>,
     mode: Mode,
@@ -168,7 +173,23 @@ impl Toolbars {
         start.setBezelColor(Some(&NSColor::systemRedColor()));
         start.setKeyEquivalent(&ns("\r"));
         let start_w = (start.fittingSize().width + 16.0).max(104.0);
-        let rw = PAD * 2.0 + BTN * 4.0 + GAP * 2.0 + start_w;
+        // The size chip is as wide as its longest name.
+        let res_button = ui::text_button(mtm, "", Command::ToggleResolutions);
+        res_button.setBordered(false);
+        res_button.setFont(Some(&NSFont::systemFontOfSize_weight(12.0, unsafe { NSFontWeightMedium })));
+        res_button.setImage(ui::symbol("chevron.up.chevron.down", 9.0).as_deref());
+        res_button.setImagePosition(objc2_app_kit::NSCellImagePosition::ImageTrailing);
+        res_button.setContentTintColor(Some(&NSColor::colorWithWhite_alpha(1.0, 0.92)));
+        res_button.setToolTip(Some(&ns(&tr("Resolution for this recording"))));
+        let res_w = Resolution::ALL
+            .iter()
+            .map(|r| {
+                res_button.setTitle(&ns(&r.short_label()));
+                res_button.fittingSize().width
+            })
+            .fold(0.0, f64::max)
+            + 10.0;
+        let rw = PAD * 2.0 + BTN * 4.0 + res_w + GAP * 2.0 + start_w;
         let record_bar = ui::hud_surface(mtm, frame(0.0, 0.0, rw, BTN + PAD * 2.0), RADIUS, true);
         let mic = ui::icon_button(mtm, "mic", &tr("Microphone"), Command::ToggleMic);
         let audio = ui::icon_button(mtm, "speaker.wave.2", &tr("System audio"), Command::ToggleSystemAudio);
@@ -179,6 +200,9 @@ impl Toolbars {
             record_bar.addSubview(b);
             x += BTN;
         }
+        res_button.setFrame(frame(x, PAD, res_w, BTN));
+        record_bar.addSubview(&res_button);
+        x += res_w;
         record_bar.addSubview(&divider(mtm, frame(x + GAP / 2.0 - 0.5, PAD + 6.0, 1.0, BTN - 12.0)));
         x += GAP;
         start.setFrame(frame(x, PAD - 1.0, start_w, BTN + 2.0));
@@ -187,6 +211,25 @@ impl Toolbars {
         let close = ui::icon_button(mtm, "xmark", &tr("Cancel  (esc)"), Command::Close);
         close.setFrame(frame(x, PAD, BTN, BTN));
         record_bar.addSubview(&close);
+
+        // The list of sizes.
+        let row_h = 24.0;
+        let mut res_rows = Vec::new();
+        let mut list_w = res_w + PAD * 2.0;
+        for (i, r) in Resolution::ALL.iter().enumerate() {
+            let b = ui::text_button(mtm, &r.label(), Command::Resolution(i as u8));
+            b.setBordered(false);
+            b.setFont(Some(&NSFont::systemFontOfSize_weight(12.0, unsafe { NSFontWeightMedium })));
+            rounded_bg(&b);
+            list_w = list_w.max(b.fittingSize().width + 28.0 + PAD * 2.0);
+            res_rows.push(b);
+        }
+        let list_h = PAD * 2.0 + row_h * res_rows.len() as f64;
+        let res_list = ui::hud_surface(mtm, frame(0.0, 0.0, list_w, list_h), RADIUS, true);
+        for (i, b) in res_rows.iter().enumerate() {
+            b.setFrame(frame(PAD, list_h - PAD - row_h * (i + 1) as f64, list_w - PAD * 2.0, row_h));
+            res_list.addSubview(b);
+        }
 
         // Size badge.
         let badge = ui::hud_surface(mtm, frame(0.0, 0.0, 92.0, 22.0), 6.0, true);
@@ -198,14 +241,14 @@ impl Toolbars {
 
         let tb = Toolbars {
             tools, tool_buttons, color_button, stroke_button, swatches, swatch_buttons,
-            actions, record_bar, mic, audio, cam, badge, badge_label, mode,
+            actions, record_bar, mic, audio, cam, res_button, res_list, res_rows, badge, badge_label, mode,
         };
         tb.hide_all();
         tb
     }
 
-    pub fn views(&self) -> [&NSView; 5] {
-        [&self.tools, &self.swatches, &self.actions, &self.record_bar, &self.badge]
+    pub fn views(&self) -> [&NSView; 6] {
+        [&self.tools, &self.swatches, &self.actions, &self.record_bar, &self.res_list, &self.badge]
     }
 
     /// Move every toolbar into `parent` (the active display's overlay view).
@@ -259,6 +302,28 @@ impl Toolbars {
         set(&self.cam, cam, "video.fill", "video.slash");
     }
 
+    /// Show `r` on the size chip and mark it in the list.
+    pub fn set_resolution(&self, r: Resolution) {
+        self.res_button.setTitle(&ns(&r.short_label()));
+        for (i, b) in self.res_rows.iter().enumerate() {
+            set_selected(b, i == r.index());
+        }
+    }
+
+    pub fn toggle_resolutions(&self) {
+        let show = self.res_list.isHidden();
+        self.swatches.setHidden(true);
+        self.res_list.setHidden(!show);
+    }
+
+    /// Close the swatch strip and the list of sizes. True if either was open.
+    pub fn hide_popovers(&self) -> bool {
+        let was = !self.swatches.isHidden() || !self.res_list.isHidden();
+        self.swatches.setHidden(true);
+        self.res_list.setHidden(true);
+        was
+    }
+
     pub fn toggle_swatches(&self) -> bool {
         let show = self.swatches.isHidden();
         self.swatches.setHidden(!show);
@@ -271,15 +336,20 @@ impl Toolbars {
 
     /// Place everything around `sel` inside `bounds` (both view-local).
     /// `dragging` hides the bars while the selection is being changed.
-    pub fn layout(&self, sel: Option<Rect>, bounds: Rect, px: (u32, u32), dragging: bool, label: Option<&str>) {
+    /// `out` is the size the recording will be saved at, when that's smaller than `px`.
+    pub fn layout(&self, sel: Option<Rect>, bounds: Rect, px: (u32, u32), out: Option<(u32, u32)>, dragging: bool, label: Option<&str>) {
         let Some(sel) = sel else {
             self.hide_all();
             return;
         };
         // Badge: above the top-left corner, or inside it when there's no room.
-        let text = match label {
-            Some(l) => format!("{l} · {} × {}", px.0, px.1),
+        let size = match out {
+            Some(o) => format!("{} × {} → {} × {}", px.0, px.1, o.0, o.1),
             None => format!("{} × {}", px.0, px.1),
+        };
+        let text = match label {
+            Some(l) => format!("{l} · {size}"),
+            None => size,
         };
         self.badge_label.setStringValue(&ns(&text));
         let bw = 18.0 + 6.6 * text.chars().count() as f64;
@@ -292,7 +362,7 @@ impl Toolbars {
         self.badge.setHidden(false);
 
         if dragging {
-            for v in [&self.tools, &self.swatches, &self.actions, &self.record_bar] {
+            for v in [&self.tools, &self.swatches, &self.actions, &self.record_bar, &self.res_list] {
                 v.setHidden(true);
             }
             return;
@@ -311,6 +381,19 @@ impl Toolbars {
         let bar_r = Rect::new(sel.max_x() - bs.width, by, bs.width, bs.height).clamp_inside(&bounds.inset(EDGE));
         bar.setFrame(cg_rect(bar_r));
         bar.setHidden(false);
+
+        if self.mode == Mode::Record {
+            // The list of sizes opens under the size chip, or above it near the bottom edge.
+            let ls = self.res_list.frame().size;
+            let chip = self.res_button.frame();
+            let lx = bar_r.x + chip.origin.x + chip.size.width / 2.0 - ls.width / 2.0;
+            let mut ly = bar_r.y - 4.0 - ls.height;
+            if ly < bounds.y + EDGE {
+                ly = bar_r.max_y() + 4.0;
+            }
+            let list_r = Rect::new(lx, ly, ls.width, ls.height).clamp_inside(&bounds.inset(EDGE));
+            self.res_list.setFrame(cg_rect(list_r));
+        }
 
         if self.mode == Mode::Screenshot {
             // Tool palette: right of the selection, else left, else inside.

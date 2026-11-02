@@ -36,6 +36,8 @@ Photon for Windows is a native Windows edition with the same features as the Mac
 
 Both shortcuts can be changed in **Settings › General**, as on the Mac.
 
+The **Resolution** setting and the record bar's size chip are on the Mac only for now. Windows recordings are saved at the screen's full resolution.
+
 ## Where things are stored
 
 | What | Where |

@@ -16,7 +16,7 @@ cargo clippy
 
 `cargo build` makes a debug build of the binary at `target/debug/Photon`. Clippy should report no warnings.
 
-The unit tests (80) cover the pure modules:
+The unit tests (84) cover the pure modules:
 - Geometry.
 - The selection state machine.
 - Markup drafts and undo.
@@ -25,6 +25,7 @@ The unit tests (80) cover the pure modules:
 - Destinations.
 - Shortcut encoding.
 - Command tags.
+- Recording sizes for each resolution.
 - Translations: the catalogs have all the `tr` keys and no stale ones.
 - Updates: version numbers, release JSON, release notes, the schedule, SHA-256, signature checks and folder permissions.
 
@@ -54,6 +55,7 @@ open photon://selftest
 |---|---|
 | `photon://selftest` | Screenshot: hover, select, every markup tool, swatches, copy, then the record overlay |
 | `photon://selftest-record` | Region recording with pause/resume, stop, the saved HUD, trim and GIF |
+| `photon://selftest-resolution` | The record bar's size list: picks 1080p, records and stops, then opens the record overlay again to show it's back on the Settings default |
 | `photon://selftest-window` | Click-a-window recording, countdown Skip, stop through the screenshot shortcut's command |
 | `photon://selftest-escape` | Esc cancels the overlay and the countdown, and nothing is saved |
 | `photon://selftest-settings` | Opens Settings and screenshots each tab |

@@ -27,6 +27,7 @@ Photon is configured in **Settings** (menu bar › Settings…, or `open photon:
 - **File names:** see [Naming templates](#naming-templates).
 - **Format:** H.264 (most compatible) or HEVC (smaller files).
 - **Frame rate:** 30 or 60 fps.
+- **Resolution:** Native (the screen's full resolution), 4K (2160p), 1440p, 1080p or 720p. The video is scaled down to fit inside that size and keeps its shape. It's never scaled up, and a portrait area at 1080p is at most 1080 wide and 1920 tall. The record bar's size chip changes it for the next recording. Mac only for now.
 - **Record system audio** and **Record microphone**, with a microphone picker.
 - **Webcam bubble**, with a camera picker.
 - **Show the pointer**, **Highlight clicks**, **3-second countdown**.
@@ -49,6 +50,7 @@ Settings are stored in the standard macOS preferences for the domain `top.piedol
 | `recAlsoDir` | string | None | That second folder |
 | `recCodec` | string | `h264` | `h264` or `hevc` |
 | `recFps60` | int | `60` | `30` or `60` (replaces the old `recFps` key) |
+| `recResolution` | string | `native` | `native`, `2160`, `1440`, `1080` or `720` |
 | `recSystemAudio` | bool | `true` | Capture system audio (Photon's own sounds are excluded) |
 | `recMic` | bool | `false` | Capture the microphone |
 | `recMicDevice` | string | system default | Microphone unique ID |

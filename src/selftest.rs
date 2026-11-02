@@ -120,6 +120,32 @@ pub fn run_record() {
     run_steps(steps);
 }
 
+/// The record bar's list of sizes: pick 1080p for one recording, record and stop, then open
+/// the record overlay again, which is back on the Settings default.
+pub fn run_resolution() {
+    if std::env::var_os("PHOTON_DEV").is_none() {
+        return;
+    }
+    let steps: Vec<(f64, Step)> = vec![
+        (0.0, Box::new(|| session::start(Mode::Record))),
+        (1.0, Box::new(|| drag((200.0, 1100.0), (1700.0, 200.0), false))),
+        (0.3, Box::new(|| shot("40-record-bar"))),
+        (0.1, Box::new(|| session::command(Command::ToggleResolutions))),
+        (0.3, Box::new(|| shot("41-size-list"))),
+        (0.1, Box::new(|| session::command(Command::Resolution(3)))),
+        (0.3, Box::new(|| shot("42-1080p-chosen"))),
+        (0.1, Box::new(|| session::command(Command::StartRecording))),
+        (0.8, Box::new(|| crate::commands::run(Command::SkipCountdown))),
+        (3.0, Box::new(|| crate::record::stop(false))),
+        (6.0, Box::new(|| crate::record::post::command(Command::DismissHud))),
+        (0.5, Box::new(|| session::start(Mode::Record))),
+        (1.0, Box::new(|| drag((200.0, 1100.0), (1700.0, 200.0), false))),
+        (0.3, Box::new(|| shot("43-next-recording"))),
+        (0.1, Box::new(session::close)),
+    ];
+    run_steps(steps);
+}
+
 pub fn run_settings() {
     if std::env::var_os("PHOTON_DEV").is_none() {
         return;

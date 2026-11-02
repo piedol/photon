@@ -160,6 +160,7 @@ pub fn open_url(host: &str) {
         "settings" => Command::OpenSettings,
         "selftest" => return crate::selftest::run(),
         "selftest-record" => return crate::selftest::run_record(),
+        "selftest-resolution" => return crate::selftest::run_resolution(),
         "selftest-settings" => return crate::selftest::run_settings(),
         "selftest-window" => return crate::selftest::run_window(),
         "selftest-escape" => return crate::selftest::run_escape(),

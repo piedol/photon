@@ -53,11 +53,12 @@ Key decisions:
 ## Recording pipeline
 
 ```text
-record overlay ─► session::RecordTarget { display, source rect, window id? }
+record overlay ─► session::RecordTarget { display, source rect, window id?, resolution }
                ─► record::start: outline, webcam bubble, countdown (Esc cancels, Skip)
                ─► SCShareableContent ─► SCContentFilter
                      region/display: display minus Photon's windows (except the webcam bubble), sourceRect
                      window:         desktop-independent window filter (follows the window)
+                     output size:    the area in pixels, fitted inside the resolution (Resolution::fit)
                ─► SCStream + SCRecordingOutput (hardware H.264/HEVC → MP4 segment in temp)
 pause  = remove the recording output (closes segment)   resume = add a new output (new segment)
 stop   = stopCapture ─► every segment finished ─► post::join (AVMutableComposition passthrough)

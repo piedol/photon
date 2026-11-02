@@ -34,6 +34,9 @@ pub enum Command {
     ToggleWebcam,
     StartRecording,
     SkipCountdown,
+    ToggleResolutions,
+    /// A size from the record bar's list, by its index in `Resolution::ALL`.
+    Resolution(u8),
     // Finished-recording HUD
     Reveal,
     CopyFile,
@@ -79,6 +82,8 @@ impl Command {
             ToggleWebcam => 402,
             StartRecording => 403,
             SkipCountdown => 404,
+            ToggleResolutions => 405,
+            Resolution(i) => 410 + i as isize,
             Reveal => 500,
             CopyFile => 501,
             OpenFile => 502,
@@ -121,6 +126,8 @@ impl Command {
             402 => ToggleWebcam,
             403 => StartRecording,
             404 => SkipCountdown,
+            405 => ToggleResolutions,
+            410..=419 => Resolution((tag - 410) as u8),
             500 => Reveal,
             501 => CopyFile,
             502 => OpenFile,
@@ -151,7 +158,7 @@ mod tests {
             CaptureScreenshot, RecordScreen, RecordHotkey, StopRecording, PauseResume,
             OpenRecordings, OpenSettings, ToggleLogin, Quit, Escape, Tool(0), Tool(9), Color(7),
             CustomColor, ToggleSwatches, CycleStroke, Stroke(2), Copy, Save, Print, Pin, RecordSelection, Undo, Close,
-            ToggleMic, ToggleSystemAudio, ToggleWebcam, StartRecording, SkipCountdown, Reveal, CopyFile,
+            ToggleMic, ToggleSystemAudio, ToggleWebcam, StartRecording, SkipCountdown, ToggleResolutions, Resolution(0), Resolution(4), Reveal, CopyFile,
             OpenFile, Trim, ExportGif, DismissHud, Update(0), Update(3), Setting(42),
         ];
         for c in all {

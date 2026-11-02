@@ -26,7 +26,7 @@ use crate::keys::{self, vk, Shortcut};
 use crate::output::cloud;
 use crate::output::destination::{self, NameParts};
 use crate::output::naming::{Case, DateFormat, Kind, NamingRule, Separator, TimeFormat, TOKENS};
-use crate::settings::{self, Codec, Settings};
+use crate::settings::{self, Codec, Resolution, Settings};
 use crate::util::{self, ns};
 use crate::{app, hotkey, ui};
 
@@ -50,6 +50,7 @@ const CAM_DEVICE: u16 = 76;
 const CURSOR: u16 = 77;
 const CLICKS: u16 = 78;
 const COUNTDOWN: u16 = 79;
+const RESOLUTION: u16 = 80;
 // Naming blocks: base + offset. Screenshots 100.., recordings 200..
 const N_TEMPLATE: u16 = 0;
 const N_DATE: u16 = 1;
@@ -328,7 +329,7 @@ pub fn show() {
         return;
     }
     let s = settings::get();
-    let (w, h) = (600.0, 640.0);
+    let (w, h) = (600.0, 676.0);
     let window = unsafe {
         NSWindow::initWithContentRect_styleMask_backing_defer(
             NSWindow::alloc(mtm),
@@ -410,6 +411,8 @@ pub fn show() {
     fps.setFrame(cg_rect(Rect::new(X + LABEL_W + 10.0 + codec_w + 8.0, y, fps_w, 25.0)));
     rc.view.addSubview(&fps);
     rc.controls.push((FPS, fps));
+    let res_labels: Vec<String> = Resolution::ALL.iter().map(|r| r.label()).collect();
+    rc.row(&tr("Resolution:"), RESOLUTION, popup(&res_labels, s.rec_resolution.index(), RESOLUTION), Some(codec_w), 25.0);
     let mics = devices(false);
     let cams = devices(true);
     rc.plain(SYS_AUDIO, checkbox(&tr("Record system audio"), SYS_AUDIO, s.rec_system_audio), 20.0);
@@ -717,6 +720,10 @@ pub fn changed(id: u16) {
         FPS => {
             let sixty = selected(id) == 1;
             settings::update(|s| s.rec_fps = if sixty { 60 } else { 30 });
+        }
+        RESOLUTION => {
+            let r = Resolution::ALL[selected(id).min(Resolution::ALL.len() - 1)];
+            settings::update(|s| s.rec_resolution = r);
         }
         SYS_AUDIO => {
             let on = is_on(id);
