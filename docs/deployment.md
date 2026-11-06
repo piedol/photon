@@ -16,7 +16,7 @@ scripts/bundle.sh --install
 scripts/bundle.sh --notarize
 ```
 
-The first command builds and signs into `dist/Photon.app`. `--install` also replaces `/Applications/Photon.app` and relaunches it. `--notarize` also notarizes and staples the app, then zips it as `dist/Photon-macOS-arm64.zip` for a release.
+The first command builds and signs into `dist/Photon.app`. `--install` also replaces `/Applications/Photon.app` and relaunches it. `--notarize` also notarizes and staples the app, zips it as `dist/Photon-macOS-arm64.zip` for updates, and makes `dist/Photon-macOS-arm64.dmg` for new installs.
 
 What `bundle.sh` does:
 1. `cargo build --release --target aarch64-apple-darwin`. The release profile uses fat LTO, 1 codegen unit, `panic = "abort"`, stripped symbols and opt-level 3.
@@ -66,14 +66,19 @@ Turn it on from the menu, from Settings › General, or with:
 
 ## Releasing to GitHub
 
+### The disk image
+
+`scripts/make-dmg.sh` builds the disk image with [dmgbuild](https://github.com/dmgbuild/dmgbuild), which lays out the window without scripting Finder. Install it once with `python3 -m venv ~/.local/share/dmgbuild-venv && ~/.local/share/dmgbuild-venv/bin/pip install dmgbuild`, or set `DMGBUILD` to its path. `scripts/dmg-settings.py` places the icons and hides the toolbar and sidebar, and `scripts/dmg-background.swift` draws the background in Photon's accent colour, toned to a mid grey so Finder's labels read in Light and Dark Mode. The image is signed, notarized and stapled. The three scripts are shared with piedol's other Mac apps and kept the same in each.
+
 The repo is `piedol/photon`. Releases are cut from `main`.
 
-App builds are published as GitHub Releases tagged `vX.Y.Z` (the version in `Cargo.toml` and `windows/Cargo.toml`), each with two files:
-- `Photon-macOS-arm64.zip`: `dist/Photon.app` from `scripts/bundle.sh`, zipped with `ditto -c -k --keepParent dist/Photon.app Photon-macOS-arm64.zip`.
+App builds are published as GitHub Releases tagged `vX.Y.Z` (the version in `Cargo.toml` and `windows/Cargo.toml`), each with three files:
+- `Photon-macOS-arm64.zip`: `dist/Photon.app` from `scripts/bundle.sh --notarize`, zipped with `ditto -c -k --keepParent`. Installed copies update from this file.
+- `Photon-macOS-arm64.dmg`: the disk image for new installs, also from `scripts/bundle.sh --notarize`. It opens to a window with Photon, an arrow and the Applications folder. The README and piedol.top link to it.
 - `Photon-windows-x64.zip`: `windows\target\release\Photon.exe` plus `LICENSE`, built on Windows with `cargo build --release` (see [windows.md](windows.md)).
 
 ```bash
-gh release create v0.1.0 Photon-macOS-arm64.zip Photon-windows-x64.zip --title "Photon 0.1.0" --notes-file notes.md
+gh release create v0.1.0 Photon-macOS-arm64.zip Photon-macOS-arm64.dmg Photon-windows-x64.zip --title "Photon 0.1.0" --notes-file notes.md
 ```
 
 Installed copies update from the latest release, so:

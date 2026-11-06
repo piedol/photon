@@ -2,7 +2,8 @@
 # Build Photon.app for Apple silicon, sign it, and optionally install or notarize.
 #   scripts/bundle.sh             build + sign into dist/Photon.app
 #   scripts/bundle.sh --install   also copy to /Applications and relaunch
-#   scripts/bundle.sh --notarize  also notarize and zip for release (keychain profile $NOTARY_PROFILE, default piedol-notary)
+#   scripts/bundle.sh --notarize  also notarize it, zip it for updates and make the disk image for new installs
+#                                 (keychain profile $NOTARY_PROFILE, default piedol-notary)
 set -euo pipefail
 cd "${0:A:h}/.."
 
@@ -73,6 +74,7 @@ if (( NOTARIZE )); then
   rm -f dist/Photon-notarize.zip
   ditto -c -k --keepParent "$APP" dist/Photon-macOS-arm64.zip
   echo "Notarized: dist/Photon-macOS-arm64.zip"
+  scripts/make-dmg.sh "$APP" dist/Photon-macOS-arm64.dmg "#0a84ff" "$IDENTITY" --notarize "$PROFILE"
 fi
 
 echo "Built $APP ($(du -sh "$APP" | cut -f1), binary $(du -h "$APP/Contents/MacOS/Photon" | cut -f1), $(lipo -archs "$APP/Contents/MacOS/Photon"))"

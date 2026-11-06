@@ -16,7 +16,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/piedol/photon/releases/latest/download/Photon-macOS-arm64.zip"><img src="assets/readme/download-mac.svg" height="56" alt="Download for Mac"></a>
+  <a href="https://github.com/piedol/photon/releases/latest/download/Photon-macOS-arm64.dmg"><img src="assets/readme/download-mac.svg" height="56" alt="Download for Mac"></a>
   &nbsp;
   <a href="https://github.com/piedol/photon/releases/latest/download/Photon-windows-x64.zip"><img src="assets/readme/download-windows.svg" height="56" alt="Download for Windows"></a>
 </p>
@@ -48,14 +48,14 @@ Photon is in English, Simplified Chinese, Japanese, German, French, Spanish, Bra
 
 | Computer | Download | Requirements |
 |---|---|---|
-| Mac | [Photon-macOS-arm64.zip](https://github.com/piedol/photon/releases/latest/download/Photon-macOS-arm64.zip) | Apple silicon (M1 or later), macOS 15 or later |
+| Mac | [Photon-macOS-arm64.dmg](https://github.com/piedol/photon/releases/latest/download/Photon-macOS-arm64.dmg) | Apple silicon (M1 or later), macOS 15 or later |
 | Windows PC | [Photon-windows-x64.zip](https://github.com/piedol/photon/releases/latest/download/Photon-windows-x64.zip) | Windows 10 (version 1903 or later) or Windows 11, 64-bit |
 
 To check your Mac, open the Apple menu › **About This Mac**. Photon runs on it if the Chip line says Apple M1 or later.
 
 **Mac**
 
-1. Open the zip and drag **Photon** into your **Applications** folder.
+1. Open the disk image and drag **Photon** onto the **Applications** folder in its window.
 2. Open Photon and confirm that you want to open an app downloaded from the internet. It's signed and notarized by Apple, so macOS doesn't ask you to approve it in Privacy & Security.
 3. Allow **Screen & System Audio Recording** when macOS asks.
 4. Photon's icon appears in the menu bar. Press **⇧⌘9** to take your first screenshot.

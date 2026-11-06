@@ -52,7 +52,7 @@ The cloud provider's folder was missing, for example because you were signed out
 
 | Symptom | Check |
 |---|---|
-| The update opened the release page instead of installing | Your account can't make changes in the folder Photon is in, or macOS is running Photon from a read-only copy because it wasn't moved into Applications. Download the zip from that page and replace Photon by hand. |
+| The update opened the release page instead of installing | Your account can't make changes in the folder Photon is in, or macOS is running Photon from a read-only copy because it wasn't moved into Applications. Download the disk image from that page and drag Photon onto Applications to replace it. |
 | "GitHub is limiting requests from this network" | GitHub allows 60 update checks an hour from an IP address without signing in. Try again later. |
 | "The download doesn't match the checksum" | The download was changed or cut short on the way. Nothing was replaced. Try again, or download the zip from the release page. |
 | An update waits and doesn't install | It waits while you're capturing or recording, or while a screenshot is pinned. Close pins to let it continue. |
